@@ -1,0 +1,182 @@
+services:
+  # === DATABASES ===
+  db-mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bookstore_db
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "3307:3306"
+    networks:
+      - bookstore-network
+
+  db-postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bookstore_db
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - bookstore-network
+
+  # === MICROSERVICES ===
+  customer-service:
+    build: ./customer-service
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=customer_service.settings
+
+  book-service:
+    build: ./book-service
+    ports:
+      - "8002:8000"
+    depends_on:
+      - db-postgres
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=book_service.settings
+
+  cart-service:
+    build: ./cart-service
+    ports:
+      - "8003:8000"
+    depends_on:
+      - db-postgres
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=cart_service.settings
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8004:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=order_service.settings
+
+  pay-service:
+    build: ./pay-service
+    ports:
+      - "8005:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=pay_service.settings
+
+  ship-service:
+    build: ./ship-service
+    ports:
+      - "8006:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=ship_service.settings
+
+  staff-service:
+    build: ./staff-service
+    ports:
+      - "8007:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=staff_service.settings
+
+  comment-rate-service:
+    build: ./comment-rate-service
+    ports:
+      - "8008:8000"
+    depends_on:
+      - db-postgres
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=comment_rate_service.settings
+
+  catalog-service:
+    build: ./catalog-service
+    ports:
+      - "8009:8000"
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=catalog_service.settings
+
+  manager-service:
+    build: ./manager-service
+    ports:
+      - "8010:8000"
+    depends_on:
+      - db-mysql
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=manager_service.settings
+
+  recommender-ai-service:
+    build: ./recommender-ai-service
+    ports:
+      - "8011:8000"
+    depends_on:
+      - db-postgres
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=recommender_ai_service.settings
+
+  api-gateway:
+    build: ./api_gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - customer-service
+      - book-service
+      - cart-service
+      - order-service
+      - pay-service
+      - ship-service
+      - staff-service
+      - comment-rate-service
+      - catalog-service
+    networks:
+      - bookstore-network
+    environment:
+      - DEBUG=1
+
+networks:
+  bookstore-network:
+    driver: bridge
