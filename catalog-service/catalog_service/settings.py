@@ -86,11 +86,14 @@ WSGI_APPLICATION = 'catalog_service.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Catalog service does not need a database, it's just a proxy to other services
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', os.getenv('DB_NAME', 'bookstore_catalog')),
+        'USER': os.getenv('POSTGRES_USER', os.getenv('DB_USER', 'postgres')),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', os.getenv('DB_PASSWORD', 'root')),
+        'HOST': os.getenv('DB_HOST', 'db-postgres'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 

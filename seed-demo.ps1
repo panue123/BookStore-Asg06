@@ -1,244 +1,166 @@
 param(
-    [string]$GatewayBase = "http://localhost:8000/api/proxy",
-    [int]$WaitSeconds = 120
+    [string]$GW   = "http://localhost:8000/api",
+    [string]$Book = "http://localhost:8002/api",
+    [string]$Cart = "http://localhost:8003/api",
+    [string]$Cmt  = "http://localhost:8008/api",
+    [string]$Staff= "http://localhost:8007/api",
+    [string]$Cust = "http://localhost:8001/api",
+    [int]$WaitSeconds = 60
 )
-
 $ErrorActionPreference = "Stop"
 
-function Invoke-ApiGet {
-    param([string]$Path)
-    return Invoke-RestMethod -Method Get -Uri ("$GatewayBase/$Path") -TimeoutSec 30
+function Invoke-Api {
+    param([string]$Method="GET",[string]$Base,[string]$Path,[object]$Body,[string]$Token)
+    $uri = "$Base/$Path"
+    $headers = @{ "Content-Type"="application/json" }
+    if ($Token) { $headers["Authorization"] = "Bearer $Token" }
+    $params = @{ Method=$Method; Uri=$uri; Headers=$headers; TimeoutSec=30 }
+    if ($Body) { $params["Body"] = ($Body | ConvertTo-Json -Depth 10) }
+    return Invoke-RestMethod @params
 }
 
-function Extract-Results {
-    param([object]$Data)
-    if ($null -eq $Data) { return @() }
-
-    # DRF PageNumberPagination shape: {count,next,previous,results:[...]}
-    if ($Data -isnot [System.Array] -and ($Data.PSObject.Properties.Name -contains "results")) {
-        $r = $Data.results
-        if ($r -is [System.Array]) { return @($r) }
-        if ($null -ne $r) { return @($r) }
-        return @()
-    }
-
-    if ($Data -is [System.Array]) { return @($Data) }
-    return @($Data)
+# ── Wait for gateway ───────────────────────────────────────
+Write-Host "Waiting for gateway..." -ForegroundColor Cyan
+for ($i=0; $i -lt $WaitSeconds; $i+=3) {
+    try { Invoke-Api -Base $GW -Path "books/" | Out-Null; Write-Host "Gateway ready!" -ForegroundColor Green; break } catch { Start-Sleep 3 }
 }
 
-function Invoke-ApiPost {
-    param([string]$Path, [object]$Body)
-    $json = $Body | ConvertTo-Json -Depth 10
-    return Invoke-RestMethod -Method Post -Uri ("$GatewayBase/$Path") -ContentType "application/json" -Body $json -TimeoutSec 30
+# ── Publisher & Books (direct to book-service) ─────────────
+Write-Host "`n[1] Seeding publisher & books..." -ForegroundColor Cyan
+$pub = $null
+try {
+    $pub = Invoke-Api -Method POST -Base $Book -Path "publishers/" -Body @{name="CloudBooks Press";address="Ho Chi Minh City, VN"}
+    Write-Host "  Publisher: id=$($pub.id)" -ForegroundColor Green
+} catch {
+    try {
+        $pubs = Invoke-Api -Base $Book -Path "publishers/"
+        $pubList = if ($pubs.results) { $pubs.results } else { $pubs }
+        $pub = $pubList | Where-Object { $_.name -eq "CloudBooks Press" } | Select-Object -First 1
+        if (-not $pub) { $pub = @{id=1} }
+        Write-Host "  Publisher exists: id=$($pub.id)" -ForegroundColor Yellow
+    } catch { $pub = @{id=1}; Write-Host "  Using publisher id=1" -ForegroundColor Yellow }
 }
 
-function Invoke-ApiPatch {
-    param([string]$Path, [object]$Body)
-    $json = $Body | ConvertTo-Json -Depth 10
-    return Invoke-RestMethod -Method Patch -Uri ("$GatewayBase/$Path") -ContentType "application/json" -Body $json -TimeoutSec 30
-}
-
-function Wait-Gateway {
-    $elapsed = 0
-    while ($elapsed -lt $WaitSeconds) {
-        try {
-            Invoke-ApiGet "books/" *> $null
-            Write-Host "API Gateway is ready." -ForegroundColor Green
-            return
-        } catch {
-            Start-Sleep -Seconds 2
-            $elapsed += 2
-        }
-    }
-    throw "Timed out waiting for API Gateway at $GatewayBase"
-}
-
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Seed demo data (via API Gateway)" -ForegroundColor Green
-Write-Host "Gateway: $GatewayBase" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-
-Wait-Gateway
-
-# --- Publisher + Books (book-service / Postgres) ---
-$publishers = @()
-try { $publishers = Extract-Results (Invoke-ApiGet "publishers/") } catch { $publishers = @() }
-$publisher = $publishers | Where-Object { $_.name -eq "Demo Publisher" } | Select-Object -First 1
-if (-not $publisher) {
-    $publisher = Invoke-ApiPost "publishers/" @{ name = "Demo Publisher"; address = "HCMC, VN" }
-    Write-Host "Created publisher: id=$($publisher.id)" -ForegroundColor Green
-} else {
-    Write-Host "Publisher exists: id=$($publisher.id)" -ForegroundColor Yellow
-}
-
-$bookSpecs = @(
-    @{ title = "Clean Code"; author = "Robert C. Martin"; category = "programming"; price = "35.00"; stock = 50 },
-    @{ title = "The Pragmatic Programmer"; author = "Andrew Hunt"; category = "programming"; price = "42.00"; stock = 40 },
-    @{ title = "Sapiens"; author = "Yuval Noah Harari"; category = "history"; price = "28.00"; stock = 25 },
-    @{ title = "A Brief History of Time"; author = "Stephen Hawking"; category = "science"; price = "20.00"; stock = 30 },
-    @{ title = "The Great Gatsby"; author = "F. Scott Fitzgerald"; category = "fiction"; price = "12.00"; stock = 60 }
+$books = @(
+  @{title="Clean Code";author="Robert C. Martin";category="programming";price="35.00";stock=50;description="A handbook of agile software craftsmanship."},
+  @{title="The Pragmatic Programmer";author="Andrew Hunt";category="programming";price="42.00";stock=40;description="Your journey to mastery."},
+  @{title="Design Patterns";author="Gang of Four";category="programming";price="55.00";stock=30;description="Elements of reusable object-oriented software."},
+  @{title="Sapiens";author="Yuval Noah Harari";category="history";price="28.00";stock=25;description="A brief history of humankind."},
+  @{title="A Brief History of Time";author="Stephen Hawking";category="science";price="20.00";stock=35;description="From the Big Bang to Black Holes."},
+  @{title="The Great Gatsby";author="F. Scott Fitzgerald";category="fiction";price="12.00";stock=60;description="The story of the mysteriously wealthy Jay Gatsby."},
+  @{title="Introduction to Algorithms";author="Cormen et al.";category="programming";price="65.00";stock=20;description="The classic algorithms textbook."},
+  @{title="Cosmos";author="Carl Sagan";category="science";price="22.00";stock=45;description="A personal voyage through the universe."},
+  @{title="1984";author="George Orwell";category="fiction";price="15.00";stock=55;description="A dystopian social science fiction novel."},
+  @{title="Calculus";author="James Stewart";category="math";price="48.00";stock=18;description="Early transcendentals, 8th edition."}
 )
 
 $createdBooks = @()
-foreach ($spec in $bookSpecs) {
-    # Use search endpoint (not paginated) to avoid duplicates even with many books.
-    $found = $null
+foreach ($b in $books) {
+    $b["publisher"] = $pub.id
     try {
-        $sr = Invoke-ApiGet ("books/search/?q=" + [uri]::EscapeDataString($spec.title))
-        $matches = @()
-        if ($sr.PSObject.Properties.Name -contains "results") { $matches = @($sr.results) }
-        else { $matches = Extract-Results $sr }
-        $found = $matches | Where-Object { $_.title -eq $spec.title } | Select-Object -First 1
-    } catch { $found = $null }
-
-    if ($found) {
-        Write-Host "Book exists: id=$($found.id) title=$($found.title)" -ForegroundColor Yellow
-        $createdBooks += $found
-        continue
-    }
-
-    $body = @{
-        title = $spec.title
-        author = $spec.author
-        publisher = $publisher.id
-        category = $spec.category
-        price = $spec.price
-        stock = $spec.stock
-    }
-    $newBook = Invoke-ApiPost "books/" $body
-    Write-Host "Created book: id=$($newBook.id) title=$($newBook.title)" -ForegroundColor Green
-    $createdBooks += $newBook
-}
-
-# --- Customer + Cart + Order (customer/cart/order/pay/ship) ---
-$addr = Invoke-ApiPost "addresses/" @{ street = "1 Nguyen Hue"; city = "Ho Chi Minh"; country = "Vietnam" }
-$job = Invoke-ApiPost "jobs/" @{ title = "Developer"; company = "Demo Co" }
-
-$customer = $null
-$customerToken = $null
-try {
-    $resp = Invoke-ApiPost "customers/" @{
-        username = "alice"
-        email = "alice@example.com"
-        password = "alice123"
-        address = $addr.id
-        job = $job.id
-    }
-    $customer = $resp.data
-    $customerToken = $resp.token
-    Write-Host "Created customer: id=$($customer.id) username=$($customer.username)" -ForegroundColor Green
-} catch {
-    # If exists, just login and reuse.
-    $login = Invoke-ApiPost "customers/login/" @{ username = "alice"; password = "alice123" }
-    $customerToken = $login.token
-    $customerId = $login.customer_id
-    $customer = Invoke-ApiGet ("customers/$customerId/")
-    Write-Host "Customer exists: id=$($customer.id) username=$($customer.username)" -ForegroundColor Yellow
-}
-
-if (-not $customer.cart_id) {
-    $cart = Invoke-ApiPost "carts/" @{ customer_id = $customer.id }
-    Invoke-ApiPatch ("customers/$($customer.id)/") @{ cart_id = $cart.id }
-    $customer.cart_id = $cart.id
-    Write-Host "Created cart and linked to customer: cart_id=$($cart.id)" -ForegroundColor Green
-}
-
-# Add 2 items
-$book1 = $createdBooks | Select-Object -First 1
-$book2 = $createdBooks | Select-Object -Skip 1 -First 1
-Invoke-ApiPost ("carts/$($customer.cart_id)/add_item/") @{ book_id = $book1.id; quantity = 1 } *> $null
-Invoke-ApiPost ("carts/$($customer.cart_id)/add_item/") @{ book_id = $book2.id; quantity = 2 } *> $null
-Write-Host "Added items to cart: cart_id=$($customer.cart_id)" -ForegroundColor Green
-
-$orderResp = Invoke-ApiPost "orders/checkout/" @{
-    customer_id = $customer.id
-    cart_id = $customer.cart_id
-    shipping_address = "1 Nguyen Hue, Ho Chi Minh, Vietnam"
-    payment_method = "credit_card"
-}
-$order = $orderResp.order
-Write-Host "Created order: id=$($order.id) status=$($order.status)" -ForegroundColor Green
-
-# --- Comment/Rating ---
-try {
-    $comment = Invoke-ApiPost "comments/" @{
-        customer_id = $customer.id
-        book_id = $book1.id
-        content = "Great book. Highly recommended."
-        rating = 5
-    }
-    Write-Host "Created comment: id=$($comment.id) rating=$($comment.rating)" -ForegroundColor Green
-} catch {
-    Write-Host "Skipping comment seed (may already exist for this customer/book)." -ForegroundColor Yellow
-}
-
-# --- Staff + RBAC + Shift (staff-service / MySQL) ---
-$staffAdmin = $null
-try {
-    $login = Invoke-ApiPost "staff/login/" @{ username = "staffadmin"; password = "admin123" }
-    $staffAdmin = $login.staff
-    Write-Host "Staff admin exists: id=$($staffAdmin.id)" -ForegroundColor Yellow
-} catch {
-    $staffAdmin = Invoke-ApiPost "staff/" @{
-        username = "staffadmin"
-        email = "staffadmin@bookstore.com"
-        first_name = "Staff"
-        last_name = "Admin"
-        password = "admin123"
-        role = "admin"
-        department = "HQ"
-    }
-    Write-Host "Created staff admin: id=$($staffAdmin.id)" -ForegroundColor Green
-}
-
-function Ensure-StaffUser {
-    param([string]$Username, [string]$Role, [string]$Department)
-    try {
-        $login = Invoke-ApiPost "staff/login/" @{ username = $Username; password = "admin123" }
-        if ($login.staff) { return $login.staff }
+        $nb = Invoke-Api -Method POST -Base $Book -Path "books/" -Body $b
+        Write-Host "  Book: id=$($nb.id) '$($nb.title)'" -ForegroundColor Green
+        $createdBooks += $nb
     } catch {
-        # continue to create
+        Write-Host "  Skip (exists?): $($b.title)" -ForegroundColor Yellow
     }
-
-    $resp = Invoke-ApiPost "staff/create_staff/" @{
-        requester_id = $staffAdmin.id
-        username = $Username
-        password = "admin123"
-        email = "$Username@bookstore.com"
-        role = $Role
-        department = $Department
-    }
-    if ($resp.staff) { return $resp.staff }
-    return $resp
 }
 
-$manager1 = Ensure-StaffUser -Username "manager1" -Role "manager" -Department "Management"
-$ship1 = Ensure-StaffUser -Username "ship1" -Role "shipping" -Department "Shipping"
-$inv1 = Ensure-StaffUser -Username "inv1" -Role "inventory" -Department "Inventory"
-Write-Host "Ensured staff users: manager1, ship1, inv1" -ForegroundColor Green
+# If books already existed, fetch them
+if ($createdBooks.Count -eq 0) {
+    try {
+        $existing = Invoke-Api -Base $Book -Path "books/"
+        $createdBooks = if ($existing.results) { $existing.results } else { $existing }
+        Write-Host "  Loaded $($createdBooks.Count) existing books" -ForegroundColor Yellow
+    } catch {}
+}
 
+# ── Register customer via gateway ──────────────────────────
+Write-Host "`n[2] Registering customer..." -ForegroundColor Cyan
+$token = $null; $custUser = $null
 try {
-    $start = (Get-Date).AddHours(1).ToString("s")
-    $end = (Get-Date).AddHours(9).ToString("s")
-    $shiftResp = Invoke-ApiPost "staff/create_shift/" @{
-        requester_id = $staffAdmin.id
-        staff = $ship1.id
-        start_time = $start
-        end_time = $end
-        notes = "Demo shift"
-    }
-    Write-Host "Created shift: id=$($shiftResp.shift.id) staff_id=$($shiftResp.shift.staff)" -ForegroundColor Green
+    $reg = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="alice";email="alice@bookstore.vn";password="alice123"}
+    $token = $reg.access_token; $custUser = $reg.user
+    Write-Host "  Registered: username=$($custUser.username) cart_id=$($custUser.cart_id)" -ForegroundColor Green
 } catch {
-    Write-Host "Skipping shift seed (may already exist or migrations not applied yet)." -ForegroundColor Yellow
+    try {
+        $login = Invoke-Api -Method POST -Base $GW -Path "auth/login/" -Body @{username="alice";password="alice123"}
+        $token = $login.access_token; $custUser = $login.user
+        Write-Host "  Login existing: username=$($custUser.username)" -ForegroundColor Yellow
+    } catch { Write-Host "  Auth failed: $_" -ForegroundColor Red }
 }
 
-# --- Recommendations ---
+$custId = $custUser.service_user_id
+$cartId = $custUser.cart_id
+
+# ── Add to cart ────────────────────────────────────────────
+Write-Host "`n[3] Adding items to cart..." -ForegroundColor Cyan
+if ($cartId -and $createdBooks.Count -ge 2) {
+    try {
+        Invoke-Api -Method POST -Base $GW -Path "customers/$custId/updateCart/" -Body @{book_id=$createdBooks[0].id;quantity=1} -Token $token | Out-Null
+        Invoke-Api -Method POST -Base $GW -Path "customers/$custId/updateCart/" -Body @{book_id=$createdBooks[1].id;quantity=2} -Token $token | Out-Null
+        Write-Host "  Added 2 books to cart $cartId" -ForegroundColor Green
+    } catch { Write-Host "  Cart update: $_" -ForegroundColor Yellow }
+}
+
+# ── Checkout (Saga) ────────────────────────────────────────
+Write-Host "`n[4] Checkout via Saga..." -ForegroundColor Cyan
 try {
-    $recs = Invoke-ApiGet ("recommendations/get_recommendations/?customer_id=$($customer.id)&limit=5")
-    Write-Host "Recommendations ready: $($recs.recommendations.Count) items" -ForegroundColor Green
-} catch {
-    Write-Host "Recommendation call failed (service might still be warming up)." -ForegroundColor Yellow
+    $order = Invoke-Api -Method POST -Base $GW -Path "orders/checkout/" -Body @{
+        customer_id=$custId; cart_id=$cartId
+        shipping_address="123 Nguyen Hue, Q.1, TP.HCM"
+        payment_method="credit_card"
+    } -Token $token
+    Write-Host "  Order id=$($order.order.id) status=$($order.order.status) success=$($order.success)" -ForegroundColor Green
+    if ($order.saga_steps) {
+        $steps = $order.saga_steps | ForEach-Object { "$($_.step):$($_.status)" }
+        Write-Host "  Saga: $($steps -join ', ')" -ForegroundColor Cyan
+    }
+} catch { Write-Host "  Checkout: $_" -ForegroundColor Yellow }
+
+# ── Comments/Reviews (direct) ──────────────────────────────
+Write-Host "`n[5] Adding reviews..." -ForegroundColor Cyan
+if ($createdBooks.Count -gt 0) {
+    $reviews = @(
+      @{customer_id=$custId;book_id=$createdBooks[0].id;content="Cuốn sách tuyệt vời, rất hữu ích!";rating=5},
+      @{customer_id=$custId;book_id=$createdBooks[1].id;content="Rất thực tế, áp dụng được ngay.";rating=4}
+    )
+    foreach ($rev in $reviews) {
+        try {
+            Invoke-Api -Method POST -Base $Cmt -Path "comments/" -Body $rev | Out-Null
+            Write-Host "  Review added for book_id=$($rev.book_id)" -ForegroundColor Green
+        } catch { Write-Host "  Skip review book_id=$($rev.book_id)" -ForegroundColor Yellow }
+    }
 }
 
-Write-Host ""
-Write-Host "Seed completed." -ForegroundColor Green
+# ── Staff admin (direct) ───────────────────────────────────
+Write-Host "`n[6] Creating staff admin..." -ForegroundColor Cyan
+try {
+    $sr = Invoke-Api -Method POST -Base $Staff -Path "staff/" -Body @{
+        username="staffadmin";email="admin@bookstore.vn"
+        password="admin123";role="admin";department="HQ"
+        first_name="Staff";last_name="Admin"
+    }
+    Write-Host "  Staff admin created: id=$($sr.id)" -ForegroundColor Green
+} catch { Write-Host "  Staff admin exists" -ForegroundColor Yellow }
+
+# ── Register 2nd user bob ──────────────────────────────────
+Write-Host "`n[7] Registering 2nd user (bob)..." -ForegroundColor Cyan
+try {
+    $reg2 = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="bob";email="bob@bookstore.vn";password="bob12345"}
+    Write-Host "  Registered bob: cart_id=$($reg2.user.cart_id)" -ForegroundColor Green
+    # Bob adds a book to cart
+    if ($createdBooks.Count -ge 3) {
+        Invoke-Api -Method POST -Base $GW -Path "customers/$($reg2.user.service_user_id)/updateCart/" -Body @{book_id=$createdBooks[2].id;quantity=1} -Token $reg2.access_token | Out-Null
+        Write-Host "  Bob added book to cart" -ForegroundColor Green
+    }
+} catch { Write-Host "  Bob exists or failed" -ForegroundColor Yellow }
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "Seed completed!" -ForegroundColor Green
+Write-Host "  UI:       http://localhost:8000" -ForegroundColor White
+Write-Host "  RabbitMQ: http://localhost:15672  (guest/guest)" -ForegroundColor White
+Write-Host "  Health:   http://localhost:8000/health/" -ForegroundColor White
+Write-Host "  Metrics:  http://localhost:8000/metrics/" -ForegroundColor White
+Write-Host "  Login:    alice / alice123" -ForegroundColor White
+Write-Host "========================================" -ForegroundColor Cyan

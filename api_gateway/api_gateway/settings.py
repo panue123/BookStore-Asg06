@@ -94,6 +94,31 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# JWT settings (shared secret – must match auth-service)
+JWT_SECRET = 'super-secret-jwt-key-change-in-production-2024'
+
+# Centralized logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'gateway': {
+            'format': '[%(asctime)s] %(levelname)s [gateway] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'gateway',
+        },
+    },
+    'loggers': {
+        'gateway': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'django': {'handlers': ['console'], 'level': 'WARNING'},
+    },
+}
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',

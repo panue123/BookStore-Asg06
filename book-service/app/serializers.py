@@ -11,7 +11,7 @@ class BookSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Book
-        fields = ['id', 'title', 'author', 'publisher', 'publisher_detail', 'category', 'price', 'stock']
+        fields = ['id', 'title', 'author', 'publisher', 'publisher_detail', 'category', 'price', 'stock', 'description', 'cover_image_url']
 
 class UpdatePriceSerializer(serializers.Serializer):
     price = serializers.DecimalField(max_digits=10, decimal_places=2)

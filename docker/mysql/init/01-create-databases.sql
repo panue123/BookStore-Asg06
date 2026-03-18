@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS bookstore_auth;
 CREATE DATABASE IF NOT EXISTS bookstore_customer;
 CREATE DATABASE IF NOT EXISTS bookstore_order;
 CREATE DATABASE IF NOT EXISTS bookstore_pay;
