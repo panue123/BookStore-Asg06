@@ -41,7 +41,7 @@ def register(request):
     if AuthUser.objects.filter(email=email).exists():
         return _err('Email already registered', 409)
 
-    # Create domain record in customer-service
+    # Create domain record in the appropriate service
     service_user_id = None
     cart_id = None
     if role == UserRole.CUSTOMER:
@@ -56,7 +56,31 @@ def register(request):
                 service_user_id = data.get('data', {}).get('id') or data.get('customer_id')
                 cart_id = data.get('data', {}).get('cart_id')
         except Exception:
-            pass  # auth record still created; domain sync can retry
+            pass
+    elif role == UserRole.STAFF:
+        try:
+            resp = requests.post(
+                'http://staff-service:8000/api/staff/',
+                json={'username': username, 'email': email, 'password': password,
+                      'role': 'staff', 'department': request.data.get('department', '')},
+                timeout=10,
+            )
+            if resp.status_code == 201:
+                service_user_id = resp.json().get('id')
+        except Exception:
+            pass
+    elif role in (UserRole.MANAGER, UserRole.ADMIN):
+        try:
+            resp = requests.post(
+                'http://manager-service:8000/api/manager/',
+                json={'name': username, 'email': email, 'password': password,
+                      'department': request.data.get('department', '')},
+                timeout=10,
+            )
+            if resp.status_code == 201:
+                service_user_id = resp.json().get('id')
+        except Exception:
+            pass
 
     auth_user = AuthUser(username=username, email=email, role=role, service_user_id=service_user_id)
     auth_user.set_password(password)
@@ -102,7 +126,7 @@ def login(request):
     user.last_login = timezone.now()
     user.save(update_fields=['last_login'])
 
-    # Fetch cart_id from customer-service if customer
+    # Fetch extra info from domain service
     cart_id = None
     if user.role == UserRole.CUSTOMER and user.service_user_id:
         try:

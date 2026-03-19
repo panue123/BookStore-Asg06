@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudBooks – Staff</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#3A85C0;--pl:#6AAED9;--pll:#B8D9EE;--pd:#1E5F8A;--bg:#E4F2FA;--s:#fff;--t:#1A3347;--tm:#4A6A80;--b:#C0D9EC;--sh:0 2px 12px rgba(30,95,138,.10);--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column}
+button,input,select,textarea{font-family:inherit}
+nav{background:var(--s);padding:.85rem 2rem;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200}
+.logo{font-size:1.35rem;font-weight:700;color:var(--pd);text-decoration:none}.logo em{color:var(--p);font-style:normal}
+.nav-right{display:flex;gap:.5rem;align-items:center}
+.role-badge{background:var(--p);color:#fff;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700}
+.btn{padding:.45rem 1rem;border-radius:var(--rs);font-weight:600;font-size:.85rem;border:none;cursor:pointer;transition:all .2s}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
+.btn-o{background:transparent;border:2px solid var(--pl);color:var(--pd)}.btn-o:hover{background:var(--pll)}
+.btn-sm{padding:.3rem .7rem;font-size:.8rem}
+.btn-ghost{background:transparent;border:1px solid var(--b);color:var(--tm)}.btn-ghost:hover{border-color:var(--pl);color:var(--pd)}
+.btn-danger{background:#FEE2E2;color:#991B1B;border:none}.btn-danger:hover{background:#FECACA}
+main{display:flex;flex:1}
+.sidebar{width:215px;background:var(--s);box-shadow:var(--sh);padding:1rem 0;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem 1.25rem;font-size:.88rem;font-weight:600;color:var(--tm);cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg);color:var(--pd)}
+.nav-item.active{background:var(--pll);color:var(--pd);border-left-color:var(--p)}
+.content{flex:1;padding:1.5rem 2rem;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.sec-title{font-size:1.1rem;font-weight:700}
+.card{background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh);margin-bottom:1rem}
+.form-group{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.85rem}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--tm)}
+.form-group input,.form-group select,.form-group textarea{padding:.5rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:var(--bg);font-size:.85rem}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--p)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:var(--bg);padding:.6rem .85rem;text-align:left;font-weight:700;color:var(--tm);border-bottom:2px solid var(--b)}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--b)}
+tr:hover td{background:var(--bg)}
+.badge{display:inline-block;padding:.18rem .6rem;border-radius:20px;font-size:.73rem;font-weight:700}
+.shift-card{background:var(--bg);border-radius:var(--rs);padding:.85rem;margin-bottom:.65rem;border:1px solid var(--b)}
+.shift-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+.s-scheduled{background:#EDE9FE;color:#5B21B6}.s-started{background:#D1FAE5;color:#065F46}
+.s-ended{background:#F3F4F6;color:#374151}.s-cancelled{background:#FEE2E2;color:#991B1B}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--pd);color:#fff;padding:.7rem 1.1rem;border-radius:var(--rs);font-size:.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;max-width:300px}
+.toast.show{opacity:1;transform:translateY(0)}.toast.err{background:#DC2626}.toast.ok{background:#059669}
+.spin{display:inline-block;width:26px;height:26px;border:3px solid var(--b);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:2rem;color:var(--tm)}
+.empty{text-align:center;color:var(--tm);padding:2rem;font-size:.88rem}
+.info-box{background:var(--pll);border:1px solid var(--pl);border-radius:var(--rs);padding:.75rem 1rem;font-size:.83rem;color:var(--pd);margin-bottom:1rem}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">☁️ Cloud<em>Books</em></a>
+  <div class="nav-right">
+    <span id="navName" style="font-size:.88rem;font-weight:600;color:var(--pd)"></span>
+    <span class="role-badge" id="navRole">STAFF</span>
+    <button class="btn btn-o btn-sm" onclick="doLogout()">Đăng xuất</button>
+  </div>
+</nav>
+<main>
+  <div class="sidebar">
+    <div class="nav-item active" onclick="showPage('profile')" id="nav-profile">👤 Hồ sơ cá nhân</div>
+    <div class="nav-item" onclick="showPage('shifts')" id="nav-shifts">🕐 Ca làm việc</div>
+    <div class="nav-item" onclick="showPage('books')" id="nav-books">📚 Cập nhật kho sách</div>
+    <div class="nav-item" onclick="showPage('orders')" id="nav-orders">📦 Xem đơn hàng</div>
+    <div class="nav-item" onclick="showPage('logs')" id="nav-logs">📋 Hoạt động của tôi</div>
+  </div>
+  <div class="content">
+
+    <!-- PROFILE -->
+    <div class="page active" id="page-profile">
+      <div class="sec-hdr"><div class="sec-title">👤 Hồ sơ cá nhân</div></div>
+      <div class="card">
+        <div id="profileInfo" class="loading"><div class="spin"></div></div>
+        <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0">
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.85rem">✏️ Cập nhật thông tin</div>
+        <div class="grid2">
+          <div class="form-group"><label>Email</label><input type="email" id="pEmail"></div>
+          <div class="form-group"><label>Phòng ban</label><input type="text" id="pDept"></div>
+          <div class="form-group"><label>Họ</label><input type="text" id="pFirst"></div>
+          <div class="form-group"><label>Tên</label><input type="text" id="pLast"></div>
+        </div>
+        <div class="form-group"><label>Mật khẩu mới (để trống nếu không đổi)</label><input type="password" id="pPass" placeholder="••••••"></div>
+        <button class="btn btn-p btn-sm" onclick="updateProfile()">💾 Lưu thay đổi</button>
+        <span id="profileMsg" style="font-size:.82rem;color:var(--tm);margin-left:.6rem"></span>
+      </div>
+    </div>
+
+    <!-- SHIFTS -->
+    <div class="page" id="page-shifts">
+      <div class="sec-hdr">
+        <div class="sec-title">🕐 Ca làm việc của tôi</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadShifts()">🔄 Làm mới</button>
+      </div>
+      <div class="info-box">ℹ️ Ca làm việc được lên lịch bởi quản lý. Bạn có thể bắt đầu / kết thúc ca của mình tại đây.</div>
+      <div id="shiftsPane"><div class="loading"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- BOOKS (stock update only) -->
+    <div class="page" id="page-books">
+      <div class="sec-hdr">
+        <div class="sec-title">📚 Cập nhật tồn kho sách</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadBooks()">🔄 Làm mới</button>
+      </div>
+      <div class="info-box">ℹ️ Bạn chỉ có thể cập nhật số lượng tồn kho. Để chỉnh sửa thông tin sách, liên hệ quản lý.</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="booksTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ORDERS (view only) -->
+    <div class="page" id="page-orders">
+      <div class="sec-hdr">
+        <div class="sec-title">📦 Danh sách đơn hàng</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Làm mới</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="ordersTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="page" id="page-logs">
+      <div class="sec-hdr">
+        <div class="sec-title">📋 Hoạt động của tôi</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadLogs()">🔄 Làm mới</button>
+      </div>
+      <div class="card" style="padding:0">
+        <div id="logsPane"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const API = '/api';
+let user = null, staffId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('cb_user');
+  if (!saved) { window.location.href = '/login/'; return; }
+  user = JSON.parse(saved);
+  if (!['staff','admin','inventory','shipping'].includes(user.role)) { window.location.href = '/login/'; return; }
+  document.getElementById('navName').textContent = '👤 ' + user.username;
+  document.getElementById('navRole').textContent = user.role.toUpperCase();
+  await loadProfile();
+});
+
+const toast = (msg, type='') => {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show'+(type?' '+type:'');
+  setTimeout(() => el.className='toast', 3000);
+};
+const authH = () => ({ 'Content-Type':'application/json', 'Authorization':'Bearer '+user.access_token });
+const doLogout = () => { localStorage.removeItem('cb_user'); window.location.href = '/login/'; };
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='shifts') loadShifts();
+  if (name==='books') loadBooks();
+  if (name==='orders') loadOrders();
+  if (name==='logs') loadLogs();
+}
+
+// ── Profile ───────────────────────────────────────────────
+async function loadProfile() {
+  const el = document.getElementById('profileInfo');
+  try {
+    const r = await fetch(API+'/staff/', { headers: authH() });
+    if (!r.ok) { el.innerHTML = '<div class="empty">Lỗi tải hồ sơ ('+r.status+')</div>'; return; }
+    const d = await r.json();
+    const list = Array.isArray(d) ? d : (d.results || []);
+    // Try match by username first, then by email, then fallback to first
+    let me = list.find(s => s.username === user.username)
+           || list.find(s => s.email === user.email)
+           || null;
+    if (!me) {
+      el.innerHTML = '<div class="empty">Không tìm thấy hồ sơ nhân viên. Liên hệ quản trị viên.</div>';
+      return;
+    }
+    staffId = me.id;
+    const roleCls = {admin:'background:#EDE9FE;color:#5B21B6',manager:'background:#DBEAFE;color:#1E40AF',staff:'background:#D1FAE5;color:#065F46',inventory:'background:#FEF3C7;color:#92400E',shipping:'background:#FCE7F3;color:#9D174D'};
+    el.innerHTML = `<div style="display:flex;gap:1rem;align-items:center">
+      <div style="width:52px;height:52px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:700">${me.username[0].toUpperCase()}</div>
+      <div>
+        <div style="font-size:1.05rem;font-weight:700">${me.username}</div>
+        <div style="color:var(--tm);font-size:.83rem">${me.email||'—'}</div>
+        <div style="margin-top:.3rem">
+          <span class="badge" style="${roleCls[me.role]||roleCls.staff}">${me.role}</span>
+          ${me.department?`<span style="font-size:.8rem;color:var(--tm);margin-left:.5rem">📍 ${me.department}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+    document.getElementById('pEmail').value = me.email||'';
+    document.getElementById('pDept').value = me.department||'';
+    document.getElementById('pFirst').value = me.first_name||'';
+    document.getElementById('pLast').value = me.last_name||'';
+  } catch(e) { el.innerHTML = '<div class="empty">Lỗi tải hồ sơ: '+e.message+'</div>'; }
+}
+
+async function updateProfile() {
+  if (!staffId) { toast('Chưa tải được hồ sơ','err'); return; }
+  const body = { email:document.getElementById('pEmail').value, department:document.getElementById('pDept').value, first_name:document.getElementById('pFirst').value, last_name:document.getElementById('pLast').value };
+  const pass = document.getElementById('pPass').value;
+  if (pass) body.password = pass;
+  const msg = document.getElementById('profileMsg');
+  msg.textContent = 'Đang lưu...';
+  try {
+    const r = await fetch(API+'/staff/'+staffId+'/update_profile/', { method:'PATCH', headers:authH(), body:JSON.stringify(body) });
+    if (r.ok) { msg.textContent='✅ Đã cập nhật'; toast('Cập nhật thành công','ok'); loadProfile(); }
+    else { const d=await r.json(); msg.textContent='❌ '+(d.error||JSON.stringify(d)); }
+  } catch(e) { msg.textContent='❌ Lỗi kết nối'; }
+}
+
+// ── Shifts ────────────────────────────────────────────────
+async function loadShifts() {
+  const el = document.getElementById('shiftsPane');
+  if (!staffId) {
+    el.innerHTML = '<div class="empty">⚠️ Không tìm thấy tài khoản nhân viên trong hệ thống. Liên hệ quản trị viên.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/staff/shifts/?requester_id='+staffId, { headers:authH() });
+    const d = await r.json();
+    if (d.error) { el.innerHTML=`<div class="empty">⚠️ ${d.error}</div>`; return; }
+    const shifts = d.shifts || [];
+    const sCls = {scheduled:'s-scheduled',started:'s-started',ended:'s-ended',cancelled:'s-cancelled'};
+    const sLabel = {scheduled:'Đã lên lịch',started:'Đang làm',ended:'Đã kết thúc',cancelled:'Đã hủy'};
+    el.innerHTML = shifts.length ? shifts.map(s=>`
+      <div class="shift-card">
+        <div class="shift-hdr">
+          <strong>Ca #${s.id}</strong>
+          <span class="badge ${sCls[s.status]||''}">${sLabel[s.status]||s.status}</span>
+        </div>
+        <div style="font-size:.83rem;color:var(--tm)">
+          🕐 Bắt đầu: ${new Date(s.start_time).toLocaleString('vi-VN')}
+          ${s.end_time?'<br>🕔 Kết thúc: '+new Date(s.end_time).toLocaleString('vi-VN'):''}
+          ${s.notes?`<br>📝 ${s.notes}`:''}
+        </div>
+        <div style="margin-top:.5rem;display:flex;gap:.4rem">
+          ${s.status==='scheduled'?`<button class="btn btn-p btn-sm" onclick="startShift(${s.id})">▶ Bắt đầu ca</button>`:''}
+          ${s.status==='started'?`<button class="btn btn-ghost btn-sm" onclick="endShift(${s.id})">⏹ Kết thúc ca</button>`:''}
+        </div>
+      </div>`).join('')
+      : '<div class="empty">Bạn chưa có ca làm việc nào được lên lịch</div>';
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải ca làm việc: '+e.message+'</div>'; }
+}
+
+async function startShift(shiftId) {
+  const r = await fetch(API+'/staff/start_shift/', { method:'POST', headers:authH(), body:JSON.stringify({staff_id:staffId,shift_id:shiftId}) });
+  if (r.ok) { toast('Đã bắt đầu ca','ok'); loadShifts(); }
+  else { const d=await r.json(); toast('Lỗi: '+(d.error||'Không thể bắt đầu ca'),'err'); }
+}
+async function endShift(shiftId) {
+  const r = await fetch(API+'/staff/end_shift/', { method:'POST', headers:authH(), body:JSON.stringify({staff_id:staffId,shift_id:shiftId}) });
+  if (r.ok) { toast('Đã kết thúc ca','ok'); loadShifts(); }
+  else { const d=await r.json(); toast('Lỗi: '+(d.error||'Không thể kết thúc ca'),'err'); }
+}
+
+// ── Books (stock update only) ─────────────────────────────
+async function loadBooks() {
+  const el = document.getElementById('booksTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/books/');
+    const d = await r.json();
+    const books = Array.isArray(d) ? d : (d.results||[]);
+    if (!books.length) { el.innerHTML='<div class="empty">Không có sách nào</div>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Tồn kho</th><th>Cập nhật kho</th></tr></thead>
+      <tbody>${books.map(b=>`<tr>
+        <td>${b.id}</td><td><strong>${b.title}</strong></td><td>${b.author||'—'}</td>
+        <td>${b.category||'—'}</td><td>${Number(b.price).toLocaleString('vi-VN')}₫</td>
+        <td><span style="color:${b.stock<5?'#EF4444':b.stock<15?'#F59E0B':'#059669'};font-weight:700">${b.stock}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="updateStock(${b.id},'${b.title.replace(/'/g,"\\'")}',${b.stock})">✏️ Kho</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải sách</div>'; }
+}
+
+async function updateStock(bookId, title, current) {
+  const val = prompt(`Cập nhật tồn kho cho "${title}" (hiện tại: ${current}):`, current);
+  if (val===null||val==='') return;
+  const n = parseInt(val);
+  if (isNaN(n)||n<0) { toast('Số lượng không hợp lệ','err'); return; }
+  const r = await fetch(API+'/books/'+bookId+'/update_stock/', { method:'PATCH', headers:authH(), body:JSON.stringify({stock:n}) });
+  if (r.ok) { toast('Đã cập nhật kho','ok'); loadBooks(); }
+  else toast('Cập nhật thất bại','err');
+}
+
+// ── Orders (view only) ────────────────────────────────────
+async function loadOrders() {
+  const el = document.getElementById('ordersTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/orders/', { headers:authH() });
+    const d = await r.json();
+    const orders = Array.isArray(d) ? d : (d.results||d.orders||[]);
+    if (!orders.length) { el.innerHTML='<div class="empty">Không có đơn hàng nào</div>'; return; }
+    const sMap = {pending:'#FEF3C7|#92400E|Chờ xử lý',paid:'#D1FAE5|#065F46|Đã thanh toán',shipped:'#DBEAFE|#1E40AF|Đang giao',canceled:'#FEE2E2|#991B1B|Đã hủy',delivered:'#D1FAE5|#065F46|Đã giao'};
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày đặt</th></tr></thead>
+      <tbody>${orders.map(o=>{
+        const [bg,col,lbl]=(sMap[o.status]||'#F3F4F6|#374151|'+o.status).split('|');
+        return `<tr><td>#${o.id}</td><td>KH #${o.customer_id}</td><td>${Number(o.total_amount||0).toLocaleString('vi-VN')}₫</td>
+          <td><span class="badge" style="background:${bg};color:${col}">${lbl}</span></td>
+          <td>${new Date(o.created_at).toLocaleDateString('vi-VN')}</td></tr>`;
+      }).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải đơn hàng</div>'; }
+}
+
+// ── Logs ──────────────────────────────────────────────────
+async function loadLogs() {
+  const el = document.getElementById('logsPane');
+  if (!staffId) { el.innerHTML='<div class="empty">Không tìm thấy tài khoản</div>'; return; }
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/staff/activity_logs/?requester_id='+staffId+'&actor_id='+staffId+'&limit=30', { headers:authH() });
+    const d = await r.json();
+    if (d.error) { el.innerHTML=`<div class="empty">${d.error}</div>`; return; }
+    const logs = d.logs||[];
+    el.innerHTML = logs.length ? logs.map(l=>`
+      <div style="padding:.55rem .85rem;border-bottom:1px solid var(--b);font-size:.83rem">
+        <span style="font-weight:700;color:var(--pd)">${l.action}</span>
+        ${l.resource_type?`<span style="color:var(--tm);font-size:.8rem"> · ${l.resource_type}${l.resource_id?' #'+l.resource_id:''}</span>`:''}
+        <div style="font-size:.76rem;color:var(--tm);margin-top:.15rem">🕐 ${new Date(l.created_at).toLocaleString('vi-VN')}</div>
+      </div>`).join('') : '<div class="empty">Chưa có hoạt động nào</div>';
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải log</div>'; }
+}
+</script>
+</body>
+</html>

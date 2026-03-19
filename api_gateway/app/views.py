@@ -37,6 +37,7 @@ SERVICE_MAP = {
     'comments':        'comment-rate-service',
     'catalog':         'catalog-service',
     'manager':         'manager-service',
+    'managers':        'manager-service',
     'recommendations': 'recommender-ai-service',
 }
 
@@ -111,7 +112,24 @@ def _validate_jwt(token: str):
 # ── Views ─────────────────────────────────────────────────────────────────────
 
 def index(request):
-    return render(request, 'home.html')
+    resp = render(request, 'home.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
+
+def login_page(request):
+    resp = render(request, 'login.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
+
+def staff_dashboard(request):
+    resp = render(request, 'staff.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
+
+def manager_dashboard(request):
+    resp = render(request, 'manager.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
 
 
 @csrf_exempt

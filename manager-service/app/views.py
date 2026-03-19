@@ -16,6 +16,11 @@ class ManagerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def dashboard(self, request):
         """Get manager dashboard with key metrics"""
+        def extract(data):
+            if isinstance(data, list): return data
+            if isinstance(data, dict): return data.get('results', data.get('orders', data.get('books', [])))
+            return []
+
         try:
             # Get sales data from Order Service
             orders_resp = requests.get('http://order-service:8000/api/orders/')
@@ -23,34 +28,34 @@ class ManagerViewSet(viewsets.ModelViewSet):
             total_revenue = 0
             
             if orders_resp.status_code == 200:
-                orders = orders_resp.json()
-                if isinstance(orders, list):
-                    total_orders = len(orders)
-                    total_revenue = sum(float(o.get('total_amount', 0)) for o in orders if o)
+                orders = extract(orders_resp.json())
+                total_orders = len(orders)
+                total_revenue = sum(float(o.get('total_amount', 0)) for o in orders if o)
             
             # Get inventory summary
-            books_resp = requests.get('http://book-service:8000/api/books/')
+            books_resp = requests.get('http://book-service:8000/api/books/?page_size=1000')
             total_books = 0
             low_stock_books = []
             
             if books_resp.status_code == 200:
-                books = books_resp.json()
-                if isinstance(books, list):
-                    total_books = len(books)
-                    for book in books:
-                        if isinstance(book, dict) and book.get('stock', 0) < 10:
-                            low_stock_books.append({
-                                'id': book.get('id'),
-                                'title': book.get('title'),
-                                'stock': book.get('stock')
-                            })
+                books = extract(books_resp.json())
+                total_books = len(books)
+                for book in books:
+                    if isinstance(book, dict) and book.get('stock', 0) < 10:
+                        low_stock_books.append({
+                            'id': book.get('id'),
+                            'title': book.get('title'),
+                            'stock': book.get('stock'),
+                            'author': book.get('author'),
+                        })
             
             # Get customer count
             customers_resp = requests.get('http://customer-service:8000/api/customers/')
             total_customers = 0
             if customers_resp.status_code == 200:
-                customers = customers_resp.json()
-                total_customers = len(customers) if isinstance(customers, list) else 0
+                cdata = customers_resp.json()
+                customers = extract(cdata)
+                total_customers = cdata.get('count', len(customers)) if isinstance(cdata, dict) else len(customers)
             
             return Response({
                 'dashboard': {
@@ -136,44 +141,68 @@ class ManagerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def sales_report(self, request):
-        """Generate sales report for a period"""
-        period = request.query_params.get('period', 'daily')  # daily, weekly, monthly
-        
+        """Generate sales report"""
+        def extract(data):
+            if isinstance(data, list): return data
+            if isinstance(data, dict): return data.get('results', data.get('orders', []))
+            return []
         try:
-            # Get orders from Order Service
             orders_resp = requests.get('http://order-service:8000/api/orders/')
             if orders_resp.status_code != 200:
                 return Response({'error': 'Failed to fetch orders'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-            
-            orders = orders_resp.json()
-            if not isinstance(orders, list):
-                orders = []
-            
-            # Calculate metrics
-            total_orders = len(orders)
-            total_revenue = sum(float(o.get('total_amount', 0)) for o in orders if o)
-            
-            # Get top selling book
-            top_book_id = None
-            if orders:
-                top_book_id = orders[0].get('id')
-            
-            now = datetime.now()
-            report = SalesReport.objects.create(
-                period=period,
-                total_orders=total_orders,
-                total_revenue=total_revenue,
-                total_items_sold=sum(1 for o in orders),
-                top_book_id=top_book_id,
-                report_date=now.date()
-            )
-            
+            orders = extract(orders_resp.json())
+            paid_orders = [o for o in orders if o.get('status') == 'paid']
+            total_sales = sum(float(o.get('total_amount', 0)) for o in paid_orders)
             return Response({
-                'report': SalesReportSerializer(report).data
-            }, status=status.HTTP_201_CREATED)
-        
+                'total_orders': len(orders),
+                'paid_orders': len(paid_orders),
+                'total_sales': total_sales,
+                'average_order_value': total_sales / len(paid_orders) if paid_orders else 0,
+            }, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @action(detail=False, methods=['get'])
+    def inventory_report(self, request):
+        """Get inventory report"""
+        def extract(data):
+            if isinstance(data, list): return data
+            if isinstance(data, dict): return data.get('results', [])
+            return []
+        try:
+            books_resp = requests.get('http://book-service:8000/api/books/?page_size=1000')
+            if books_resp.status_code != 200:
+                return Response({'error': 'Failed to fetch books'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            books = extract(books_resp.json())
+            return Response({
+                'total_books': len(books),
+                'in_stock': len([b for b in books if b.get('stock', 0) > 0]),
+                'out_of_stock': len([b for b in books if b.get('stock', 0) == 0]),
+                'total_inventory_value': sum(float(b.get('price', 0)) * b.get('stock', 0) for b in books),
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @action(detail=False, methods=['get'])
+    def shipping_report(self, request):
+        """Get shipping report"""
+        def extract(data):
+            if isinstance(data, list): return data
+            if isinstance(data, dict): return data.get('results', data.get('shipments', []))
+            return []
+        try:
+            resp = requests.get('http://ship-service:8000/api/shipments/')
+            if resp.status_code != 200:
+                return Response({'error': 'Failed to fetch shipments'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            shipments = extract(resp.json())
+            return Response({
+                'total_shipments': len(shipments),
+                'shipped': len([s for s in shipments if s.get('status') == 'shipped']),
+                'delivered': len([s for s in shipments if s.get('status') == 'delivered']),
+                'pending': len([s for s in shipments if s.get('status') in ['pending', 'processing']]),
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @action(detail=False, methods=['get'])
     def low_stock_alerts(self, request):
@@ -181,14 +210,12 @@ class ManagerViewSet(viewsets.ModelViewSet):
         threshold = int(request.query_params.get('threshold', 10))
         
         try:
-            books_resp = requests.get('http://book-service:8000/api/books/')
+            books_resp = requests.get('http://book-service:8000/api/books/?page_size=1000')
             if books_resp.status_code != 200:
                 return Response({'error': 'Failed to fetch books'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
-            books = books_resp.json()
-            if not isinstance(books, list):
-                books = []
-            
+            data = books_resp.json()
+            books = data if isinstance(data, list) else data.get('results', [])
             low_stock = [b for b in books if isinstance(b, dict) and b.get('stock', 0) < threshold]
             
             return Response({
@@ -199,103 +226,3 @@ class ManagerViewSet(viewsets.ModelViewSet):
         
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Get customer stats
-        try:
-            customers = requests.get('http://customer-service:8000/api/customers/').json()
-            dashboard_data['customers'] = {
-                'total': len(customers),
-                'count': len(customers)
-            }
-        except Exception as e:
-            dashboard_data['errors'].append(f'Customer Service: {str(e)}')
-        
-        # Get book stats
-        try:
-            books = requests.get('http://book-service:8000/api/books/').json()
-            dashboard_data['books'] = {
-                'total': len(books),
-                'count': len(books),
-                'categories': len(set(b.get('category', '') for b in books))
-            }
-        except Exception as e:
-            dashboard_data['errors'].append(f'Book Service: {str(e)}')
-        
-        # Get order stats
-        try:
-            orders = requests.get('http://order-service:8000/api/orders/').json()
-            dashboard_data['orders'] = {
-                'total': len(orders),
-                'count': len(orders),
-                'total_revenue': sum(float(o.get('total_amount', 0)) for o in orders if isinstance(orders, list))
-            }
-        except Exception as e:
-            dashboard_data['errors'].append(f'Order Service: {str(e)}')
-        
-        return Response(dashboard_data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'])
-    def sales_report(self, request):
-        """Get sales report"""
-        try:
-            orders = requests.get('http://order-service:8000/api/orders/').json()
-            
-            if not isinstance(orders, list):
-                return Response({'error': 'Invalid order data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            paid_orders = [o for o in orders if o.get('status') == 'paid']
-            total_sales = sum(float(o.get('total_amount', 0)) for o in paid_orders)
-            
-            return Response({
-                'total_orders': len(orders),
-                'paid_orders': len(paid_orders),
-                'total_sales': total_sales,
-                'average_order_value': total_sales / len(paid_orders) if paid_orders else 0
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    @action(detail=False, methods=['get'])
-    def inventory_report(self, request):
-        """Get inventory report"""
-        try:
-            books = requests.get('http://book-service:8000/api/books/').json()
-            
-            if not isinstance(books, list):
-                return Response({'error': 'Invalid book data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            total_books = len(books)
-            books_in_stock = len([b for b in books if b.get('stock', 0) > 0])
-            out_of_stock = len([b for b in books if b.get('stock', 0) == 0])
-            total_inventory_value = sum(float(b.get('price', 0)) * b.get('stock', 0) for b in books)
-            
-            return Response({
-                'total_books': total_books,
-                'in_stock': books_in_stock,
-                'out_of_stock': out_of_stock,
-                'total_inventory_value': total_inventory_value
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    @action(detail=False, methods=['get'])
-    def shipping_report(self, request):
-        """Get shipping report"""
-        try:
-            shipments = requests.get('http://ship-service:8000/api/shipments/').json()
-            
-            if not isinstance(shipments, list):
-                return Response({'error': 'Invalid shipment data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            shipped = len([s for s in shipments if s.get('status') == 'shipped'])
-            delivered = len([s for s in shipments if s.get('status') == 'delivered'])
-            pending = len([s for s in shipments if s.get('status') in ['pending', 'processing']])
-            
-            return Response({
-                'total_shipments': len(shipments),
-                'shipped': shipped,
-                'delivered': delivered,
-                'pending': pending
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)

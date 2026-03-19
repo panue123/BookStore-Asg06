@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudBooks – Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#3A85C0;--pl:#6AAED9;--pll:#B8D9EE;--pd:#1E5F8A;--bg:#E4F2FA;--s:#fff;--t:#1A3347;--tm:#4A6A80;--b:#C0D9EC;--sh:0 2px 12px rgba(30,95,138,.10);--shl:0 8px 32px rgba(30,95,138,.18);--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column}
+button,input,select,textarea{font-family:inherit;cursor:pointer}
+input,select,textarea{cursor:text}
+nav{background:var(--s);padding:.85rem 2rem;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200}
+.logo{font-size:1.35rem;font-weight:700;color:var(--pd);text-decoration:none}.logo em{color:var(--p);font-style:normal}
+.nav-right{display:flex;gap:.5rem;align-items:center}
+.role-badge{background:#1E40AF;color:#fff;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700}
+.btn{padding:.45rem 1rem;border-radius:var(--rs);font-weight:600;font-size:.85rem;border:none;cursor:pointer;transition:all .2s}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
+.btn-o{background:transparent;border:2px solid var(--pl);color:var(--pd)}.btn-o:hover{background:var(--pll)}
+.btn-sm{padding:.3rem .7rem;font-size:.8rem}
+.btn-ghost{background:transparent;border:1px solid var(--b);color:var(--tm)}.btn-ghost:hover{border-color:var(--pl);color:var(--pd)}
+.btn-danger{background:#FEE2E2;color:#991B1B;border:none}.btn-danger:hover{background:#FECACA}
+.btn-success{background:#D1FAE5;color:#065F46;border:none}.btn-success:hover{background:#A7F3D0}
+main{display:flex;flex:1}
+.sidebar{width:225px;background:var(--s);box-shadow:var(--sh);padding:1rem 0;flex-shrink:0;min-height:calc(100vh - 56px)}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem 1.25rem;font-size:.88rem;font-weight:600;color:var(--tm);cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg);color:var(--pd)}
+.nav-item.active{background:var(--pll);color:var(--pd);border-left-color:var(--p)}
+.content{flex:1;padding:1.5rem 2rem;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.sec-title{font-size:1.1rem;font-weight:700}
+.card{background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh);margin-bottom:1rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:1rem;margin-bottom:1.25rem}
+.kpi{background:var(--s);border-radius:var(--r);padding:1.1rem 1.25rem;box-shadow:var(--sh);border-left:4px solid var(--p)}
+.kpi-label{font-size:.78rem;color:var(--tm);font-weight:600;margin-bottom:.3rem}
+.kpi-value{font-size:1.6rem;font-weight:700;color:var(--pd)}
+.form-group{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.85rem}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--tm)}
+.form-group input,.form-group select,.form-group textarea{padding:.5rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:var(--bg);font-size:.85rem;cursor:text}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--p)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:var(--bg);padding:.6rem .85rem;text-align:left;font-weight:700;color:var(--tm);border-bottom:2px solid var(--b)}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--b)}
+tr:hover td{background:var(--bg)}
+.badge{display:inline-block;padding:.18rem .6rem;border-radius:20px;font-size:.73rem;font-weight:700}
+.alert-row td{background:#FEF9C3}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--s);border-radius:var(--r);padding:1.75rem;width:100%;max-width:520px;box-shadow:var(--shl);max-height:92vh;overflow-y:auto}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.modal-title{font-size:1.1rem;font-weight:700}
+.btn-x{background:transparent;border:none;font-size:1.35rem;color:var(--tm);line-height:1;padding:.15rem;cursor:pointer}.btn-x:hover{color:var(--t)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--pd);color:#fff;padding:.7rem 1.1rem;border-radius:var(--rs);font-size:.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;max-width:300px}
+.toast.show{opacity:1;transform:translateY(0)}.toast.err{background:#DC2626}.toast.ok{background:#059669}
+.spin{display:inline-block;width:26px;height:26px;border:3px solid var(--b);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:2rem;color:var(--tm)}
+.empty{text-align:center;color:var(--tm);padding:2rem;font-size:.88rem}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.log-item{padding:.55rem .85rem;border-bottom:1px solid var(--b);font-size:.83rem}
+.log-item:last-child{border:none}
+@media(max-width:700px){.sidebar{display:none}.kpi-grid{grid-template-columns:1fr 1fr}.report-grid{grid-template-columns:1fr}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">☁️ Cloud<em>Books</em></a>
+  <div class="nav-right">
+    <span id="navName" style="font-size:.88rem;font-weight:600;color:var(--pd)"></span>
+    <span class="role-badge">MANAGER</span>
+    <button class="btn btn-o btn-sm" onclick="doLogout()">Đăng xuất</button>
+  </div>
+</nav>
+<main>
+  <div class="sidebar">
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">📊 Dashboard</div>
+    <div class="nav-item" onclick="showPage('profile')" id="nav-profile">👤 Hồ sơ cá nhân</div>
+    <div class="nav-item" onclick="showPage('books')" id="nav-books">📚 Quản lý sách</div>
+    <div class="nav-item" onclick="showPage('catalog')" id="nav-catalog">🗂️ Danh mục</div>
+    <div class="nav-item" onclick="showPage('inventory')" id="nav-inventory">📦 Tồn kho</div>
+    <div class="nav-item" onclick="showPage('orders')" id="nav-orders">🛒 Đơn hàng</div>
+    <div class="nav-item" onclick="showPage('reports')" id="nav-reports">📈 Báo cáo</div>
+    <div class="nav-item" onclick="showPage('customers')" id="nav-customers">👥 Khách hàng</div>
+    <div class="nav-item" onclick="showPage('staff-list')" id="nav-staff-list">🧑‍💼 Nhân viên</div>
+    <div class="nav-item" onclick="showPage('inv-logs')" id="nav-inv-logs">📋 Lịch sử kho</div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="sec-hdr"><div class="sec-title">📊 Tổng quan hệ thống</div><button class="btn btn-ghost btn-sm" onclick="loadDashboard()">🔄 Làm mới</button></div>
+      <div id="kpiPane"><div class="loading"><div class="spin"></div></div></div>
+      <div class="sec-title" style="font-size:1rem;margin-bottom:.75rem">⚠️ Sách sắp hết hàng</div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="lowStockPane"><div class="loading"><div class="spin"></div></div></div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="sec-hdr"><div class="sec-title">👤 Hồ sơ cá nhân</div></div>
+      <div class="card">
+        <div id="profileInfo" class="loading"><div class="spin"></div></div>
+        <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0">
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.85rem">✏️ Cập nhật thông tin</div>
+        <div class="grid2">
+          <div class="form-group"><label>Tên hiển thị</label><input type="text" id="pName"></div>
+          <div class="form-group"><label>Phòng ban</label><input type="text" id="pDept"></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" id="pEmail"></div>
+        <button class="btn btn-p btn-sm" onclick="updateProfile()">💾 Lưu thay đổi</button>
+        <span id="profileMsg" style="font-size:.82rem;color:var(--tm);margin-left:.6rem"></span>
+      </div>
+    </div>
+
+    <!-- BOOKS CRUD -->
+    <div class="page" id="page-books">
+      <div class="sec-hdr">
+        <div class="sec-title">📚 Quản lý sách</div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="loadBooksManager()">🔄 Làm mới</button>
+          <button class="btn btn-p btn-sm" onclick="openBookModal()">+ Thêm sách</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="booksManagerTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- CATALOG -->
+    <div class="page" id="page-catalog">
+      <div class="sec-hdr"><div class="sec-title">🗂️ Danh mục & Tìm kiếm</div><button class="btn btn-ghost btn-sm" onclick="loadCatalog()">🔄 Làm mới</button></div>
+      <div class="card">
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <input type="text" id="catSearch" placeholder="Tìm theo tên, tác giả..." style="flex:1;padding:.5rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.85rem;background:var(--bg)">
+          <select id="catFilter" style="padding:.5rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.85rem;background:var(--bg)">
+            <option value="">Tất cả thể loại</option>
+            <option value="programming">Lập trình</option>
+            <option value="science">Khoa học</option>
+            <option value="history">Lịch sử</option>
+            <option value="fiction">Tiểu thuyết</option>
+            <option value="math">Toán học</option>
+          </select>
+          <button class="btn btn-p btn-sm" onclick="searchCatalog()">🔍 Tìm</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadFeatured()">⭐ Nổi bật</button>
+        </div>
+        <div id="catalogResult"><div class="empty">Nhập từ khóa hoặc chọn thể loại để tìm kiếm</div></div>
+      </div>
+      <div class="sec-title" style="font-size:1rem;margin-bottom:.75rem">🔥 Tìm kiếm phổ biến</div>
+      <div class="card"><div id="popularSearches"><div class="loading"><div class="spin"></div></div></div></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="sec-hdr"><div class="sec-title">📦 Quản lý tồn kho</div><button class="btn btn-ghost btn-sm" onclick="loadInventory()">🔄 Làm mới</button></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="inventoryTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="page" id="page-orders">
+      <div class="sec-hdr"><div class="sec-title">🛒 Tất cả đơn hàng</div><button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Làm mới</button></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="ordersTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="sec-hdr"><div class="sec-title">📈 Báo cáo</div><button class="btn btn-ghost btn-sm" onclick="loadReports()">🔄 Tải báo cáo</button></div>
+      <div id="reportsPane"><div class="empty">Nhấn "Tải báo cáo" để xem</div></div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="sec-hdr"><div class="sec-title">👥 Danh sách khách hàng</div><button class="btn btn-ghost btn-sm" onclick="loadCustomers()">🔄 Làm mới</button></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="customersTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- STAFF LIST -->
+    <div class="page" id="page-staff-list">
+      <div class="sec-hdr"><div class="sec-title">🧑‍💼 Danh sách nhân viên</div><button class="btn btn-ghost btn-sm" onclick="loadStaffList()">🔄 Làm mới</button></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="staffListTable"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+    <!-- INV LOGS -->
+    <div class="page" id="page-inv-logs">
+      <div class="sec-hdr"><div class="sec-title">📋 Lịch sử thay đổi kho</div><button class="btn btn-ghost btn-sm" onclick="loadInvLogs()">🔄 Làm mới</button></div>
+      <div class="card" style="padding:0">
+        <div id="invLogsPane"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- BOOK MODAL -->
+<div class="overlay" id="bookModal">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="bookModalTitle">📚 Thêm sách mới</span><button class="btn-x" onclick="closeModal('bookModal')">✕</button></div>
+    <input type="hidden" id="bookId">
+    <div class="grid2">
+      <div class="form-group"><label>Tiêu đề *</label><input type="text" id="bTitle" placeholder="Tên sách"></div>
+      <div class="form-group"><label>Tác giả *</label><input type="text" id="bAuthor" placeholder="Tên tác giả"></div>
+    </div>
+    <div class="grid2">
+      <div class="form-group"><label>Thể loại</label>
+        <select id="bCategory">
+          <option value="programming">Lập trình</option>
+          <option value="science">Khoa học</option>
+          <option value="history">Lịch sử</option>
+          <option value="fiction">Tiểu thuyết</option>
+          <option value="math">Toán học</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Giá (VNĐ) *</label><input type="number" id="bPrice" placeholder="150000" min="0"></div>
+    </div>
+    <div class="grid2">
+      <div class="form-group"><label>Tồn kho</label><input type="number" id="bStock" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Nhà xuất bản (ID)</label><input type="number" id="bPublisher" placeholder="1"></div>
+    </div>
+    <div class="form-group"><label>Mô tả</label><textarea id="bDesc" rows="3" placeholder="Mô tả ngắn về sách..."></textarea></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.5rem">
+      <button class="btn btn-ghost" onclick="closeModal('bookModal')">Hủy</button>
+      <button class="btn btn-p" onclick="saveBook()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+let user = null, managerId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('cb_user');
+  if (!saved) { window.location.href = '/login/'; return; }
+  user = JSON.parse(saved);
+  if (!['manager','admin'].includes(user.role)) { window.location.href = '/login/'; return; }
+  document.getElementById('navName').textContent = '👤 ' + user.username;
+  loadDashboard();
+  loadProfile();
+});
+
+const toast = (msg, type='') => {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show'+(type?' '+type:'');
+  setTimeout(() => el.className='toast', 3000);
+};
+const authH = () => ({ 'Content-Type':'application/json', 'Authorization':'Bearer '+user.access_token });
+const fmt = n => Number(n||0).toLocaleString('vi-VN')+'₫';
+const doLogout = () => { localStorage.removeItem('cb_user'); window.location.href = '/login/'; };
+const openModal = id => document.getElementById(id).classList.add('open');
+const closeModal = id => document.getElementById(id).classList.remove('open');
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='books') loadBooksManager();
+  if (name==='catalog') { loadCatalog(); loadPopularSearches(); }
+  if (name==='inventory') loadInventory();
+  if (name==='orders') loadOrders();
+  if (name==='customers') loadCustomers();
+  if (name==='staff-list') loadStaffList();
+  if (name==='inv-logs') loadInvLogs();
+  if (name==='reports') loadReports();
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+async function loadDashboard() {
+  const kpi = document.getElementById('kpiPane');
+  const low = document.getElementById('lowStockPane');
+  kpi.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const [dashR, lowR] = await Promise.all([
+      fetch(API+'/manager/dashboard/', { method:'POST', headers:authH(), body:'{}' }),
+      fetch(API+'/manager/low_stock_alerts/?threshold=15', { headers:authH() })
+    ]);
+    const dash = await dashR.json();
+    const d = dash.dashboard || dash;
+    kpi.innerHTML = `<div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Tổng đơn hàng</div><div class="kpi-value">${d.total_orders||0}</div></div>
+      <div class="kpi" style="border-color:#059669"><div class="kpi-label">Doanh thu</div><div class="kpi-value" style="color:#059669">${fmt(d.total_revenue)}</div></div>
+      <div class="kpi" style="border-color:#F59E0B"><div class="kpi-label">Tổng sách</div><div class="kpi-value" style="color:#92400E">${d.total_books||0}</div></div>
+      <div class="kpi" style="border-color:#8B5CF6"><div class="kpi-label">Khách hàng</div><div class="kpi-value" style="color:#5B21B6">${d.total_customers||0}</div></div>
+    </div>`;
+    if (lowR.ok) {
+      const ld = await lowR.json();
+      const books = ld.books || [];
+      low.innerHTML = books.length ? `<table>
+        <thead><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Tồn kho</th><th></th></tr></thead>
+        <tbody>${books.map(b=>`<tr ${b.stock===0?'class="alert-row"':''}>
+          <td>${b.id}</td><td><strong>${b.title}</strong></td><td>${b.author||'—'}</td>
+          <td><span style="color:${b.stock===0?'#EF4444':'#F59E0B'};font-weight:700">${b.stock}</span></td>
+          <td><button class="btn btn-p btn-sm" onclick="quickRestock(${b.id},'${b.title.replace(/'/g,"\\'")}',${b.stock})">📦 Nhập kho</button></td>
+        </tr>`).join('')}</tbody></table>`
+        : '<div class="empty">✅ Tất cả sách đều đủ hàng</div>';
+    }
+  } catch(e) { kpi.innerHTML = '<div class="empty">Lỗi tải dashboard: '+e.message+'</div>'; }
+}
+</script>
+
+<script>
+// ── Profile ───────────────────────────────────────────────
+async function loadProfile() {
+  const el = document.getElementById('profileInfo');
+  try {
+    const r = await fetch(API+'/manager/', { headers: authH() });
+    if (!r.ok) { el.innerHTML = '<div class="empty">Lỗi tải hồ sơ ('+r.status+')</div>'; return; }
+    const d = await r.json();
+    const list = Array.isArray(d) ? d : (d.results || []);
+    // Match by email, then username, then first record
+    const me = list.find(m => m.email === user.email)
+             || list.find(m => m.name === user.username)
+             || list[0]
+             || null;
+    if (!me) {
+      el.innerHTML = `<div style="display:flex;gap:1rem;align-items:center">
+        <div style="width:52px;height:52px;background:#1E40AF;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:700">${user.username[0].toUpperCase()}</div>
+        <div><div style="font-size:1.05rem;font-weight:700">${user.username}</div>
+        <div style="color:var(--tm);font-size:.83rem">${user.email||'—'}</div>
+        <div style="margin-top:.3rem"><span class="badge" style="background:#DBEAFE;color:#1E40AF">MANAGER</span></div></div>
+      </div>`;
+      document.getElementById('pName').value = user.username;
+      document.getElementById('pEmail').value = user.email || '';
+      return;
+    }
+    managerId = me.id;
+    el.innerHTML = `<div style="display:flex;gap:1rem;align-items:center">
+      <div style="width:52px;height:52px;background:#1E40AF;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:700">${(me.name||user.username)[0].toUpperCase()}</div>
+      <div><div style="font-size:1.05rem;font-weight:700">${me.name||user.username}</div>
+      <div style="color:var(--tm);font-size:.83rem">${me.email||'—'}</div>
+      <div style="margin-top:.3rem"><span class="badge" style="background:#DBEAFE;color:#1E40AF">MANAGER</span>
+      ${me.department?`<span style="font-size:.8rem;color:var(--tm);margin-left:.4rem">📍 ${me.department}</span>`:''}</div></div>
+    </div>`;
+    document.getElementById('pName').value = me.name || '';
+    document.getElementById('pDept').value = me.department || '';
+    document.getElementById('pEmail').value = me.email || '';
+  } catch(e) { el.innerHTML = '<div class="empty">Lỗi tải hồ sơ: '+e.message+'</div>'; }
+}
+
+async function updateProfile() {
+  const body = { name:document.getElementById('pName').value, department:document.getElementById('pDept').value, email:document.getElementById('pEmail').value };
+  const msg = document.getElementById('profileMsg');
+  msg.textContent = 'Đang lưu...';
+  try {
+    if (managerId) {
+      const r = await fetch(API+'/manager/'+managerId+'/', { method:'PATCH', headers:authH(), body:JSON.stringify(body) });
+      if (r.ok) { msg.textContent='✅ Đã cập nhật'; toast('Cập nhật thành công','ok'); loadProfile(); }
+      else { const d=await r.json(); msg.textContent='❌ '+(d.error||JSON.stringify(d)); }
+    } else {
+      msg.textContent = '⚠️ Chưa tìm thấy hồ sơ manager trong DB';
+    }
+  } catch(e) { msg.textContent='❌ Lỗi kết nối'; }
+}
+
+// ── Books CRUD ────────────────────────────────────────────
+async function loadBooksManager() {
+  const el = document.getElementById('booksManagerTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/books/');
+    const d = await r.json();
+    const books = Array.isArray(d) ? d : (d.results||[]);
+    if (!books.length) { el.innerHTML='<div class="empty">Chưa có sách nào</div>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Kho</th><th>Thao tác</th></tr></thead>
+      <tbody>${books.map(b=>`<tr>
+        <td>${b.id}</td><td><strong>${b.title}</strong></td><td>${b.author||'—'}</td>
+        <td>${b.category||'—'}</td><td>${fmt(b.price)}</td>
+        <td><span style="color:${b.stock<5?'#EF4444':b.stock<15?'#F59E0B':'#059669'};font-weight:700">${b.stock}</span></td>
+        <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick='editBook(${JSON.stringify(b)})'>✏️ Sửa</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id},'${b.title.replace(/'/g,"\\'")}')">🗑️</button>
+        </td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải sách</div>'; }
+}
+
+function openBookModal(book=null) {
+  document.getElementById('bookId').value = book ? book.id : '';
+  document.getElementById('bookModalTitle').textContent = book ? '✏️ Sửa sách' : '📚 Thêm sách mới';
+  document.getElementById('bTitle').value = book ? book.title : '';
+  document.getElementById('bAuthor').value = book ? book.author||'' : '';
+  document.getElementById('bCategory').value = book ? book.category||'programming' : 'programming';
+  document.getElementById('bPrice').value = book ? book.price : '';
+  document.getElementById('bStock').value = book ? book.stock : '0';
+  document.getElementById('bPublisher').value = book ? (book.publisher||'') : '';
+  document.getElementById('bDesc').value = book ? (book.description||'') : '';
+  openModal('bookModal');
+}
+
+function editBook(book) { openBookModal(book); }
+
+async function saveBook() {
+  const id = document.getElementById('bookId').value;
+  const body = {
+    title: document.getElementById('bTitle').value.trim(),
+    author: document.getElementById('bAuthor').value.trim(),
+    category: document.getElementById('bCategory').value,
+    price: parseFloat(document.getElementById('bPrice').value)||0,
+    stock: parseInt(document.getElementById('bStock').value)||0,
+    description: document.getElementById('bDesc').value.trim(),
+  };
+  const pub = document.getElementById('bPublisher').value;
+  if (pub) body.publisher = parseInt(pub);
+  if (!body.title || !body.author) { toast('Nhập tiêu đề và tác giả','err'); return; }
+  try {
+    const url = id ? API+'/books/'+id+'/' : API+'/books/';
+    const method = id ? 'PATCH' : 'POST';
+    const r = await fetch(url, { method, headers:authH(), body:JSON.stringify(body) });
+    if (r.ok) {
+      closeModal('bookModal');
+      toast(id ? 'Đã cập nhật sách' : 'Đã thêm sách mới','ok');
+      loadBooksManager();
+    } else {
+      const d = await r.json();
+      toast('❌ '+(d.error||JSON.stringify(d)),'err');
+    }
+  } catch(e) { toast('Lỗi kết nối','err'); }
+}
+
+async function deleteBook(id, title) {
+  if (!confirm(`Xóa sách "${title}"? Hành động này không thể hoàn tác.`)) return;
+  try {
+    const r = await fetch(API+'/books/'+id+'/', { method:'DELETE', headers:authH() });
+    if (r.ok || r.status===204) { toast('Đã xóa sách','ok'); loadBooksManager(); }
+    else toast('Không thể xóa sách','err');
+  } catch(e) { toast('Lỗi kết nối','err'); }
+}
+</script>
+
+<script>
+// ── Catalog ───────────────────────────────────────────────
+async function loadCatalog() {
+  document.getElementById('catalogResult').innerHTML = '<div class="empty">Nhập từ khóa hoặc chọn thể loại để tìm kiếm</div>';
+}
+
+async function searchCatalog() {
+  const q = document.getElementById('catSearch').value.trim();
+  const cat = document.getElementById('catFilter').value;
+  const el = document.getElementById('catalogResult');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    let url = API+'/catalog/search/?';
+    if (q) url += 'q='+encodeURIComponent(q)+'&';
+    if (cat) url += 'category='+cat;
+    const r = await fetch(url);
+    const d = await r.json();
+    const books = d.results || (Array.isArray(d)?d:[]);
+    renderCatalogBooks(books, el);
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tìm kiếm</div>'; }
+}
+
+async function loadFeatured() {
+  const el = document.getElementById('catalogResult');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/catalog/featured_books/');
+    const d = await r.json();
+    const books = d.featured_books || [];
+    renderCatalogBooks(books, el);
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải sách nổi bật</div>'; }
+}
+
+function renderCatalogBooks(books, el) {
+  if (!books.length) { el.innerHTML='<div class="empty">Không tìm thấy sách nào</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Kho</th><th>Đánh giá</th></tr></thead>
+    <tbody>${books.map(b=>`<tr>
+      <td>${b.id}</td><td><strong>${b.title}</strong></td><td>${b.author||'—'}</td>
+      <td>${b.category||'—'}</td><td>${fmt(b.price)}</td>
+      <td><span style="color:${b.stock<5?'#EF4444':b.stock<15?'#F59E0B':'#059669'};font-weight:700">${b.stock}</span></td>
+      <td>⭐ ${(b.average_rating||0).toFixed(1)} (${b.total_reviews||0})</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadPopularSearches() {
+  const el = document.getElementById('popularSearches');
+  try {
+    const r = await fetch(API+'/catalog/popular_books/');
+    const d = await r.json();
+    const items = Array.isArray(d) ? d : [];
+    el.innerHTML = items.length
+      ? items.map(i=>`<span style="display:inline-block;background:var(--pll);color:var(--pd);padding:.25rem .7rem;border-radius:20px;font-size:.8rem;font-weight:600;margin:.2rem">${i.search_query} (${i.count})</span>`).join('')
+      : '<div class="empty">Chưa có dữ liệu tìm kiếm</div>';
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải dữ liệu</div>'; }
+}
+
+// ── Inventory ─────────────────────────────────────────────
+async function loadInventory() {
+  const el = document.getElementById('inventoryTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/books/');
+    const d = await r.json();
+    const books = Array.isArray(d) ? d : (d.results||[]);
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Tồn kho</th><th></th></tr></thead>
+      <tbody>${books.map(b=>`<tr>
+        <td>${b.id}</td><td><strong>${b.title}</strong></td><td>${b.author||'—'}</td>
+        <td>${b.category||'—'}</td><td>${fmt(b.price)}</td>
+        <td><span style="color:${b.stock<5?'#EF4444':b.stock<15?'#F59E0B':'#059669'};font-weight:700">${b.stock}</span></td>
+        <td><button class="btn btn-p btn-sm" onclick="quickRestock(${b.id},'${b.title.replace(/'/g,"\\'")}',${b.stock})">📦 Cập nhật</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải tồn kho</div>'; }
+}
+
+async function quickRestock(bookId, title, current) {
+  const val = prompt(`Tồn kho mới cho "${title}" (hiện tại: ${current}):`, current);
+  if (val===null||val==='') return;
+  const newStock = parseInt(val);
+  if (isNaN(newStock)||newStock<0) { toast('Số lượng không hợp lệ','err'); return; }
+  const reason = prompt('Lý do thay đổi:', 'Nhập hàng') || 'Nhập hàng';
+  try {
+    const r = await fetch(API+'/manager/update_inventory/', {
+      method:'POST', headers:authH(),
+      body:JSON.stringify({ book_id:bookId, new_stock:newStock, reason, manager_id:managerId })
+    });
+    if (r.ok) { toast('Đã cập nhật tồn kho','ok'); loadInventory(); loadDashboard(); }
+    else { const d=await r.json(); toast('❌ '+(d.error||'Lỗi'),'err'); }
+  } catch(e) { toast('Lỗi kết nối','err'); }
+}
+
+// ── Orders ────────────────────────────────────────────────
+async function loadOrders() {
+  const el = document.getElementById('ordersTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/orders/', { headers:authH() });
+    const d = await r.json();
+    const orders = Array.isArray(d) ? d : (d.results||d.orders||[]);
+    if (!orders.length) { el.innerHTML='<div class="empty">Không có đơn hàng nào</div>'; return; }
+    const sMap = {pending:'#FEF3C7|#92400E|Chờ xử lý',paid:'#D1FAE5|#065F46|Đã thanh toán',shipped:'#DBEAFE|#1E40AF|Đang giao',canceled:'#FEE2E2|#991B1B|Đã hủy',delivered:'#D1FAE5|#065F46|Đã giao'};
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày đặt</th></tr></thead>
+      <tbody>${orders.map(o=>{
+        const [bg,col,lbl]=(sMap[o.status]||'#F3F4F6|#374151|'+o.status).split('|');
+        return `<tr><td>#${o.id}</td><td>KH #${o.customer_id}</td><td>${fmt(o.total_amount)}</td>
+          <td><span class="badge" style="background:${bg};color:${col}">${lbl}</span></td>
+          <td>${new Date(o.created_at).toLocaleDateString('vi-VN')}</td></tr>`;
+      }).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải đơn hàng</div>'; }
+}
+
+// ── Reports ───────────────────────────────────────────────
+async function loadReports() {
+  const el = document.getElementById('reportsPane');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const [salesR, invR, shipR] = await Promise.all([
+      fetch(API+'/manager/sales_report/', { headers:authH() }),
+      fetch(API+'/manager/inventory_report/', { headers:authH() }),
+      fetch(API+'/manager/shipping_report/', { headers:authH() })
+    ]);
+    const sales = salesR.ok ? await salesR.json() : {};
+    const inv = invR.ok ? await invR.json() : {};
+    const ship = shipR.ok ? await shipR.json() : {};
+    const s = sales.report || sales;
+    el.innerHTML = `<div class="report-grid">
+      <div class="card">
+        <div class="sec-title" style="font-size:1rem;margin-bottom:.85rem">💰 Doanh số</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.9rem">
+          <div style="display:flex;justify-content:space-between"><span>Tổng đơn hàng</span><strong>${sales.total_orders||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Đơn đã thanh toán</span><strong>${sales.paid_orders||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Tổng doanh thu</span><strong style="color:#059669">${fmt(sales.total_sales)}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Giá trị TB/đơn</span><strong>${fmt(sales.average_order_value)}</strong></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-title" style="font-size:1rem;margin-bottom:.85rem">📦 Tồn kho</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.9rem">
+          <div style="display:flex;justify-content:space-between"><span>Tổng đầu sách</span><strong>${inv.total_books||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Còn hàng</span><strong style="color:#059669">${inv.in_stock||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Hết hàng</span><strong style="color:#EF4444">${inv.out_of_stock||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Giá trị kho</span><strong style="color:var(--pd)">${fmt(inv.total_inventory_value)}</strong></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-title" style="font-size:1rem;margin-bottom:.85rem">🚚 Vận chuyển</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.9rem">
+          <div style="display:flex;justify-content:space-between"><span>Tổng vận đơn</span><strong>${ship.total_shipments||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Đang giao</span><strong style="color:#1E40AF">${ship.shipped||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Đã giao</span><strong style="color:#059669">${ship.delivered||0}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Chờ xử lý</span><strong style="color:#92400E">${ship.pending||0}</strong></div>
+        </div>
+      </div>
+    </div>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải báo cáo</div>'; }
+}
+
+// ── Customers ─────────────────────────────────────────────
+async function loadCustomers() {
+  const el = document.getElementById('customersTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/customers/', { headers:authH() });
+    const d = await r.json();
+    const list = Array.isArray(d) ? d : (d.results||[]);
+    if (!list.length) { el.innerHTML='<div class="empty">Không có khách hàng nào</div>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Cart ID</th><th>Ngày tạo</th></tr></thead>
+      <tbody>${list.map(c=>`<tr>
+        <td>${c.id}</td><td><strong>${c.username}</strong></td><td>${c.email||'—'}</td>
+        <td>${c.cart_id||'—'}</td>
+        <td>${c.date_joined?new Date(c.date_joined).toLocaleDateString('vi-VN'):'—'}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải khách hàng</div>'; }
+}
+
+// ── Staff List ────────────────────────────────────────────
+async function loadStaffList() {
+  const el = document.getElementById('staffListTable');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/staff/', { headers:authH() });
+    const d = await r.json();
+    const list = Array.isArray(d) ? d : (d.results||[]);
+    if (!list.length) { el.innerHTML='<div class="empty">Không có nhân viên nào</div>'; return; }
+    const roleCls = {admin:'background:#EDE9FE;color:#5B21B6',manager:'background:#DBEAFE;color:#1E40AF',staff:'background:#D1FAE5;color:#065F46',inventory:'background:#FEF3C7;color:#92400E',shipping:'background:#FCE7F3;color:#9D174D'};
+    el.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Vai trò</th><th>Phòng ban</th><th>Trạng thái</th></tr></thead>
+      <tbody>${list.map(s=>`<tr>
+        <td>${s.id}</td><td><strong>${s.username}</strong></td><td>${s.email||'—'}</td>
+        <td><span class="badge" style="${roleCls[s.role]||roleCls.staff}">${s.role}</span></td>
+        <td>${s.department||'—'}</td>
+        <td><span class="badge" style="${s.is_active?'background:#D1FAE5;color:#065F46':'background:#FEE2E2;color:#991B1B'}">${s.is_active?'Hoạt động':'Vô hiệu'}</span></td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải danh sách nhân viên</div>'; }
+}
+
+// ── Inventory Logs ────────────────────────────────────────
+async function loadInvLogs() {
+  const el = document.getElementById('invLogsPane');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(API+'/manager/inventory_logs/', { headers:authH() });
+    const d = await r.json();
+    const logs = d.logs || [];
+    el.innerHTML = logs.length ? logs.map(l=>`
+      <div class="log-item">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>📚 ${l.book_title||'Sách #'+l.book_id}</strong>
+          <span style="font-size:.8rem;color:var(--tm)">${new Date(l.created_at).toLocaleString('vi-VN')}</span>
+        </div>
+        <div style="font-size:.83rem;color:var(--tm);margin-top:.2rem">
+          Kho: <strong>${l.previous_stock}</strong> → <strong style="color:${l.change_amount>0?'#059669':'#EF4444'}">${l.new_stock}</strong>
+          (${l.change_amount>0?'+':''}${l.change_amount}) · ${l.reason}
+        </div>
+      </div>`).join('') : '<div class="empty">Chưa có lịch sử thay đổi kho</div>';
+  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải lịch sử</div>'; }
+}
+</script>
+</body>
+</html>

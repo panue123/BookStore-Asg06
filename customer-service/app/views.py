@@ -4,20 +4,28 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Customer, Address, Job
 from .serializers import CustomerSerializer, AddressSerializer, JobSerializer
 
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
 class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         """Register a new customer (signup)"""
@@ -68,8 +76,13 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'])
     def updateCustomer(self, request, pk=None):
-        """Update customer profile"""
+        """Update customer profile - only own profile"""
         customer = self.get_object()
+        
+        # Check: only customer can update their own profile
+        if request.user.id != customer.id:
+            return Response({'error': 'You can only update your own profile'}, status=status.HTTP_403_FORBIDDEN)
+        
         serializer = self.get_serializer(customer, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

@@ -192,6 +192,7 @@ main{display:flex;flex:1;gap:1.5rem;padding:1.5rem 2rem;max-width:1400px;margin:
   <div class="nav-actions" id="navActions">
     <button class="btn btn-o" onclick="openModal('loginModal')">Đăng nhập</button>
     <button class="btn btn-p" onclick="openModal('registerModal')">Đăng ký</button>
+    <a href="/login/" style="font-size:.78rem;color:var(--tm);text-decoration:none;padding:.3rem .5rem;border:1px solid var(--b);border-radius:var(--rs)">Staff / Manager</a>
   </div>
 </nav>
 
@@ -203,6 +204,7 @@ main{display:flex;flex:1;gap:1.5rem;padding:1.5rem 2rem;max-width:1400px;margin:
       <button class="tab active" id="tab-home" onclick="switchTab('home')">🏠 Trang chủ</button>
       <button class="tab" id="tab-search" onclick="switchTab('search')">🔍 Tìm kiếm</button>
       <button class="tab" id="tab-orders" onclick="switchTab('orders')">📦 Đơn hàng</button>
+      <button class="tab" id="tab-profile" onclick="switchTab('profile')" style="display:none" id="tab-profile">👤 Hồ sơ</button>
       <button class="tab" id="tab-recs" onclick="switchTab('recs')">💡 Gợi ý</button>
       <button class="tab" id="tab-health" onclick="switchTab('health')">🩺 Hệ thống</button>
     </div>
@@ -264,8 +266,31 @@ main{display:flex;flex:1;gap:1.5rem;padding:1.5rem 2rem;max-width:1400px;margin:
       <div id="recsPane"><div class="empty-state"><div class="empty-icon">💡</div>Đăng nhập để nhận gợi ý cá nhân hóa</div></div>
     </div>
 
-    <!-- HEALTH TAB -->
-    <div id="pane-health" style="display:none">
+    <!-- PROFILE TAB -->
+    <div id="pane-profile" style="display:none">
+      <div class="sec-hdr"><div class="sec-title">👤 Hồ sơ cá nhân</div></div>
+      <div style="background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh);margin-bottom:1rem">
+        <div id="profileDisplay"></div>
+        <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0">
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.85rem">✏️ Cập nhật thông tin</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
+          <div class="form-group"><label>Email</label><input type="email" id="profEmail"></div>
+          <div class="form-group"><label>Họ</label><input type="text" id="profFirst"></div>
+          <div class="form-group"><label>Tên</label><input type="text" id="profLast"></div>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="saveProfile()">💾 Lưu</button>
+        <span id="profMsg" style="font-size:.82rem;color:var(--tm);margin-left:.6rem"></span>
+      </div>
+      <div style="background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh)">
+        <div class="sec-hdr">
+          <div style="font-size:1rem;font-weight:700">📍 Địa chỉ của tôi</div>
+          <button class="btn btn-p btn-sm" onclick="openAddrModal()">+ Thêm địa chỉ</button>
+        </div>
+        <div id="addrList"><div class="empty-state"><div class="empty-icon">📍</div>Chưa có địa chỉ</div></div>
+      </div>
+    </div>
+
+    <!-- HEALTH TAB -->    <div id="pane-health" style="display:none">
       <div class="sec-hdr"><div class="sec-title">🩺 Trạng thái hệ thống</div><button class="btn btn-ghost btn-sm" onclick="loadHealth()">🔄 Kiểm tra</button></div>
       <div id="healthPane"><div class="empty-state"><div class="empty-icon">🩺</div>Nhấn "Kiểm tra" để xem trạng thái</div></div>
       <div style="margin-top:1.5rem">
@@ -341,6 +366,18 @@ main{display:flex;flex:1;gap:1.5rem;padding:1.5rem 2rem;max-width:1400px;margin:
   </div>
 </div>
 
+<!-- ADDRESS MODAL -->
+<div class="overlay" id="addrModal">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="addrModalTitle">📍 Thêm địa chỉ</span><button class="btn-x" onclick="closeModal('addrModal')">✕</button></div>
+    <input type="hidden" id="addrId">
+    <div class="form-group"><label>Đường / Số nhà</label><input type="text" id="addrStreet" placeholder="123 Nguyễn Huệ"></div>
+    <div class="form-group" style="margin-top:.65rem"><label>Thành phố</label><input type="text" id="addrCity" placeholder="TP. Hồ Chí Minh"></div>
+    <div class="form-group" style="margin-top:.65rem"><label>Quốc gia</label><input type="text" id="addrCountry" placeholder="Việt Nam" value="Việt Nam"></div>
+    <button class="btn btn-p" style="width:100%;margin-top:1rem;padding:.75rem" onclick="saveAddr()">Lưu địa chỉ</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -362,6 +399,8 @@ const API = '/api';
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('cb_user');
   if (saved) { try { user = JSON.parse(saved); } catch(e){} }
+  if (user?.role === 'staff' || user?.role === 'admin') { window.location.href = '/staff/'; return; }
+  if (user?.role === 'manager') { window.location.href = '/manager/'; return; }
   updateNav();
   loadBooks();
 });
@@ -388,7 +427,10 @@ function authHeaders() {
 async function apiFetch(path, opts={}) {
   opts.headers = { ...authHeaders(), ...(opts.headers||{}) };
   const r = await fetch(API + path, opts);
-  if (r.status === 401 && user) { doLogout(); toast('Phiên đăng nhập hết hạn','err'); }
+  // Only auto-logout on 401 for auth-sensitive routes, not for service-level auth issues
+  if (r.status === 401 && user && path.startsWith('/auth/')) {
+    doLogout(); toast('Phiên đăng nhập hết hạn','err');
+  }
   return r;
 }
 
@@ -414,18 +456,22 @@ function statusBadge(s) {
 function updateNav() {
   const el = document.getElementById('navActions');
   const sidebar = document.getElementById('cartSidebar');
+  const profTab = document.getElementById('tab-profile');
   if (user) {
     el.innerHTML = `
       <span style="font-size:.85rem;font-weight:600;color:var(--pd)">👤 ${user.username}</span>
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('profile')">👤 Hồ sơ</button>
       <button class="btn btn-ghost btn-sm" onclick="switchTab('orders')">📦 Đơn hàng</button>
       <button class="btn btn-ghost btn-sm" onclick="switchTab('recs')">💡 Gợi ý</button>
       <button class="btn btn-o btn-sm" onclick="doLogout()">Đăng xuất</button>`;
+    if (profTab) profTab.style.display = '';
     sidebar.style.display = 'block';
     fetchCart();
   } else {
     el.innerHTML = `
       <button class="btn btn-o" onclick="openModal('loginModal')">Đăng nhập</button>
       <button class="btn btn-p" onclick="openModal('registerModal')">Đăng ký</button>`;
+    if (profTab) profTab.style.display = 'none';
     sidebar.style.display = 'none';
     cartData = null;
   }
@@ -448,6 +494,8 @@ async function doLogin() {
     user = { ...d.user, access_token: d.access_token, refresh_token: d.refresh_token };
     localStorage.setItem('cb_user', JSON.stringify(user));
     closeModal('loginModal');
+    if (user.role === 'staff' || user.role === 'admin') { window.location.href = '/staff/'; return; }
+    if (user.role === 'manager') { window.location.href = '/manager/'; return; }
     updateNav();
     toast('Đăng nhập thành công 🎉','ok');
   } catch(e) { toast('Lỗi kết nối','err'); }
@@ -493,13 +541,15 @@ function doLogout() {
 // TABS
 // ═══════════════════════════════════════════════════════════
 function switchTab(name) {
-  ['home','search','orders','recs','health'].forEach(t => {
+  ['home','search','orders','profile','recs','health'].forEach(t => {
     document.getElementById('pane-'+t).style.display = t===name ? 'block' : 'none';
-    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    const tab = document.getElementById('tab-'+t);
+    if (tab) tab.classList.toggle('active', t===name);
   });
   if (name==='orders') loadOrders();
   if (name==='recs') loadRecs();
   if (name==='health') loadHealth();
+  if (name==='profile') loadProfileTab();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -960,6 +1010,127 @@ async function loadMetrics() {
         ${Object.entries(d.by_service||{}).map(([k,v])=>`${k}: <strong>${v}</strong>`).join(' · ')||'—'}
       </div>`;
   } catch(e) { el.innerHTML = '<div class="empty-state">Không thể tải metrics</div>'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROFILE & ADDRESS (CUSTOMER)
+// ═══════════════════════════════════════════════════════════
+async function loadProfileTab() {
+  if (!user) return;
+  const el = document.getElementById('profileDisplay');
+  el.innerHTML = `<div style="display:flex;gap:.85rem;align-items:center;margin-bottom:.5rem">
+    <div style="width:48px;height:48px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;font-weight:700">${user.username[0].toUpperCase()}</div>
+    <div><div style="font-weight:700;font-size:1.05rem">${user.username}</div>
+    <div style="color:var(--tm);font-size:.83rem">${user.email||'—'}</div>
+    <div style="margin-top:.25rem"><span style="background:var(--pll);color:var(--pd);padding:.15rem .55rem;border-radius:20px;font-size:.73rem;font-weight:700">${user.role||'customer'}</span></div></div>
+  </div>`;
+  document.getElementById('profEmail').value = user.email || '';
+  // Load customer detail for first/last name
+  if (user.service_user_id) {
+    try {
+      const r = await apiFetch('/customers/'+user.service_user_id+'/');
+      if (r.ok) {
+        const d = await r.json();
+        document.getElementById('profFirst').value = d.first_name || '';
+        document.getElementById('profLast').value = d.last_name || '';
+      }
+    } catch(e) {}
+  }
+  loadAddresses();
+}
+
+async function saveProfile() {
+  if (!user?.service_user_id) { toast('Không tìm thấy tài khoản','err'); return; }
+  const body = {
+    email: document.getElementById('profEmail').value,
+    first_name: document.getElementById('profFirst').value,
+    last_name: document.getElementById('profLast').value,
+  };
+  const msg = document.getElementById('profMsg');
+  msg.textContent = 'Đang lưu...';
+  try {
+    const r = await apiFetch('/customers/'+user.service_user_id+'/updateCustomer/', {
+      method:'PATCH', body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      msg.textContent = '✅ Đã cập nhật';
+      user.email = body.email;
+      localStorage.setItem('cb_user', JSON.stringify(user));
+      toast('Cập nhật thành công','ok');
+    } else {
+      const d = await r.json();
+      msg.textContent = '❌ '+(d.error||JSON.stringify(d));
+    }
+  } catch(e) { msg.textContent = '❌ Lỗi kết nối'; }
+}
+
+// ── Addresses ─────────────────────────────────────────────
+async function loadAddresses() {
+  const el = document.getElementById('addrList');
+  try {
+    const r = await apiFetch('/addresses/');
+    if (!r.ok) { el.innerHTML = '<div class="empty-state">Lỗi tải địa chỉ</div>'; return; }
+    const d = await r.json();
+    const addrs = d.results || d;
+    if (!addrs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📍</div>Chưa có địa chỉ nào</div>';
+      return;
+    }
+    el.innerHTML = addrs.map(a => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;border:1px solid var(--b);border-radius:var(--rs);margin-bottom:.5rem;background:var(--bg)">
+        <div>
+          <div style="font-weight:600;font-size:.88rem">📍 ${a.street}</div>
+          <div style="font-size:.8rem;color:var(--tm)">${a.city}, ${a.country}</div>
+        </div>
+        <div style="display:flex;gap:.35rem">
+          <button class="btn btn-ghost btn-sm" onclick="editAddr(${a.id},'${a.street.replace(/'/g,"\\'")}','${a.city}','${a.country}')">✏️</button>
+          <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none" onclick="deleteAddr(${a.id})">🗑️</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty-state">Lỗi tải địa chỉ</div>'; }
+}
+
+function openAddrModal(id='', street='', city='', country='Việt Nam') {
+  document.getElementById('addrId').value = id;
+  document.getElementById('addrStreet').value = street;
+  document.getElementById('addrCity').value = city;
+  document.getElementById('addrCountry').value = country;
+  document.getElementById('addrModalTitle').textContent = id ? '✏️ Sửa địa chỉ' : '📍 Thêm địa chỉ';
+  openModal('addrModal');
+}
+
+function editAddr(id, street, city, country) { openAddrModal(id, street, city, country); }
+
+async function saveAddr() {
+  const id = document.getElementById('addrId').value;
+  const body = {
+    street: document.getElementById('addrStreet').value.trim(),
+    city: document.getElementById('addrCity').value.trim(),
+    country: document.getElementById('addrCountry').value.trim(),
+  };
+  if (!body.street || !body.city) { toast('Nhập đầy đủ thông tin địa chỉ','err'); return; }
+  try {
+    const url = id ? '/addresses/'+id+'/' : '/addresses/';
+    const method = id ? 'PATCH' : 'POST';
+    const r = await apiFetch(url, { method, body: JSON.stringify(body) });
+    if (r.ok) {
+      closeModal('addrModal');
+      toast(id ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ','ok');
+      loadAddresses();
+    } else {
+      const d = await r.json();
+      toast('❌ '+(d.error||JSON.stringify(d)),'err');
+    }
+  } catch(e) { toast('Lỗi kết nối','err'); }
+}
+
+async function deleteAddr(id) {
+  if (!confirm('Xóa địa chỉ này?')) return;
+  try {
+    const r = await apiFetch('/addresses/'+id+'/', { method:'DELETE' });
+    if (r.ok || r.status===204) { toast('Đã xóa địa chỉ','ok'); loadAddresses(); }
+    else toast('Không thể xóa','err');
+  } catch(e) { toast('Lỗi kết nối','err'); }
 }
 </script>
 </body>
