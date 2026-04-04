@@ -121,6 +121,16 @@ def login_page(request):
     resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     return resp
 
+def customer_login_page(request):
+    resp = render(request, 'customer_login.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
+
+def cart_page(request):
+    resp = render(request, 'cart_page.html')
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
+
 def staff_dashboard(request):
     resp = render(request, 'staff.html')
     resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'

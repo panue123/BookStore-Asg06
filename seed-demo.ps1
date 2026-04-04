@@ -19,17 +19,16 @@ function Invoke-Api {
     return Invoke-RestMethod @params
 }
 
-# ── Wait for gateway ───────────────────────────────────────
 Write-Host "Waiting for gateway..." -ForegroundColor Cyan
 for ($i=0; $i -lt $WaitSeconds; $i+=3) {
     try { Invoke-Api -Base $GW -Path "books/" | Out-Null; Write-Host "Gateway ready!" -ForegroundColor Green; break } catch { Start-Sleep 3 }
 }
 
-# ── Publisher & Books (direct to book-service) ─────────────
+# ── Publisher ──────────────────────────────────────────────
 Write-Host "`n[1] Seeding publisher & books..." -ForegroundColor Cyan
 $pub = $null
 try {
-    $pub = Invoke-Api -Method POST -Base $Book -Path "publishers/" -Body @{name="CloudBooks Press";address="Ho Chi Minh City, VN"}
+    $pub = Invoke-Api -Method POST -Base $Book -Path "publishers/" -Body @{name="CloudBooks Press";address="123 Nguyễn Huệ, Q.1, TP.HCM"}
     Write-Host "  Publisher: id=$($pub.id)" -ForegroundColor Green
 } catch {
     try {
@@ -38,20 +37,155 @@ try {
         $pub = $pubList | Where-Object { $_.name -eq "CloudBooks Press" } | Select-Object -First 1
         if (-not $pub) { $pub = @{id=1} }
         Write-Host "  Publisher exists: id=$($pub.id)" -ForegroundColor Yellow
-    } catch { $pub = @{id=1}; Write-Host "  Using publisher id=1" -ForegroundColor Yellow }
+    } catch { $pub = @{id=1} }
 }
 
+# Sách với giá VNĐ thực tế và ảnh bìa thật từ Open Library / Google Books covers
 $books = @(
-  @{title="Clean Code";author="Robert C. Martin";category="programming";price="35.00";stock=50;description="A handbook of agile software craftsmanship."},
-  @{title="The Pragmatic Programmer";author="Andrew Hunt";category="programming";price="42.00";stock=40;description="Your journey to mastery."},
-  @{title="Design Patterns";author="Gang of Four";category="programming";price="55.00";stock=30;description="Elements of reusable object-oriented software."},
-  @{title="Sapiens";author="Yuval Noah Harari";category="history";price="28.00";stock=25;description="A brief history of humankind."},
-  @{title="A Brief History of Time";author="Stephen Hawking";category="science";price="20.00";stock=35;description="From the Big Bang to Black Holes."},
-  @{title="The Great Gatsby";author="F. Scott Fitzgerald";category="fiction";price="12.00";stock=60;description="The story of the mysteriously wealthy Jay Gatsby."},
-  @{title="Introduction to Algorithms";author="Cormen et al.";category="programming";price="65.00";stock=20;description="The classic algorithms textbook."},
-  @{title="Cosmos";author="Carl Sagan";category="science";price="22.00";stock=45;description="A personal voyage through the universe."},
-  @{title="1984";author="George Orwell";category="fiction";price="15.00";stock=55;description="A dystopian social science fiction novel."},
-  @{title="Calculus";author="James Stewart";category="math";price="48.00";stock=18;description="Early transcendentals, 8th edition."}
+  @{
+    title="Clean Code"
+    author="Robert C. Martin"
+    category="programming"
+    price="185000"
+    stock=50
+    description="Cuốn sách kinh điển về viết code sạch, dễ đọc và bảo trì. Bắt buộc phải đọc cho mọi lập trình viên."
+    cover_image_url="https://m.media-amazon.com/images/I/41xShlnTZTL._SX376_BO1,204,203,200_.jpg"
+  },
+  @{
+    title="The Pragmatic Programmer"
+    author="Andrew Hunt & David Thomas"
+    category="programming"
+    price="210000"
+    stock=40
+    description="Hành trình từ lập trình viên mới đến bậc thầy. Những lời khuyên thực tiễn cho sự nghiệp phát triển phần mềm."
+    cover_image_url="https://m.media-amazon.com/images/I/51W1sBPO7tL._SX380_BO1,204,203,200_.jpg"
+  },
+  @{
+    title="Design Patterns"
+    author="Gang of Four"
+    category="programming"
+    price="275000"
+    stock=30
+    description="23 mẫu thiết kế phần mềm hướng đối tượng kinh điển. Nền tảng không thể thiếu của kỹ sư phần mềm."
+    cover_image_url="https://m.media-amazon.com/images/I/51szD9HC9pL._SX395_BO1,204,203,200_.jpg"
+  },
+  @{
+    title="Sapiens: Lược Sử Loài Người"
+    author="Yuval Noah Harari"
+    category="history"
+    price="165000"
+    stock=25
+    description="Hành trình 70.000 năm của loài người từ thời đồ đá đến thế kỷ 21. Bestseller toàn cầu."
+    cover_image_url="https://m.media-amazon.com/images/I/713jIoMO3UL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Lược Sử Thời Gian"
+    author="Stephen Hawking"
+    category="science"
+    price="120000"
+    stock=35
+    description="Từ Vụ Nổ Lớn đến Lỗ Đen. Vật lý vũ trụ được giải thích cho mọi người đọc."
+    cover_image_url="https://m.media-amazon.com/images/I/A1xkFZX5k-L._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Gatsby Vĩ Đại"
+    author="F. Scott Fitzgerald"
+    category="fiction"
+    price="89000"
+    stock=60
+    description="Câu chuyện về giấc mơ Mỹ, tình yêu và sự thất vọng trong thập niên 1920. Kiệt tác văn học thế giới."
+    cover_image_url="https://m.media-amazon.com/images/I/71FTb9X6wsL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Introduction to Algorithms"
+    author="Cormen, Leiserson, Rivest"
+    category="programming"
+    price="320000"
+    stock=20
+    description="Giáo trình thuật toán toàn diện nhất. Được sử dụng tại MIT và các trường đại học hàng đầu thế giới."
+    cover_image_url="https://m.media-amazon.com/images/I/61Pgdn8Ys-L._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Cosmos"
+    author="Carl Sagan"
+    category="science"
+    price="145000"
+    stock=45
+    description="Cuộc hành trình cá nhân xuyên vũ trụ. Khoa học, triết học và nhân văn hòa quyện tuyệt vời."
+    cover_image_url="https://m.media-amazon.com/images/I/71KMnCNtFGL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="1984"
+    author="George Orwell"
+    category="fiction"
+    price="95000"
+    stock=55
+    description="Tiểu thuyết dystopia kinh điển về xã hội toàn trị. Cảnh báo về quyền lực và tự do con người."
+    cover_image_url="https://m.media-amazon.com/images/I/71kxa2Pu7tL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Giải Tích (Calculus)"
+    author="James Stewart"
+    category="math"
+    price="240000"
+    stock=18
+    description="Giáo trình giải tích toàn diện, phiên bản thứ 8. Được sử dụng rộng rãi tại các trường đại học Việt Nam."
+    cover_image_url="https://m.media-amazon.com/images/I/71RnfLFMgFL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Đắc Nhân Tâm"
+    author="Dale Carnegie"
+    category="history"
+    price="79000"
+    stock=80
+    description="Cuốn sách self-help bán chạy nhất mọi thời đại. Nghệ thuật giao tiếp và tạo ảnh hưởng."
+    cover_image_url="https://m.media-amazon.com/images/I/71XnFpBFMRL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Nhà Giả Kim"
+    author="Paulo Coelho"
+    category="fiction"
+    price="75000"
+    stock=70
+    description="Hành trình theo đuổi giấc mơ của chàng chăn cừu Santiago. Triết lý sống sâu sắc và cảm hứng."
+    cover_image_url="https://m.media-amazon.com/images/I/51Z0nLAfLmL._SX330_BO1,204,203,200_.jpg"
+  },
+  @{
+    title="Atomic Habits"
+    author="James Clear"
+    category="history"
+    price="135000"
+    stock=65
+    description="Thay đổi nhỏ, kết quả phi thường. Phương pháp xây dựng thói quen tốt và loại bỏ thói quen xấu."
+    cover_image_url="https://m.media-amazon.com/images/I/81wgcld4wxL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Python Crash Course"
+    author="Eric Matthes"
+    category="programming"
+    price="195000"
+    stock=42
+    description="Học Python nhanh chóng và thực tế. Từ cơ bản đến dự án thực tế trong thời gian ngắn nhất."
+    cover_image_url="https://m.media-amazon.com/images/I/71sL5oNBBQL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Thinking, Fast and Slow"
+    author="Daniel Kahneman"
+    category="science"
+    price="155000"
+    stock=38
+    description="Khám phá hai hệ thống tư duy của con người. Tâm lý học hành vi và kinh tế học hành vi."
+    cover_image_url="https://m.media-amazon.com/images/I/71wvKXBHRpL._AC_UF1000,1000_QL80_.jpg"
+  },
+  @{
+    title="Dune"
+    author="Frank Herbert"
+    category="fiction"
+    price="175000"
+    stock=33
+    description="Sử thi khoa học viễn tưởng vĩ đại nhất mọi thời đại. Hành tinh sa mạc Arrakis và cuộc chiến vì gia vị."
+    cover_image_url="https://m.media-amazon.com/images/I/81ym3QUd3KL._AC_UF1000,1000_QL80_.jpg"
+  }
 )
 
 $createdBooks = @()
@@ -59,27 +193,26 @@ foreach ($b in $books) {
     $b["publisher"] = $pub.id
     try {
         $nb = Invoke-Api -Method POST -Base $Book -Path "books/" -Body $b
-        Write-Host "  Book: id=$($nb.id) '$($nb.title)'" -ForegroundColor Green
+        Write-Host "  Book: id=$($nb.id) '$($nb.title)' - $($nb.price)đ" -ForegroundColor Green
         $createdBooks += $nb
     } catch {
         Write-Host "  Skip (exists?): $($b.title)" -ForegroundColor Yellow
     }
 }
 
-# If books already existed, fetch them
 if ($createdBooks.Count -eq 0) {
     try {
-        $existing = Invoke-Api -Base $Book -Path "books/"
+        $existing = Invoke-Api -Base $Book -Path "books/?page_size=50"
         $createdBooks = if ($existing.results) { $existing.results } else { $existing }
         Write-Host "  Loaded $($createdBooks.Count) existing books" -ForegroundColor Yellow
     } catch {}
 }
 
-# ── Register customer via gateway ──────────────────────────
-Write-Host "`n[2] Registering customer..." -ForegroundColor Cyan
+# ── Register customer alice ────────────────────────────────
+Write-Host "`n[2] Registering customer alice..." -ForegroundColor Cyan
 $token = $null; $custUser = $null
 try {
-    $reg = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="alice";email="alice@bookstore.vn";password="alice123"}
+    $reg = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="alice";email="alice@bookstore.vn";password="alice123";role="customer"}
     $token = $reg.access_token; $custUser = $reg.user
     Write-Host "  Registered: username=$($custUser.username) cart_id=$($custUser.cart_id)" -ForegroundColor Green
 } catch {
@@ -93,7 +226,7 @@ try {
 $custId = $custUser.service_user_id
 $cartId = $custUser.cart_id
 
-# ── Add to cart ────────────────────────────────────────────
+# ── Add to cart & checkout ─────────────────────────────────
 Write-Host "`n[3] Adding items to cart..." -ForegroundColor Cyan
 if ($cartId -and $createdBooks.Count -ge 2) {
     try {
@@ -103,27 +236,23 @@ if ($cartId -and $createdBooks.Count -ge 2) {
     } catch { Write-Host "  Cart update: $_" -ForegroundColor Yellow }
 }
 
-# ── Checkout (Saga) ────────────────────────────────────────
 Write-Host "`n[4] Checkout via Saga..." -ForegroundColor Cyan
 try {
     $order = Invoke-Api -Method POST -Base $GW -Path "orders/checkout/" -Body @{
         customer_id=$custId; cart_id=$cartId
-        shipping_address="123 Nguyen Hue, Q.1, TP.HCM"
+        shipping_address="123 Nguyễn Huệ, Q.1, TP.HCM"
         payment_method="credit_card"
     } -Token $token
     Write-Host "  Order id=$($order.order.id) status=$($order.order.status) success=$($order.success)" -ForegroundColor Green
-    if ($order.saga_steps) {
-        $steps = $order.saga_steps | ForEach-Object { "$($_.step):$($_.status)" }
-        Write-Host "  Saga: $($steps -join ', ')" -ForegroundColor Cyan
-    }
 } catch { Write-Host "  Checkout: $_" -ForegroundColor Yellow }
 
-# ── Comments/Reviews (direct) ──────────────────────────────
+# ── Reviews ────────────────────────────────────────────────
 Write-Host "`n[5] Adding reviews..." -ForegroundColor Cyan
 if ($createdBooks.Count -gt 0) {
     $reviews = @(
-      @{customer_id=$custId;book_id=$createdBooks[0].id;content="Cuốn sách tuyệt vời, rất hữu ích!";rating=5},
-      @{customer_id=$custId;book_id=$createdBooks[1].id;content="Rất thực tế, áp dụng được ngay.";rating=4}
+      @{customer_id=$custId;book_id=$createdBooks[0].id;content="Cuốn sách tuyệt vời, thay đổi cách tôi viết code hoàn toàn!";rating=5},
+      @{customer_id=$custId;book_id=$createdBooks[1].id;content="Rất thực tế, áp dụng được ngay vào công việc hàng ngày.";rating=4},
+      @{customer_id=$custId;book_id=$createdBooks[3].id;content="Sapiens mở ra góc nhìn hoàn toàn mới về lịch sử nhân loại.";rating=5}
     )
     foreach ($rev in $reviews) {
         try {
@@ -133,23 +262,37 @@ if ($createdBooks.Count -gt 0) {
     }
 }
 
-# ── Staff admin (direct) ───────────────────────────────────
-Write-Host "`n[6] Creating staff admin..." -ForegroundColor Cyan
-try {
-    $sr = Invoke-Api -Method POST -Base $Staff -Path "staff/" -Body @{
-        username="staffadmin";email="admin@bookstore.vn"
-        password="admin123";role="admin";department="HQ"
-        first_name="Staff";last_name="Admin"
-    }
-    Write-Host "  Staff admin created: id=$($sr.id)" -ForegroundColor Green
-} catch { Write-Host "  Staff admin exists" -ForegroundColor Yellow }
+# ── Staff admin ────────────────────────────────────────────
+Write-Host "`n[6] Creating staff accounts..." -ForegroundColor Cyan
+$staffAccounts = @(
+    @{username="staffadmin";email="admin@bookstore.vn";password="admin123";role="admin";department="HQ"},
+    @{username="staff01";email="staff01@bookstore.vn";password="staff123";role="staff";department="Kho hàng"},
+    @{username="manager01";email="manager@bookstore.vn";password="manager123";role="manager";department="Quản lý"}
+)
+foreach ($sa in $staffAccounts) {
+    try {
+        $sr = Invoke-Api -Method POST -Base $Staff -Path "staff/" -Body $sa
+        Write-Host "  Created: $($sa.username) ($($sa.role))" -ForegroundColor Green
+    } catch { Write-Host "  Exists: $($sa.username)" -ForegroundColor Yellow }
+}
 
-# ── Register 2nd user bob ──────────────────────────────────
-Write-Host "`n[7] Registering 2nd user (bob)..." -ForegroundColor Cyan
+# Register manager via auth service
 try {
-    $reg2 = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="bob";email="bob@bookstore.vn";password="bob12345"}
+    Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="manager01";email="manager@bookstore.vn";password="manager123";role="manager"} | Out-Null
+    Write-Host "  Auth registered: manager01" -ForegroundColor Green
+} catch { Write-Host "  Auth manager01 exists" -ForegroundColor Yellow }
+
+# Register staffadmin via auth service
+try {
+    Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="staffadmin";email="admin@bookstore.vn";password="admin123";role="staff"} | Out-Null
+    Write-Host "  Auth registered: staffadmin" -ForegroundColor Green
+} catch { Write-Host "  Auth staffadmin exists" -ForegroundColor Yellow }
+
+# ── 2nd customer bob ───────────────────────────────────────
+Write-Host "`n[7] Registering 2nd customer (bob)..." -ForegroundColor Cyan
+try {
+    $reg2 = Invoke-Api -Method POST -Base $GW -Path "auth/register/" -Body @{username="bob";email="bob@bookstore.vn";password="bob12345";role="customer"}
     Write-Host "  Registered bob: cart_id=$($reg2.user.cart_id)" -ForegroundColor Green
-    # Bob adds a book to cart
     if ($createdBooks.Count -ge 3) {
         Invoke-Api -Method POST -Base $GW -Path "customers/$($reg2.user.service_user_id)/updateCart/" -Body @{book_id=$createdBooks[2].id;quantity=1} -Token $reg2.access_token | Out-Null
         Write-Host "  Bob added book to cart" -ForegroundColor Green
@@ -158,9 +301,13 @@ try {
 
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "Seed completed!" -ForegroundColor Green
-Write-Host "  UI:       http://localhost:8000" -ForegroundColor White
-Write-Host "  RabbitMQ: http://localhost:15672  (guest/guest)" -ForegroundColor White
-Write-Host "  Health:   http://localhost:8000/health/" -ForegroundColor White
-Write-Host "  Metrics:  http://localhost:8000/metrics/" -ForegroundColor White
-Write-Host "  Login:    alice / alice123" -ForegroundColor White
+Write-Host ""
+Write-Host "  UI:           http://localhost:8000" -ForegroundColor White
+Write-Host "  Staff login:  /login/" -ForegroundColor White
+Write-Host ""
+Write-Host "  Accounts:" -ForegroundColor Yellow
+Write-Host "    Customer:  alice / alice123" -ForegroundColor White
+Write-Host "    Customer:  bob / bob12345" -ForegroundColor White
+Write-Host "    Staff:     staffadmin / admin123" -ForegroundColor White
+Write-Host "    Manager:   manager01 / manager123" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan

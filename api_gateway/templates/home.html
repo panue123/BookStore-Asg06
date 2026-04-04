@@ -1,1136 +1,881 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CloudBooks – Nhà sách trực tuyến</title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Moon Books – Nhà sách trực tuyến</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--p:#3A85C0;--pl:#6AAED9;--pll:#B8D9EE;--pd:#1E5F8A;--bg:#E4F2FA;--s:#fff;--t:#1A3347;--tm:#4A6A80;--b:#C0D9EC;--sh:0 2px 12px rgba(30,95,138,.10);--shl:0 8px 32px rgba(30,95,138,.18);--r:12px;--rs:8px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column}
-button{font-family:inherit;cursor:pointer}
-input,select,textarea{font-family:inherit}
-
-/* NAV */
-nav{background:var(--s);padding:.85rem 2rem;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;gap:1rem;flex-wrap:wrap}
-.logo{font-size:1.35rem;font-weight:700;color:var(--pd);display:flex;align-items:center;gap:.4rem;text-decoration:none}
-.logo em{color:var(--p);font-style:normal}
-.nav-search{display:flex;gap:.4rem;flex:1;max-width:440px}
-.nav-search input{flex:1;padding:.5rem .85rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:var(--bg);font-size:.88rem}
-.nav-search input:focus{outline:none;border-color:var(--p)}
-.nav-actions{display:flex;gap:.4rem;align-items:center;flex-shrink:0}
-.btn{padding:.48rem 1rem;border-radius:var(--rs);font-weight:600;font-size:.85rem;border:none;transition:all .2s;line-height:1.4}
-.btn-o{background:transparent;border:2px solid var(--pl);color:var(--pd)}
-.btn-o:hover{background:var(--pll)}
-.btn-p{background:var(--p);color:#fff}
-.btn-p:hover{background:var(--pd)}
-.btn-sm{padding:.32rem .7rem;font-size:.8rem}
-.btn-ghost{background:transparent;border:1px solid var(--b);color:var(--tm)}
-.btn-ghost:hover{border-color:var(--pl);color:var(--pd)}
-.badge{background:var(--p);color:#fff;border-radius:50%;width:17px;height:17px;font-size:.68rem;display:inline-flex;align-items:center;justify-content:center;margin-left:.2rem;font-weight:700;vertical-align:middle}
-
-/* LAYOUT */
-main{display:flex;flex:1;gap:1.5rem;padding:1.5rem 2rem;max-width:1400px;margin:0 auto;width:100%}
-.content{flex:1;min-width:0}
-.sidebar{width:330px;flex-shrink:0}
-
-/* TABS */
-.tabs{display:flex;gap:.25rem;margin-bottom:1.25rem;background:var(--s);border-radius:var(--r);padding:.3rem;box-shadow:var(--sh)}
-.tab{flex:1;padding:.5rem;border:none;border-radius:var(--rs);background:transparent;color:var(--tm);font-weight:600;font-size:.85rem;transition:all .2s}
-.tab.active{background:var(--p);color:#fff}
-.tab:hover:not(.active){background:var(--pll);color:var(--pd)}
-
-/* FILTERS */
-.filters{background:var(--s);border-radius:var(--r);padding:.85rem 1.1rem;margin-bottom:1.1rem;box-shadow:var(--sh);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-.filters select,.filters input[type=number]{padding:.42rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:var(--bg);font-size:.83rem}
-.filters select:focus,.filters input:focus{outline:none;border-color:var(--p)}
-
-/* SECTION HEADER */
-.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
-.sec-title{font-size:1.15rem;font-weight:700}
-.sec-meta{font-size:.8rem;color:var(--tm);margin-top:.1rem}
-
-/* BOOKS GRID */
-.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem}
-.book-card{background:var(--s);border-radius:var(--r);padding:1rem;box-shadow:var(--sh);transition:all .25s;display:flex;flex-direction:column;border:1.5px solid transparent;cursor:pointer}
-.book-card:hover{transform:translateY(-4px);box-shadow:var(--shl);border-color:var(--pl)}
-.book-cover{height:130px;background:linear-gradient(135deg,var(--pll),var(--p));border-radius:var(--rs);margin-bottom:.8rem;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:700;position:relative;overflow:hidden}
-.cover-cat{position:absolute;bottom:.35rem;right:.35rem;background:rgba(0,0,0,.28);color:#fff;font-size:.62rem;padding:.12rem .38rem;border-radius:4px;font-weight:600;text-transform:uppercase}
-.book-title{font-size:.92rem;font-weight:700;margin-bottom:.18rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.book-author{color:var(--tm);font-size:.8rem;margin-bottom:.45rem}
-.book-rating{display:flex;align-items:center;gap:.25rem;font-size:.78rem;color:var(--tm);margin-bottom:.65rem}
-.stars{color:#F59E0B;letter-spacing:-.5px}
-.book-footer{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:.65rem;border-top:1px solid var(--b)}
-.book-price{font-weight:700;color:var(--pd);font-size:1rem}
-.btn-cart{background:var(--pll);color:var(--pd);border:none;padding:.38rem .8rem;border-radius:var(--rs);font-weight:600;font-size:.8rem;transition:all .2s}
-.btn-cart:hover{background:var(--p);color:#fff}
-.btn-cart:disabled{opacity:.5;cursor:not-allowed}
-.oos{font-size:.72rem;color:#EF4444;font-weight:600}
-
-/* CART SIDEBAR */
-.cart-panel{background:var(--s);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh);position:sticky;top:5rem;max-height:calc(100vh - 6.5rem);overflow-y:auto;display:flex;flex-direction:column;gap:.65rem}
-.cart-panel h3{font-size:1rem;font-weight:700;padding-bottom:.65rem;border-bottom:2px solid var(--b)}
-.cart-item{display:flex;gap:.65rem;padding:.55rem 0;border-bottom:1px solid var(--b)}
-.ci-info{flex:1;min-width:0}
-.ci-title{font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ci-price{font-size:.78rem;color:var(--tm)}
-.ci-ctrl{display:flex;align-items:center;gap:.3rem;flex-shrink:0}
-.qty-btn{width:21px;height:21px;border:1px solid var(--b);border-radius:4px;background:var(--bg);color:var(--pd);font-weight:700;font-size:.82rem;display:flex;align-items:center;justify-content:center;padding:0}
-.qty-btn:hover{background:var(--pll)}
-.cart-total{display:flex;justify-content:space-between;font-weight:700;font-size:.98rem;padding-top:.45rem;border-top:2px dashed var(--b)}
-.form-group{display:flex;flex-direction:column;gap:.28rem}
-.form-group label{font-size:.8rem;font-weight:600;color:var(--tm)}
-.form-group input,.form-group select,.form-group textarea{padding:.5rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:var(--bg);font-size:.85rem}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--p)}
-.btn-checkout{width:100%;padding:.8rem;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:.95rem;font-weight:700;transition:background .2s}
-.btn-checkout:hover{background:var(--pd)}
-.empty-state{text-align:center;color:var(--tm);padding:1.5rem 0;font-size:.88rem}
-.empty-icon{font-size:2.2rem;margin-bottom:.4rem}
-
-/* MODAL */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:center;justify-content:center;padding:1rem}
-.overlay.open{display:flex}
-.modal{background:var(--s);border-radius:var(--r);padding:1.75rem;width:100%;max-width:460px;box-shadow:var(--shl);max-height:92vh;overflow-y:auto;position:relative}
-.modal-lg{max-width:820px}
-.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
-.modal-title{font-size:1.15rem;font-weight:700}
-.btn-x{background:transparent;border:none;font-size:1.35rem;color:var(--tm);line-height:1;padding:.15rem}
-.btn-x:hover{color:var(--t)}
-
-/* DETAIL */
-.detail-grid{display:grid;grid-template-columns:180px 1fr;gap:1.25rem;margin-bottom:1.25rem}
-.detail-cover{height:240px;background:linear-gradient(135deg,var(--pll),var(--p));border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.8rem;font-weight:700}
-.detail-info{display:flex;flex-direction:column;gap:.55rem}
-.detail-title{font-size:1.3rem;font-weight:700;line-height:1.3}
-.detail-author{color:var(--tm);font-size:.92rem}
-.detail-meta{display:flex;gap:.65rem;flex-wrap:wrap}
-.chip{background:var(--bg);border:1px solid var(--b);border-radius:20px;padding:.22rem .7rem;font-size:.78rem;color:var(--tm);font-weight:600}
-.detail-price{font-size:1.5rem;font-weight:700;color:var(--pd)}
-.detail-desc{font-size:.88rem;color:var(--tm);line-height:1.6;margin-top:.25rem}
-.reviews-sec{border-top:2px solid var(--b);padding-top:1.1rem}
-.rev-card{background:var(--bg);border-radius:var(--rs);padding:.8rem;margin-bottom:.65rem}
-.rev-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
-.rev-author{font-weight:600;font-size:.85rem}
-.rev-date{font-size:.75rem;color:var(--tm)}
-.rev-body{font-size:.85rem;color:var(--tm);line-height:1.5}
-.write-rev{background:var(--bg);border-radius:var(--rs);padding:.9rem;margin-top:.9rem}
-.write-rev h4{font-size:.92rem;font-weight:700;margin-bottom:.65rem}
-.star-row{display:flex;gap:.25rem;margin-bottom:.65rem}
-.star-btn{background:none;border:none;font-size:1.35rem;color:#D1D5DB;transition:color .15s;padding:0;line-height:1}
-.star-btn.on,.star-btn:hover~.star-btn,.star-row:hover .star-btn:hover,.star-row:hover .star-btn:hover~.star-btn{color:#F59E0B}
-.star-row:hover .star-btn{color:#F59E0B}
-.star-row:hover .star-btn:hover~.star-btn{color:#D1D5DB}
-
-/* ORDERS */
-.order-card{background:var(--bg);border-radius:var(--rs);padding:.9rem;margin-bottom:.65rem;border:1px solid var(--b)}
-.order-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
-.order-id{font-weight:700;font-size:.88rem}
-.status-badge{padding:.18rem .6rem;border-radius:20px;font-size:.73rem;font-weight:700}
-.s-pending{background:#FEF3C7;color:#92400E}
-.s-paid{background:#D1FAE5;color:#065F46}
-.s-shipped{background:#DBEAFE;color:#1E40AF}
-.s-canceled{background:#FEE2E2;color:#991B1B}
-.s-delivered{background:#D1FAE5;color:#065F46}
-.order-items{font-size:.8rem;color:var(--tm);margin-bottom:.35rem}
-.order-total{font-weight:700;color:var(--pd);font-size:.9rem}
-
-/* RECS */
-.rec-card{display:flex;gap:.8rem;background:var(--bg);border-radius:var(--rs);padding:.8rem;margin-bottom:.6rem;border:1px solid var(--b);cursor:pointer;transition:all .2s}
-.rec-card:hover{border-color:var(--pl);background:var(--pll)}
-.rec-cover{width:46px;height:60px;background:linear-gradient(135deg,var(--pll),var(--p));border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0}
-.rec-info{flex:1;min-width:0}
-.rec-title{font-weight:700;font-size:.88rem;margin-bottom:.18rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rec-reason{font-size:.76rem;color:var(--tm)}
-.rec-price{font-weight:700;color:var(--pd);font-size:.88rem;margin-top:.25rem}
-
-/* TOAST */
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--pd);color:#fff;padding:.7rem 1.1rem;border-radius:var(--rs);font-size:.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;max-width:300px;box-shadow:var(--shl)}
-.toast.show{opacity:1;transform:translateY(0)}
-.toast.err{background:#DC2626}
-.toast.ok{background:#059669}
-
-/* LOADING */
-.loading{text-align:center;padding:3rem;color:var(--tm)}
-.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--b);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:.75rem}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* SAGA STEPS */
-.saga-steps{margin-top:.75rem;font-size:.8rem}
-.saga-step{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--b)}
-.saga-step:last-child{border:none}
-.step-ok{color:#059669;font-weight:700}
-.step-fail{color:#DC2626;font-weight:700}
-
-/* HEALTH PANEL */
-.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.65rem;margin-top:.75rem}
-.health-card{background:var(--bg);border-radius:var(--rs);padding:.65rem .85rem;border:1px solid var(--b);display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600}
-.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.dot-ok{background:#10B981}
-.dot-warn{background:#F59E0B}
-.dot-err{background:#EF4444}
-
-@media(max-width:900px){
-  main{flex-direction:column;padding:1rem}
-  .sidebar{width:100%;position:static}
-  nav{padding:.75rem 1rem}
-  .detail-grid{grid-template-columns:1fr}
-  .detail-cover{height:180px}
+:root{
+  --p:#3B82F6;--pl:#93C5FD;--pll:#EFF6FF;--pd:#1D4ED8;--pdd:#1E3A8A;
+  --bg:#F0F7FF;--s:#fff;--t:#1E293B;--tm:#64748B;--b:#DBEAFE;
+  --sh:0 2px 12px rgba(59,130,246,.10);--shl:0 8px 32px rgba(59,130,246,.18);
+  --r:14px;--rs:10px;
+  --orange:#F97316;--green:#10B981;--red:#EF4444
 }
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column}
+button,input,select,textarea{font-family:inherit}
+a{text-decoration:none;color:inherit}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--pdd);color:#fff;padding:.35rem 2rem;font-size:.78rem;display:flex;justify-content:space-between;align-items:center}
+.topbar a{color:#93C5FD;font-weight:600}
+
+/* ── NAV ── */
+nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;align-items:center;position:sticky;top:0;z-index:300;gap:1rem;border-bottom:1px solid var(--b)}
+.logo{font-size:1.35rem;font-weight:800;color:var(--pdd);display:flex;align-items:center;gap:.4rem;flex-shrink:0;white-space:nowrap}
+.logo-icon{font-size:1.4rem}
+.nav-search{display:flex;gap:0;flex:1;max-width:520px;border:2px solid var(--p);border-radius:var(--rs);overflow:hidden}
+.nav-search select{padding:.5rem .7rem;border:none;border-right:1px solid var(--b);background:#F8FBFF;font-size:.82rem;color:var(--tm);cursor:pointer;flex-shrink:0}
+.nav-search input{flex:1;padding:.5rem .9rem;border:none;color:var(--t);background:#F8FBFF;font-size:.88rem}
+.nav-search input:focus{outline:none;background:var(--s)}
+.nav-search button{padding:.5rem 1rem;background:var(--p);color:#fff;border:none;font-weight:700;font-size:.88rem;cursor:pointer;transition:background .2s;flex-shrink:0}
+.nav-search button:hover{background:var(--pd)}
+.nav-right{display:flex;gap:.45rem;align-items:center;margin-left:auto;flex-shrink:0}
+.btn{padding:.45rem .95rem;border-radius:var(--rs);font-weight:600;font-size:.84rem;border:none;cursor:pointer;transition:all .2s;line-height:1.4}
+.btn-o{background:transparent;border:1.5px solid var(--p);color:var(--p)}.btn-o:hover{background:var(--pll)}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
+.btn-sm{padding:.32rem .7rem;font-size:.8rem}
+.btn-ghost{background:transparent;border:1px solid var(--b);color:var(--tm)}.btn-ghost:hover{border-color:var(--p);color:var(--p)}
+.cart-btn{position:relative;background:var(--p);color:#fff;padding:.45rem .9rem;border-radius:var(--rs);font-weight:700;font-size:.84rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.35rem;border:none}
+.cart-btn:hover{background:var(--pd)}
+.cart-badge{background:#EF4444;color:#fff;border-radius:50%;width:17px;height:17px;font-size:.62rem;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.profile-wrap{position:relative}
+.profile-btn{display:flex;align-items:center;gap:.4rem;padding:.42rem .75rem;border:1.5px solid var(--b);border-radius:var(--rs);background:var(--s);cursor:pointer;font-size:.84rem;font-weight:600;color:var(--t);transition:all .2s}
+.profile-btn:hover{border-color:var(--p);background:var(--pll)}
+.avatar{width:26px;height:26px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:800;flex-shrink:0}
+.dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--s);border:1.5px solid var(--b);border-radius:var(--r);box-shadow:var(--shl);min-width:210px;z-index:400;overflow:hidden;display:none}
+.dropdown.open{display:block}
+.dd-item{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;font-size:.86rem;font-weight:600;color:var(--t);cursor:pointer;transition:background .15s;border:none;background:transparent;width:100%;text-align:left}
+.dd-item:hover{background:var(--pll);color:var(--pd)}
+.dd-sep{height:1px;background:var(--b);margin:.2rem 0}
+.dd-header{padding:.6rem 1rem .3rem;font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em}
+
+/* ── CATEGORY NAV ── */
+.cat-nav{background:var(--s);border-bottom:1px solid var(--b);padding:0 2rem}
+.cat-nav-inner{max-width:1280px;margin:0 auto;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.cat-nav-inner::-webkit-scrollbar{display:none}
+.cat-link{padding:.65rem 1rem;font-size:.83rem;font-weight:600;color:var(--tm);white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0}
+.cat-link:hover,.cat-link.active{color:var(--p);border-bottom-color:var(--p)}
+
+/* ── HERO BANNER ── */
+.hero{background:linear-gradient(135deg,var(--pdd) 0%,var(--pd) 50%,#2563EB 100%);padding:3rem 2rem;color:#fff;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40%;right:-10%;width:500px;height:500px;background:rgba(255,255,255,.05);border-radius:50%}
+.hero::after{content:'';position:absolute;bottom:-30%;left:5%;width:300px;height:300px;background:rgba(255,255,255,.04);border-radius:50%}
+.hero-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;position:relative;z-index:1}
+.hero-title{font-size:2.2rem;font-weight:800;line-height:1.2;margin-bottom:.75rem}
+.hero-title em{color:#FCD34D;font-style:normal}
+.hero-sub{font-size:1rem;opacity:.88;margin-bottom:1.5rem;line-height:1.6}
+.hero-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.hero-btn{padding:.75rem 1.75rem;border-radius:var(--rs);font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;border:none}
+.hero-btn-primary{background:#FCD34D;color:var(--pdd)}.hero-btn-primary:hover{background:#FDE68A;transform:translateY(-2px)}
+.hero-btn-secondary{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4)}.hero-btn-secondary:hover{background:rgba(255,255,255,.25)}
+.hero-stats{display:flex;gap:2rem;margin-top:1.5rem}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:1.5rem;font-weight:800;color:#FCD34D}
+.hero-stat-label{font-size:.78rem;opacity:.8}
+.hero-books{display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap}
+.hero-book-thumb{width:90px;height:120px;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);flex-shrink:0;background:rgba(255,255,255,.1)}
+.hero-book-thumb img{width:100%;height:100%;object-fit:cover}
+
+/* ── MAIN LAYOUT ── */
+.main-wrap{max-width:1280px;margin:0 auto;width:100%;padding:1.5rem 2rem}
+
+/* ── SECTION ── */
+.section{margin-bottom:2.5rem}
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem}
+.section-title{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:.5rem}
+.section-title::before{content:'';width:4px;height:1.1rem;background:var(--p);border-radius:2px;display:inline-block}
+.see-all{font-size:.83rem;color:var(--p);font-weight:600;cursor:pointer}
+.see-all:hover{text-decoration:underline}
+
+/* ── PROMO BANNERS ── */
+.promo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:2rem}
+.promo-card{border-radius:var(--r);padding:1.25rem 1.5rem;color:#fff;position:relative;overflow:hidden;cursor:pointer;transition:transform .2s}
+.promo-card:hover{transform:translateY(-3px)}
+.promo-card-1{background:linear-gradient(135deg,#F97316,#EF4444)}
+.promo-card-2{background:linear-gradient(135deg,#8B5CF6,#6D28D9)}
+.promo-card-3{background:linear-gradient(135deg,#10B981,#059669)}
+.promo-title{font-size:1rem;font-weight:800;margin-bottom:.3rem}
+.promo-sub{font-size:.8rem;opacity:.88}
+.promo-badge{position:absolute;top:.75rem;right:.75rem;background:rgba(255,255,255,.25);padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:700}
+
+/* ── BOOKS GRID ── */
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:1rem}
+.book-card{background:var(--s);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:all .25s;display:flex;flex-direction:column;border:1.5px solid transparent;cursor:pointer;position:relative}
+.book-card:hover{transform:translateY(-4px);box-shadow:var(--shl);border-color:var(--pl)}
+.book-badge{position:absolute;top:.5rem;left:.5rem;z-index:2;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;color:#fff}
+.badge-new{background:var(--orange)}
+.badge-sale{background:var(--red)}
+.badge-hot{background:#8B5CF6}
+.book-cover{height:200px;position:relative;overflow:hidden;background:#EFF6FF;flex-shrink:0}
+.book-cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.book-card:hover .book-cover img{transform:scale(1.05)}
+.book-cover-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;background:linear-gradient(135deg,#EFF6FF,#DBEAFE)}
+.cover-cat{position:absolute;bottom:.4rem;left:.4rem;background:rgba(29,78,216,.82);color:#fff;font-size:.6rem;padding:.18rem .5rem;border-radius:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.book-body{padding:.85rem;display:flex;flex-direction:column;flex:1}
+.book-title{font-size:.88rem;font-weight:700;margin-bottom:.18rem;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-clamp:2}
+.book-author{color:var(--tm);font-size:.76rem;margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-rating{display:flex;align-items:center;gap:.25rem;font-size:.74rem;color:var(--tm);margin-bottom:.55rem}
+.stars{color:#F59E0B;letter-spacing:-.5px;font-size:.78rem}
+.book-footer{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:.55rem;border-top:1px solid var(--b)}
+.book-price{font-weight:800;color:var(--red);font-size:.98rem}
+.book-price-orig{font-size:.72rem;color:var(--tm);text-decoration:line-through;margin-left:.25rem}
+.btn-cart{background:var(--p);color:#fff;border:none;padding:.38rem .7rem;border-radius:var(--rs);font-weight:700;font-size:.76rem;cursor:pointer;transition:all .2s}
+.btn-cart:hover{background:var(--pd)}
+.btn-cart:disabled{opacity:.5;cursor:not-allowed;background:var(--tm)}
+.oos-tag{font-size:.72rem;color:var(--red);font-weight:700;background:#FEE2E2;padding:.2rem .5rem;border-radius:6px}
+
+/* ── CATEGORY CARDS ── */
+.cat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.85rem}
+.cat-card{background:var(--s);border-radius:var(--r);padding:1.1rem .75rem;text-align:center;cursor:pointer;transition:all .2s;border:1.5px solid var(--b);box-shadow:var(--sh)}
+.cat-card:hover{border-color:var(--p);background:var(--pll);transform:translateY(-2px)}
+.cat-icon{font-size:1.8rem;margin-bottom:.4rem}
+.cat-name{font-size:.8rem;font-weight:700;color:var(--t)}
+.cat-count{font-size:.72rem;color:var(--tm);margin-top:.15rem}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;justify-content:center;align-items:center;gap:.4rem;margin-top:1.5rem;flex-wrap:wrap}
+.pg-btn{padding:.42rem .75rem;border:1.5px solid var(--b);border-radius:var(--rs);background:var(--s);color:var(--tm);font-size:.84rem;font-weight:600;cursor:pointer;transition:all .2s;min-width:36px;text-align:center}
+.pg-btn:hover{border-color:var(--p);color:var(--p);background:var(--pll)}
+.pg-btn.active{background:var(--p);color:#fff;border-color:var(--p)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+.pg-info{font-size:.82rem;color:var(--tm);padding:0 .5rem}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(--s);border-radius:var(--r);padding:1.75rem;width:100%;max-width:480px;box-shadow:var(--shl);max-height:92vh;overflow-y:auto}
+.modal-lg{max-width:860px}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.modal-title{font-size:1.1rem;font-weight:700}
+.btn-x{background:transparent;border:none;font-size:1.3rem;color:var(--tm);cursor:pointer;padding:.2rem;border-radius:6px;line-height:1}.btn-x:hover{background:var(--b);color:var(--t)}
+.detail-grid{display:grid;grid-template-columns:200px 1fr;gap:1.5rem;margin-bottom:1.25rem}
+.detail-cover{height:270px;border-radius:var(--r);overflow:hidden;background:linear-gradient(135deg,var(--pll),#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:3rem}
+.detail-cover img{width:100%;height:100%;object-fit:cover}
+.detail-info{display:flex;flex-direction:column;gap:.6rem}
+.detail-title{font-size:1.2rem;font-weight:800;line-height:1.3}
+.detail-author{color:var(--tm);font-size:.9rem}
+.detail-meta{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{background:var(--pll);border:1px solid var(--b);border-radius:20px;padding:.22rem .7rem;font-size:.76rem;color:var(--pd);font-weight:600}
+.detail-price{font-size:1.55rem;font-weight:800;color:var(--red)}
+.detail-desc{font-size:.87rem;color:var(--tm);line-height:1.65}
+.reviews-sec{border-top:2px solid var(--b);padding-top:1.1rem;margin-top:.5rem}
+.rev-card{background:var(--pll);border-radius:var(--rs);padding:.85rem;margin-bottom:.65rem;border:1px solid var(--b)}
+.rev-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+.rev-author{font-weight:700;font-size:.85rem}
+.rev-date{font-size:.75rem;color:var(--tm)}
+.rev-body{font-size:.85rem;color:var(--tm);line-height:1.55}
+.write-rev{background:var(--pll);border-radius:var(--rs);padding:1rem;margin-top:1rem;border:1px solid var(--b)}
+.write-rev h4{font-size:.92rem;font-weight:700;margin-bottom:.75rem}
+.star-row{display:flex;gap:.3rem;margin-bottom:.75rem}
+.star-btn{background:none;border:none;font-size:1.5rem;color:#D1D5DB;cursor:pointer;padding:0;line-height:1;transition:color .15s}
+.form-group{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--tm)}
+.form-group input,.form-group select,.form-group textarea{padding:.52rem .8rem;border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);background:#F8FBFF;font-size:.88rem;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--p)}
+.order-card{background:var(--s);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:.75rem;border:1.5px solid var(--b);cursor:pointer;transition:all .2s;box-shadow:var(--sh)}
+.order-card:hover{border-color:var(--pl);box-shadow:var(--shl)}
+.order-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
+.order-id{font-weight:700;font-size:.9rem}
+.status-badge{padding:.2rem .65rem;border-radius:20px;font-size:.73rem;font-weight:700}
+.s-pending{background:#FEF3C7;color:#92400E}.s-paid{background:#D1FAE5;color:#065F46}
+.s-shipped{background:#DBEAFE;color:#1E40AF}.s-canceled{background:#FEE2E2;color:#991B1B}.s-delivered{background:#D1FAE5;color:#065F46}
+.profile-card{background:var(--s);border-radius:var(--r);padding:1.5rem;box-shadow:var(--sh);margin-bottom:1rem;border:1px solid var(--b)}
+.profile-avatar-lg{width:64px;height:64px;background:linear-gradient(135deg,var(--p),var(--pl));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;font-weight:800;flex-shrink:0}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--pdd);color:#fff;padding:.75rem 1.2rem;border-radius:var(--rs);font-size:.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;max-width:320px;box-shadow:var(--shl)}
+.toast.show{opacity:1;transform:translateY(0)}.toast.err{background:#DC2626}.toast.ok{background:#059669}
+.loading{text-align:center;padding:3rem;color:var(--tm)}
+.spin{display:inline-block;width:34px;height:34px;border:3px solid var(--b);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:.75rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;color:var(--tm);padding:2.5rem;font-size:.9rem}
+.empty-icon{font-size:2.5rem;margin-bottom:.6rem}
+footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
+.footer-inner{max-width:1280px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;margin-bottom:1.5rem}
+.footer-brand .logo{color:#fff;font-size:1.2rem}
+.footer-brand p{font-size:.82rem;opacity:.75;margin-top:.5rem;line-height:1.6}
+.footer-col h4{font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:#93C5FD}
+.footer-col a{display:block;font-size:.82rem;opacity:.75;margin-bottom:.4rem;color:#fff;transition:opacity .2s}
+.footer-col a:hover{opacity:1}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.15);padding-top:1rem;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;opacity:.65;flex-wrap:wrap;gap:.5rem}
+@media(max-width:1024px){.cat-grid{grid-template-columns:repeat(3,1fr)}.promo-grid{grid-template-columns:1fr 1fr}.hero-inner{grid-template-columns:1fr}.hero-books{display:none}.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.main-wrap{padding:1rem}.nav{padding:.65rem 1rem;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}.books-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.hero{padding:2rem 1rem}.hero-title{font-size:1.5rem}.promo-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}.detail-cover{height:200px}.footer-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 150.000₫ | 📞 Hotline: 1800-6789</span>
+  <span><a href="/login/">Nhân viên / Quản lý</a></span>
+</div>
+
+<!-- ═══ NAV ═══ -->
 <nav>
-  <a href="#" class="logo">☁️ Cloud<em>Books</em></a>
+  <a href="/" class="logo"><span class="logo-icon">🌙</span> Moon Books</a>
   <div class="nav-search">
-    <input type="text" id="navSearch" placeholder="Tìm sách, tác giả..." onkeydown="if(event.key==='Enter')doSearch()">
-    <button class="btn btn-p btn-sm" onclick="doSearch()">🔍</button>
+    <select id="searchCatFilter">
+      <option value="">Tất cả</option>
+      <option value="programming">Lập trình</option>
+      <option value="science">Khoa học</option>
+      <option value="history">Lịch sử</option>
+      <option value="fiction">Tiểu thuyết</option>
+      <option value="math">Toán học</option>
+    </select>
+    <input type="text" id="navSearch" placeholder="Tìm sách, tác giả, thể loại..." onkeydown="if(event.key==='Enter')doSearch()">
+    <button onclick="doSearch()">🔍 Tìm</button>
   </div>
-  <div class="nav-actions" id="navActions">
-    <button class="btn btn-o" onclick="openModal('loginModal')">Đăng nhập</button>
-    <button class="btn btn-p" onclick="openModal('registerModal')">Đăng ký</button>
-    <a href="/login/" style="font-size:.78rem;color:var(--tm);text-decoration:none;padding:.3rem .5rem;border:1px solid var(--b);border-radius:var(--rs)">Staff / Manager</a>
+  <div class="nav-right" id="navRight">
+    <a href="/customer-login/" class="btn btn-o btn-sm">Đăng nhập</a>
+    <a href="/customer-login/?tab=register" class="btn btn-p btn-sm">Đăng ký</a>
   </div>
 </nav>
 
-<!-- MAIN -->
-<main>
-  <div class="content">
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab active" id="tab-home" onclick="switchTab('home')">🏠 Trang chủ</button>
-      <button class="tab" id="tab-search" onclick="switchTab('search')">🔍 Tìm kiếm</button>
-      <button class="tab" id="tab-orders" onclick="switchTab('orders')">📦 Đơn hàng</button>
-      <button class="tab" id="tab-profile" onclick="switchTab('profile')" style="display:none" id="tab-profile">👤 Hồ sơ</button>
-      <button class="tab" id="tab-recs" onclick="switchTab('recs')">💡 Gợi ý</button>
-      <button class="tab" id="tab-health" onclick="switchTab('health')">🩺 Hệ thống</button>
+<!-- ═══ CATEGORY NAV ═══ -->
+<div class="cat-nav">
+  <div class="cat-nav-inner">
+    <span class="cat-link active" onclick="filterCat('')">Tất cả</span>
+    <span class="cat-link" onclick="filterCat('programming')">💻 Lập trình</span>
+    <span class="cat-link" onclick="filterCat('science')">🔬 Khoa học</span>
+    <span class="cat-link" onclick="filterCat('history')">📜 Lịch sử & Kỹ năng</span>
+    <span class="cat-link" onclick="filterCat('fiction')">📖 Tiểu thuyết</span>
+    <span class="cat-link" onclick="filterCat('math')">📐 Toán học</span>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div id="pane-home">
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-title">Khám phá thế giới<br>qua từng <em>trang sách</em></div>
+        <div class="hero-sub">Hơn 10.000 đầu sách chất lượng cao. Giao hàng nhanh toàn quốc. Giá tốt nhất thị trường.</div>
+        <div class="hero-actions">
+          <button class="hero-btn hero-btn-primary" onclick="document.getElementById('bookSection').scrollIntoView({behavior:'smooth'})">🛍️ Mua sắm ngay</button>
+          <button class="hero-btn hero-btn-secondary" onclick="filterCat('programming')">💻 Sách lập trình</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-num">10K+</div><div class="hero-stat-label">Đầu sách</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">50K+</div><div class="hero-stat-label">Khách hàng</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">4.8★</div><div class="hero-stat-label">Đánh giá</div></div>
+        </div>
+      </div>
+      <div class="hero-books" id="heroBooksPreview"></div>
+    </div>
+  </div>
+
+  <div class="main-wrap">
+    <!-- PROMO BANNERS -->
+    <div class="promo-grid" style="margin-top:1.5rem">
+      <div class="promo-card promo-card-1" onclick="filterCat('programming')">
+        <div class="promo-badge">HOT</div>
+        <div class="promo-title">💻 Sách Lập Trình</div>
+        <div class="promo-sub">Giảm đến 30% cho sách kỹ thuật</div>
+      </div>
+      <div class="promo-card promo-card-2" onclick="filterCat('fiction')">
+        <div class="promo-badge">MỚI</div>
+        <div class="promo-title">📖 Tiểu Thuyết Hay</div>
+        <div class="promo-sub">Bestseller tháng này</div>
+      </div>
+      <div class="promo-card promo-card-3" onclick="filterCat('science')">
+        <div class="promo-badge">ĐỀ XUẤT</div>
+        <div class="promo-title">🔬 Khoa Học & Tự Nhiên</div>
+        <div class="promo-sub">Mở rộng kiến thức mỗi ngày</div>
+      </div>
     </div>
 
-    <!-- HOME TAB -->
-    <div id="pane-home">
-      <div class="filters">
-        <span style="font-size:.8rem;font-weight:600;color:var(--tm)">Lọc:</span>
-        <select id="fCat" onchange="loadBooks()">
-          <option value="">Tất cả thể loại</option>
-          <option value="programming">Lập trình</option>
-          <option value="science">Khoa học</option>
-          <option value="history">Lịch sử</option>
-          <option value="fiction">Tiểu thuyết</option>
-          <option value="math">Toán học</option>
-        </select>
-        <input type="number" id="fMin" placeholder="Giá từ" min="0" step="1" style="width:90px" onchange="loadBooks()">
-        <input type="number" id="fMax" placeholder="Đến" min="0" step="1" style="width:90px" onchange="loadBooks()">
-        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Xóa lọc</button>
+    <!-- CATEGORIES -->
+    <div class="section">
+      <div class="section-hdr"><div class="section-title">Danh mục sách</div></div>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="filterCat('programming')"><div class="cat-icon">💻</div><div class="cat-name">Lập trình</div><div class="cat-count" id="cnt-programming">...</div></div>
+        <div class="cat-card" onclick="filterCat('science')"><div class="cat-icon">🔬</div><div class="cat-name">Khoa học</div><div class="cat-count" id="cnt-science">...</div></div>
+        <div class="cat-card" onclick="filterCat('history')"><div class="cat-icon">📜</div><div class="cat-name">Lịch sử & KN</div><div class="cat-count" id="cnt-history">...</div></div>
+        <div class="cat-card" onclick="filterCat('fiction')"><div class="cat-icon">📖</div><div class="cat-name">Tiểu thuyết</div><div class="cat-count" id="cnt-fiction">...</div></div>
+        <div class="cat-card" onclick="filterCat('math')"><div class="cat-icon">📐</div><div class="cat-name">Toán học</div><div class="cat-count" id="cnt-math">...</div></div>
+        <div class="cat-card" onclick="filterCat('')"><div class="cat-icon">📚</div><div class="cat-name">Tất cả</div><div class="cat-count" id="cnt-all">...</div></div>
       </div>
-      <div class="sec-hdr">
+    </div>
+
+    <!-- BOOKS -->
+    <div class="section" id="bookSection">
+      <div class="section-hdr">
         <div>
-          <div class="sec-title">📚 Danh sách sách</div>
-          <div class="sec-meta" id="booksMeta">Đang tải...</div>
+          <div class="section-title" id="bookSectionTitle">Tất cả sách</div>
+          <div style="font-size:.8rem;color:var(--tm);margin-top:.2rem" id="booksMeta">Đang tải...</div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <select id="sortBy" onchange="sortBooks()" style="padding:.38rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.82rem;background:#F8FBFF">
+            <option value="">Mặc định</option>
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+            <option value="name">Tên A-Z</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadBooks(1)">🔄</button>
         </div>
       </div>
       <div class="books-grid" id="booksGrid"><div class="loading"><div class="spin"></div><br>Đang tải sách...</div></div>
+      <div class="pagination" id="pagination"></div>
     </div>
-
-    <!-- SEARCH TAB -->
-    <div id="pane-search" style="display:none">
-      <div class="filters">
-        <input type="text" id="sQ" placeholder="Từ khóa..." style="flex:1;padding:.42rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:var(--bg)">
-        <select id="sCat">
-          <option value="">Tất cả</option>
-          <option value="programming">Lập trình</option>
-          <option value="science">Khoa học</option>
-          <option value="history">Lịch sử</option>
-          <option value="fiction">Tiểu thuyết</option>
-          <option value="math">Toán học</option>
-        </select>
-        <input type="number" id="sMin" placeholder="Giá từ" style="width:85px;padding:.42rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:var(--bg)">
-        <input type="number" id="sMax" placeholder="Đến" style="width:85px;padding:.42rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:var(--bg)">
-        <button class="btn btn-p btn-sm" onclick="doSearch()">Tìm kiếm</button>
-      </div>
-      <div class="sec-hdr"><div class="sec-title">Kết quả tìm kiếm</div><div class="sec-meta" id="searchMeta"></div></div>
-      <div class="books-grid" id="searchGrid"><div class="empty-state"><div class="empty-icon">🔍</div>Nhập từ khóa để tìm sách</div></div>
-    </div>
-
-    <!-- ORDERS TAB -->
-    <div id="pane-orders" style="display:none">
-      <div class="sec-hdr"><div class="sec-title">📦 Đơn hàng của tôi</div><button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Làm mới</button></div>
-      <div id="ordersPane"><div class="empty-state"><div class="empty-icon">📦</div>Đăng nhập để xem đơn hàng</div></div>
-    </div>
-
-    <!-- RECS TAB -->
-    <div id="pane-recs" style="display:none">
-      <div class="sec-hdr"><div class="sec-title">💡 Gợi ý cho bạn</div><button class="btn btn-ghost btn-sm" onclick="loadRecs()">🔄 Làm mới</button></div>
-      <div id="recsPane"><div class="empty-state"><div class="empty-icon">💡</div>Đăng nhập để nhận gợi ý cá nhân hóa</div></div>
-    </div>
-
-    <!-- PROFILE TAB -->
-    <div id="pane-profile" style="display:none">
-      <div class="sec-hdr"><div class="sec-title">👤 Hồ sơ cá nhân</div></div>
-      <div style="background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh);margin-bottom:1rem">
-        <div id="profileDisplay"></div>
-        <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0">
-        <div style="font-size:1rem;font-weight:700;margin-bottom:.85rem">✏️ Cập nhật thông tin</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
-          <div class="form-group"><label>Email</label><input type="email" id="profEmail"></div>
-          <div class="form-group"><label>Họ</label><input type="text" id="profFirst"></div>
-          <div class="form-group"><label>Tên</label><input type="text" id="profLast"></div>
-        </div>
-        <button class="btn btn-p btn-sm" onclick="saveProfile()">💾 Lưu</button>
-        <span id="profMsg" style="font-size:.82rem;color:var(--tm);margin-left:.6rem"></span>
-      </div>
-      <div style="background:var(--s);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh)">
-        <div class="sec-hdr">
-          <div style="font-size:1rem;font-weight:700">📍 Địa chỉ của tôi</div>
-          <button class="btn btn-p btn-sm" onclick="openAddrModal()">+ Thêm địa chỉ</button>
-        </div>
-        <div id="addrList"><div class="empty-state"><div class="empty-icon">📍</div>Chưa có địa chỉ</div></div>
-      </div>
-    </div>
-
-    <!-- HEALTH TAB -->    <div id="pane-health" style="display:none">
-      <div class="sec-hdr"><div class="sec-title">🩺 Trạng thái hệ thống</div><button class="btn btn-ghost btn-sm" onclick="loadHealth()">🔄 Kiểm tra</button></div>
-      <div id="healthPane"><div class="empty-state"><div class="empty-icon">🩺</div>Nhấn "Kiểm tra" để xem trạng thái</div></div>
-      <div style="margin-top:1.5rem">
-        <div class="sec-hdr"><div class="sec-title">📊 Metrics Gateway</div><button class="btn btn-ghost btn-sm" onclick="loadMetrics()">🔄 Tải</button></div>
-        <div id="metricsPane"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CART SIDEBAR -->
-  <aside class="sidebar" id="cartSidebar" style="display:none">
-    <div class="cart-panel">
-      <h3>🛒 Giỏ hàng <span id="cartCount" class="badge">0</span></h3>
-      <div id="cartItems"><div class="empty-state"><div class="empty-icon">🛒</div>Giỏ hàng trống</div></div>
-      <div class="cart-total"><span>Tổng cộng</span><span id="cartTotal">0₫</span></div>
-      <div class="form-group">
-        <label>Địa chỉ giao hàng</label>
-        <input type="text" id="shipAddr" placeholder="Nhập địa chỉ..." value="123 Nguyễn Huệ, Q.1, TP.HCM">
-      </div>
-      <div class="form-group">
-        <label>Phương thức thanh toán</label>
-        <select id="payMethod">
-          <option value="credit_card">💳 Thẻ tín dụng</option>
-          <option value="cod">💵 COD</option>
-          <option value="bank_transfer">🏦 Chuyển khoản</option>
-        </select>
-      </div>
-      <button class="btn-checkout" onclick="checkout()">✅ Đặt hàng</button>
-      <div id="checkoutMsg" style="font-size:.8rem;color:var(--tm);margin-top:.4rem"></div>
-    </div>
-  </aside>
-</main>
-
-<!-- ═══════════════════ MODALS ═══════════════════ -->
-
-<!-- LOGIN -->
-<div class="overlay" id="loginModal">
-  <div class="modal">
-    <div class="modal-hdr"><span class="modal-title">👋 Đăng nhập</span><button class="btn-x" onclick="closeModal('loginModal')">✕</button></div>
-    <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="logUser" placeholder="username"></div>
-    <div class="form-group" style="margin-top:.75rem"><label>Mật khẩu</label><input type="password" id="logPass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn btn-p" style="width:100%;margin-top:1rem;padding:.75rem" onclick="doLogin()">Đăng nhập</button>
-    <p style="text-align:center;margin-top:.75rem;font-size:.83rem;color:var(--tm)">Chưa có tài khoản? <a href="#" onclick="closeModal('loginModal');openModal('registerModal')" style="color:var(--p);font-weight:600">Đăng ký</a></p>
   </div>
 </div>
 
-<!-- REGISTER -->
-<div class="overlay" id="registerModal">
-  <div class="modal">
-    <div class="modal-hdr"><span class="modal-title">📝 Tạo tài khoản</span><button class="btn-x" onclick="closeModal('registerModal')">✕</button></div>
-    <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="regUser" placeholder="username"></div>
-    <div class="form-group" style="margin-top:.75rem"><label>Email</label><input type="email" id="regEmail" placeholder="email@example.com"></div>
-    <div class="form-group" style="margin-top:.75rem"><label>Mật khẩu</label><input type="password" id="regPass" placeholder="Tối thiểu 6 ký tự"></div>
-    <div class="form-group" style="margin-top:.75rem"><label>Xác nhận mật khẩu</label><input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" onkeydown="if(event.key==='Enter')doRegister()"></div>
-    <button class="btn btn-p" style="width:100%;margin-top:1rem;padding:.75rem" onclick="doRegister()">Tạo tài khoản</button>
-    <p style="text-align:center;margin-top:.75rem;font-size:.83rem;color:var(--tm)">Đã có tài khoản? <a href="#" onclick="closeModal('registerModal');openModal('loginModal')" style="color:var(--p);font-weight:600">Đăng nhập</a></p>
+<!-- SEARCH RESULTS -->
+<div id="pane-search" style="display:none">
+  <div class="main-wrap">
+    <div class="section-hdr" style="margin-top:1rem">
+      <div><div class="section-title" id="searchTitle">Kết quả tìm kiếm</div><div style="font-size:.8rem;color:var(--tm);margin-top:.2rem" id="searchMeta"></div></div>
+      <button class="btn btn-ghost btn-sm" onclick="backHome()">← Về trang chủ</button>
+    </div>
+    <div class="books-grid" id="searchGrid"><div class="empty-state"><div class="empty-icon">🔍</div>Nhập từ khóa để tìm sách</div></div>
   </div>
 </div>
 
-<!-- BOOK DETAIL -->
+<!-- ORDERS -->
+<div id="pane-orders" style="display:none">
+  <div class="main-wrap">
+    <div class="section-hdr" style="margin-top:1rem">
+      <div class="section-title">📦 Đơn hàng của tôi</div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="loadOrders()">🔄 Làm mới</button>
+        <button class="btn btn-ghost btn-sm" onclick="backHome()">← Trang chủ</button>
+      </div>
+    </div>
+    <div id="ordersPane"><div class="empty-state"><div class="empty-icon">🔒</div>Đăng nhập để xem đơn hàng</div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="pane-profile" style="display:none">
+  <div class="main-wrap">
+    <div class="section-hdr" style="margin-top:1rem">
+      <div class="section-title">👤 Hồ sơ cá nhân</div>
+      <button class="btn btn-ghost btn-sm" onclick="backHome()">← Trang chủ</button>
+    </div>
+    <div class="profile-card">
+      <div id="profileDisplay"></div>
+      <hr style="border:none;border-top:1px solid var(--b);margin:1.1rem 0">
+      <div style="font-weight:700;margin-bottom:.85rem">✏️ Cập nhật thông tin</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
+        <div class="form-group"><label>Email</label><input type="email" id="profEmail"></div>
+        <div class="form-group"><label>Họ</label><input type="text" id="profFirst"></div>
+        <div class="form-group"><label>Tên</label><input type="text" id="profLast"></div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="saveProfile()">💾 Lưu thay đổi</button>
+      <span id="profMsg" style="font-size:.82rem;color:var(--tm);margin-left:.6rem"></span>
+    </div>
+    <div class="profile-card">
+      <div class="section-hdr">
+        <div style="font-weight:700">📍 Địa chỉ của tôi</div>
+        <button class="btn btn-p btn-sm" onclick="openAddrModal()">+ Thêm địa chỉ</button>
+      </div>
+      <div id="addrList"><div class="empty-state" style="padding:1rem 0"><div class="empty-icon">📍</div>Chưa có địa chỉ</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo" style="color:#fff;font-size:1.2rem">🌙 Moon Books</div>
+        <p>Nhà sách trực tuyến hàng đầu Việt Nam. Mang tri thức đến mọi nhà với giá tốt nhất.</p>
+        <div style="margin-top:.85rem;display:flex;gap:.5rem">
+          <span style="background:rgba(255,255,255,.15);padding:.3rem .6rem;border-radius:6px;font-size:.78rem">📘 Facebook</span>
+          <span style="background:rgba(255,255,255,.15);padding:.3rem .6rem;border-radius:6px;font-size:.78rem">📸 Instagram</span>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Danh mục</h4>
+        <a href="#" onclick="filterCat('programming');return false">Lập trình</a>
+        <a href="#" onclick="filterCat('science');return false">Khoa học</a>
+        <a href="#" onclick="filterCat('fiction');return false">Tiểu thuyết</a>
+        <a href="#" onclick="filterCat('history');return false">Lịch sử & Kỹ năng</a>
+        <a href="#" onclick="filterCat('math');return false">Toán học</a>
+      </div>
+      <div class="footer-col">
+        <h4>Hỗ trợ</h4>
+        <a href="#">Hướng dẫn mua hàng</a>
+        <a href="#">Chính sách đổi trả</a>
+        <a href="#">Chính sách vận chuyển</a>
+        <a href="#">Câu hỏi thường gặp</a>
+      </div>
+      <div class="footer-col">
+        <h4>Liên hệ</h4>
+        <a href="#">📞 1800-6789 (miễn phí)</a>
+        <a href="#">✉️ support@moonbooks.vn</a>
+        <a href="#">📍 123 Nguyễn Huệ, Q.1, TP.HCM</a>
+        <a href="#">🕐 8:00 - 22:00 hàng ngày</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Moon Books. Tất cả quyền được bảo lưu.</span>
+      <span>Được xây dựng với ❤️ tại Việt Nam</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ MODALS ═══ -->
 <div class="overlay" id="detailModal">
   <div class="modal modal-lg">
     <div class="modal-hdr"><span class="modal-title" id="detailTitle">Chi tiết sách</span><button class="btn-x" onclick="closeModal('detailModal')">✕</button></div>
     <div id="detailBody"></div>
   </div>
 </div>
-
-<!-- ORDER DETAIL -->
 <div class="overlay" id="orderDetailModal">
   <div class="modal modal-lg">
     <div class="modal-hdr"><span class="modal-title">Chi tiết đơn hàng</span><button class="btn-x" onclick="closeModal('orderDetailModal')">✕</button></div>
     <div id="orderDetailBody"></div>
   </div>
 </div>
-
-<!-- ADDRESS MODAL -->
 <div class="overlay" id="addrModal">
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title" id="addrModalTitle">📍 Thêm địa chỉ</span><button class="btn-x" onclick="closeModal('addrModal')">✕</button></div>
     <input type="hidden" id="addrId">
     <div class="form-group"><label>Đường / Số nhà</label><input type="text" id="addrStreet" placeholder="123 Nguyễn Huệ"></div>
-    <div class="form-group" style="margin-top:.65rem"><label>Thành phố</label><input type="text" id="addrCity" placeholder="TP. Hồ Chí Minh"></div>
-    <div class="form-group" style="margin-top:.65rem"><label>Quốc gia</label><input type="text" id="addrCountry" placeholder="Việt Nam" value="Việt Nam"></div>
-    <button class="btn btn-p" style="width:100%;margin-top:1rem;padding:.75rem" onclick="saveAddr()">Lưu địa chỉ</button>
+    <div class="form-group"><label>Thành phố</label><input type="text" id="addrCity" placeholder="TP. Hồ Chí Minh"></div>
+    <div class="form-group"><label>Quốc gia</label><input type="text" id="addrCountry" value="Việt Nam"></div>
+    <button class="btn btn-p" style="width:100%;padding:.75rem;margin-top:.5rem" onclick="saveAddr()">Lưu địa chỉ</button>
   </div>
 </div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-
 <script>
-// ═══════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════
-let user = null;       // { id, username, email, role, service_user_id, cart_id, access_token, refresh_token }
-let cartData = null;   // cart object from cart-service
-let currentBookId = null;
-let reviewRating = 5;
+let user=null, currentBookId=null, reviewRating=5;
+let allBooks=[], currentPage=1, totalPages=1, currentCat='';
+const PAGE_SIZE=12;
+const API='/api';
+const EMOJI={programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'};
+const BADGES=['','badge-new','badge-sale','badge-hot','','badge-new','badge-sale'];
 
-const API = '/api';
-
-// ═══════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('cb_user');
-  if (saved) { try { user = JSON.parse(saved); } catch(e){} }
-  if (user?.role === 'staff' || user?.role === 'admin') { window.location.href = '/staff/'; return; }
-  if (user?.role === 'manager') { window.location.href = '/manager/'; return; }
+document.addEventListener('DOMContentLoaded',()=>{
+  try{user=JSON.parse(localStorage.getItem('cb_user')||'null');}catch(e){}
+  if(user?.role==='staff'||user?.role==='admin'){window.location.href='/staff/';return;}
+  if(user?.role==='manager'){window.location.href='/manager/';return;}
   updateNav();
-  loadBooks();
+  loadBooks(1);
+  document.addEventListener('click',e=>{if(!e.target.closest('.profile-wrap'))closeDropdown();});
 });
 
-// ═══════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════
-function toast(msg, type='') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show' + (type ? ' '+type : '');
-  setTimeout(() => el.className = 'toast', 3200);
+function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',3200);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function authH(){const h={'Content-Type':'application/json'};if(user?.access_token)h['Authorization']='Bearer '+user.access_token;return h;}
+async function api(path,opts={}){opts.headers={...authH(),...(opts.headers||{})};return fetch(API+path,opts);}
+function fmt(n){return Number(n).toLocaleString('vi-VN')+'₫';}
+function starsHtml(r){const n=Math.round(r||0);return'★'.repeat(n)+'☆'.repeat(5-n);}
+function statusBadge(s){const m={pending:'s-pending Chờ xử lý',paid:'s-paid Đã thanh toán',shipped:'s-shipped Đang giao',canceled:'s-canceled Đã hủy',delivered:'s-delivered Đã giao'};const p=(m[s]||'s-pending '+s).split(' ');return`<span class="status-badge ${p[0]}">${p.slice(1).join(' ')}</span>`;}
+function coverHtml(book,h='200px'){
+  if(book.cover_image_url)return`<img src="${book.cover_image_url}" alt="${book.title}" style="width:100%;height:${h};object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="book-cover-fallback" style="display:none;height:${h}">${EMOJI[book.category]||'📚'}</div>`;
+  return`<div class="book-cover-fallback" style="height:${h}">${EMOJI[book.category]||'📚'}</div>`;
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-function authHeaders() {
-  const h = { 'Content-Type': 'application/json' };
-  if (user?.access_token) h['Authorization'] = 'Bearer ' + user.access_token;
-  return h;
-}
-
-async function apiFetch(path, opts={}) {
-  opts.headers = { ...authHeaders(), ...(opts.headers||{}) };
-  const r = await fetch(API + path, opts);
-  // Only auto-logout on 401 for auth-sensitive routes, not for service-level auth issues
-  if (r.status === 401 && user && path.startsWith('/auth/')) {
-    doLogout(); toast('Phiên đăng nhập hết hạn','err');
-  }
-  return r;
-}
-
-function fmt(n) {
-  return Number(n).toLocaleString('vi-VN') + '₫';
-}
-
-function starsHtml(rating) {
-  const r = Math.round(rating || 0);
-  return '★'.repeat(r) + '☆'.repeat(5-r);
-}
-
-function statusBadge(s) {
-  const map = { pending:'s-pending Chờ xử lý', paid:'s-paid Đã thanh toán',
-    shipped:'s-shipped Đang giao', canceled:'s-canceled Đã hủy', delivered:'s-delivered Đã giao' };
-  const [cls, label] = (map[s]||'s-pending '+s).split(' ');
-  return `<span class="status-badge ${cls}">${label}</span>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-// NAV / AUTH STATE
-// ═══════════════════════════════════════════════════════════
-function updateNav() {
-  const el = document.getElementById('navActions');
-  const sidebar = document.getElementById('cartSidebar');
-  const profTab = document.getElementById('tab-profile');
-  if (user) {
-    el.innerHTML = `
-      <span style="font-size:.85rem;font-weight:600;color:var(--pd)">👤 ${user.username}</span>
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('profile')">👤 Hồ sơ</button>
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('orders')">📦 Đơn hàng</button>
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('recs')">💡 Gợi ý</button>
-      <button class="btn btn-o btn-sm" onclick="doLogout()">Đăng xuất</button>`;
-    if (profTab) profTab.style.display = '';
-    sidebar.style.display = 'block';
-    fetchCart();
+// ── NAV ──────────────────────────────────────────────────
+function updateNav(){
+  const el=document.getElementById('navRight');
+  if(user){
+    const init=(user.username||'U')[0].toUpperCase();
+    el.innerHTML=`
+      <a href="/cart/" class="cart-btn">🛒 Giỏ hàng <span class="cart-badge" id="cartBadge">0</span></a>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleDropdown(event)">
+          <div class="avatar">${init}</div>${user.username} <span style="font-size:.7rem;color:var(--tm)">▾</span>
+        </button>
+        <div class="dropdown" id="profileDropdown">
+          <div class="dd-header">${user.username}</div>
+          <div class="dd-sep"></div>
+          <button class="dd-item" onclick="showPane('profile');closeDropdown()">👤 Thông tin cá nhân</button>
+          <button class="dd-item" onclick="showPane('orders');closeDropdown()">📦 Đơn hàng của tôi</button>
+          <div class="dd-sep"></div>
+          <button class="dd-item" onclick="doLogout()" style="color:#DC2626">🚪 Đăng xuất</button>
+        </div>
+      </div>`;
+    fetchCartCount();
   } else {
-    el.innerHTML = `
-      <button class="btn btn-o" onclick="openModal('loginModal')">Đăng nhập</button>
-      <button class="btn btn-p" onclick="openModal('registerModal')">Đăng ký</button>`;
-    if (profTab) profTab.style.display = 'none';
-    sidebar.style.display = 'none';
-    cartData = null;
+    el.innerHTML=`
+      <a href="/customer-login/" class="btn btn-o btn-sm">Đăng nhập</a>
+      <a href="/customer-login/?tab=register" class="btn btn-p btn-sm">Đăng ký</a>`;
   }
 }
-
-// ═══════════════════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════════════════
-async function doLogin() {
-  const username = document.getElementById('logUser').value.trim();
-  const password = document.getElementById('logPass').value;
-  if (!username || !password) { toast('Nhập đầy đủ thông tin','err'); return; }
-  try {
-    const r = await fetch(API + '/auth/login/', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    const d = await r.json();
-    if (!r.ok) { toast(d.error || 'Đăng nhập thất bại','err'); return; }
-    user = { ...d.user, access_token: d.access_token, refresh_token: d.refresh_token };
-    localStorage.setItem('cb_user', JSON.stringify(user));
-    closeModal('loginModal');
-    if (user.role === 'staff' || user.role === 'admin') { window.location.href = '/staff/'; return; }
-    if (user.role === 'manager') { window.location.href = '/manager/'; return; }
-    updateNav();
-    toast('Đăng nhập thành công 🎉','ok');
-  } catch(e) { toast('Lỗi kết nối','err'); }
+function toggleDropdown(e){e.stopPropagation();document.getElementById('profileDropdown')?.classList.toggle('open');}
+function closeDropdown(){document.getElementById('profileDropdown')?.classList.remove('open');}
+async function fetchCartCount(){
+  if(!user?.cart_id)return;
+  try{const r=await api('/carts/'+user.cart_id+'/');if(r.ok){const d=await r.json();const b=document.getElementById('cartBadge');if(b)b.textContent=(d.items||[]).length;}}catch(e){}
+}
+function doLogout(){
+  if(user?.access_token)fetch(API+'/auth/logout/',{method:'POST',headers:authH(),body:JSON.stringify({access_token:user.access_token})}).catch(()=>{});
+  user=null;localStorage.removeItem('cb_user');updateNav();toast('Đã đăng xuất');showPane('home');
 }
 
-async function doRegister() {
-  const username = document.getElementById('regUser').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPass').value;
-  const pass2    = document.getElementById('regPass2').value;
-  if (!username || !email || !password) { toast('Nhập đầy đủ thông tin','err'); return; }
-  if (password !== pass2) { toast('Mật khẩu không khớp','err'); return; }
-  if (password.length < 6) { toast('Mật khẩu tối thiểu 6 ký tự','err'); return; }
-  try {
-    const r = await fetch(API + '/auth/register/', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, email, password})
-    });
-    const d = await r.json();
-    if (!r.ok) { toast(d.error || 'Đăng ký thất bại','err'); return; }
-    user = { ...d.user, access_token: d.access_token, refresh_token: d.refresh_token };
-    localStorage.setItem('cb_user', JSON.stringify(user));
-    closeModal('registerModal');
-    updateNav();
-    toast('Đăng ký thành công! Chào mừng ' + user.username + ' 🎉','ok');
-  } catch(e) { toast('Lỗi kết nối','err'); }
-}
-
-function doLogout() {
-  if (user?.access_token) {
-    fetch(API + '/auth/logout/', { method:'POST', headers:authHeaders(),
-      body: JSON.stringify({access_token: user.access_token}) }).catch(()=>{});
-  }
-  user = null; cartData = null;
-  localStorage.removeItem('cb_user');
-  updateNav();
-  toast('Đã đăng xuất');
-}
-</script>
-
-<script>
-// ═══════════════════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════════════════
-function switchTab(name) {
-  ['home','search','orders','profile','recs','health'].forEach(t => {
-    document.getElementById('pane-'+t).style.display = t===name ? 'block' : 'none';
-    const tab = document.getElementById('tab-'+t);
-    if (tab) tab.classList.toggle('active', t===name);
+// ── PANES ────────────────────────────────────────────────
+function showPane(name){
+  ['home','search','orders','profile'].forEach(t=>{
+    const p=document.getElementById('pane-'+t);if(p)p.style.display=t===name?'block':'none';
   });
-  if (name==='orders') loadOrders();
-  if (name==='recs') loadRecs();
-  if (name==='health') loadHealth();
-  if (name==='profile') loadProfileTab();
+  if(name==='orders')loadOrders();
+  if(name==='profile')loadProfileTab();
 }
+function backHome(){showPane('home');}
 
-// ═══════════════════════════════════════════════════════════
-// BOOKS
-// ═══════════════════════════════════════════════════════════
-async function loadBooks() {
-  const grid = document.getElementById('booksGrid');
-  const cat  = document.getElementById('fCat').value;
-  const min  = document.getElementById('fMin').value;
-  const max  = document.getElementById('fMax').value;
-  grid.innerHTML = '<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
-  try {
-    let url = '/api/books/?';
-    if (cat) url += 'category='+cat+'&';
-    if (min) url += 'min_price='+min+'&';
-    if (max) url += 'max_price='+max+'&';
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    let data = await r.json();
-    // handle paginated or plain list
-    const books = Array.isArray(data) ? data : (data.results || data.books || []);
-    renderBooks(books, grid, 'booksMeta');
-  } catch(e) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Không thể tải sách. Kiểm tra book-service.</div>';
-    document.getElementById('booksMeta').textContent = 'Lỗi kết nối';
+// ── BOOKS ────────────────────────────────────────────────
+async function loadBooks(page=1){
+  currentPage=page;
+  const grid=document.getElementById('booksGrid');
+  grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải sách...</div>';
+  document.getElementById('pagination').innerHTML='';
+  try{
+    let url='/api/books/?page_size=200';
+    if(currentCat)url+='&category='+currentCat;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error();
+    const data=await r.json();
+    allBooks=Array.isArray(data)?data:(data.results||data.books||[]);
+    // Update category counts
+    updateCatCounts(allBooks);
+    // Hero preview
+    renderHeroPreview(allBooks.slice(0,4));
+    sortAndRender();
+  }catch(e){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Không thể tải sách. Kiểm tra kết nối.</div>';
+    document.getElementById('booksMeta').textContent='Lỗi kết nối';
   }
 }
 
-function clearFilters() {
-  document.getElementById('fCat').value = '';
-  document.getElementById('fMin').value = '';
-  document.getElementById('fMax').value = '';
-  loadBooks();
+function updateCatCounts(books){
+  const cats={programming:0,science:0,history:0,fiction:0,math:0};
+  books.forEach(b=>{if(cats[b.category]!==undefined)cats[b.category]++;});
+  Object.entries(cats).forEach(([k,v])=>{const el=document.getElementById('cnt-'+k);if(el)el.textContent=v+' cuốn';});
+  const allEl=document.getElementById('cnt-all');if(allEl)allEl.textContent=books.length+' cuốn';
 }
 
-async function doSearch() {
-  const q   = document.getElementById('navSearch').value || document.getElementById('sQ').value;
-  const cat = document.getElementById('sCat').value;
-  const min = document.getElementById('sMin').value;
-  const max = document.getElementById('sMax').value;
-  // sync search inputs
-  document.getElementById('sQ').value = q;
-  document.getElementById('navSearch').value = q;
-  switchTab('search');
-  const grid = document.getElementById('searchGrid');
-  grid.innerHTML = '<div class="loading"><div class="spin"></div><br>Đang tìm...</div>';
-  try {
-    let url = '/api/books/search/?q='+encodeURIComponent(q);
-    if (cat) url += '&category='+cat;
-    if (min) url += '&min_price='+min;
-    if (max) url += '&max_price='+max;
-    const r = await fetch(url);
-    const data = await r.json();
-    const books = data.results || data.books || (Array.isArray(data)?data:[]);
-    renderBooks(books, grid, 'searchMeta');
-  } catch(e) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Lỗi tìm kiếm</div>';
-  }
+function renderHeroPreview(books){
+  const el=document.getElementById('heroBooksPreview');
+  if(!el)return;
+  el.innerHTML=books.filter(b=>b.cover_image_url).slice(0,4).map(b=>`
+    <div class="hero-book-thumb" onclick="openDetail(${b.id})">
+      <img src="${b.cover_image_url}" alt="${b.title}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+    </div>`).join('');
 }
 
-function renderBooks(books, grid, metaId) {
-  if (metaId) document.getElementById(metaId).textContent = books.length + ' cuốn sách';
-  if (!books.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>Không tìm thấy sách nào</div>';
-    return;
+function filterCat(cat){
+  currentCat=cat;
+  // Update cat nav
+  document.querySelectorAll('.cat-link').forEach(el=>{
+    el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${cat}'`)||(cat===''&&el.textContent.includes('Tất cả')));
+  });
+  const title=document.getElementById('bookSectionTitle');
+  const catNames={programming:'💻 Sách Lập Trình',science:'🔬 Khoa Học',history:'📜 Lịch Sử & Kỹ Năng',fiction:'📖 Tiểu Thuyết',math:'📐 Toán Học','':`Tất cả sách`};
+  if(title)title.textContent=catNames[cat]||'Tất cả sách';
+  loadBooks(1);
+  document.getElementById('bookSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function sortBooks(){sortAndRender();}
+
+function sortAndRender(){
+  const sort=document.getElementById('sortBy')?.value||'';
+  let books=[...allBooks];
+  if(sort==='price_asc')books.sort((a,b)=>parseFloat(a.price)-parseFloat(b.price));
+  else if(sort==='price_desc')books.sort((a,b)=>parseFloat(b.price)-parseFloat(a.price));
+  else if(sort==='name')books.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
+  totalPages=Math.ceil(books.length/PAGE_SIZE)||1;
+  const start=(currentPage-1)*PAGE_SIZE;
+  const pageBooks=books.slice(start,start+PAGE_SIZE);
+  document.getElementById('booksMeta').textContent=`${books.length} cuốn sách · Trang ${currentPage}/${totalPages}`;
+  renderBooks(pageBooks,document.getElementById('booksGrid'));
+  renderPagination(books.length);
+}
+
+function renderPagination(total){
+  const el=document.getElementById('pagination');
+  if(totalPages<=1){el.innerHTML='';return;}
+  let html=`<button class="pg-btn" onclick="loadBooks(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Trước</button>`;
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||Math.abs(i-currentPage)<=1)html+=`<button class="pg-btn ${i===currentPage?'active':''}" onclick="loadBooks(${i})">${i}</button>`;
+    else if(Math.abs(i-currentPage)===2)html+=`<span class="pg-info">…</span>`;
   }
-  grid.innerHTML = books.map(b => {
-    const emoji = {programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'}[b.category] || '📚';
-    const oos = b.stock <= 0;
-    return `<div class="book-card" onclick="openDetail(${b.id})">
-      <div class="book-cover">${emoji}<span class="cover-cat">${b.category||'book'}</span></div>
-      <div class="book-title">${b.title}</div>
-      <div class="book-author">✍️ ${b.author||'Không rõ'}</div>
-      <div class="book-rating"><span class="stars">${starsHtml(b.average_rating||0)}</span> ${b.total_reviews||0} đánh giá</div>
-      <div class="book-footer">
-        <div class="book-price">${fmt(b.price)}</div>
-        ${oos
-          ? '<span class="oos">Hết hàng</span>'
-          : `<button class="btn-cart" onclick="event.stopPropagation();addToCart(${b.id},${b.price},'${b.title.replace(/'/g,"\\'")}')">🛒 Thêm</button>`}
+  html+=`<button class="pg-btn" onclick="loadBooks(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Sau ›</button>`;
+  el.innerHTML=html;
+}
+
+async function doSearch(){
+  const q=document.getElementById('navSearch').value.trim();
+  const cat=document.getElementById('searchCatFilter').value;
+  if(!q&&!cat)return;
+  showPane('search');
+  document.getElementById('searchTitle').textContent=q?`Kết quả cho "${q}"`:'Duyệt theo danh mục';
+  const grid=document.getElementById('searchGrid');
+  grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tìm...</div>';
+  try{
+    let url='/api/books/search/?q='+encodeURIComponent(q);
+    if(cat)url+='&category='+cat;
+    const r=await fetch(url);
+    const data=await r.json();
+    const books=data.results||data.books||(Array.isArray(data)?data:[]);
+    document.getElementById('searchMeta').textContent=books.length+' kết quả';
+    renderBooks(books,grid);
+  }catch(e){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Lỗi tìm kiếm</div>';}
+}
+
+function renderBooks(books,grid){
+  if(!books.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div>Không tìm thấy sách nào</div>';return;}
+  grid.innerHTML=books.map((b,i)=>{
+    const oos=b.stock<=0;
+    const badgeClass=BADGES[i%BADGES.length];
+    const badgeLabel=badgeClass==='badge-new'?'MỚI':badgeClass==='badge-sale'?'SALE':badgeClass==='badge-hot'?'HOT':'';
+    return`<div class="book-card" onclick="openDetail(${b.id})">
+      ${badgeLabel?`<span class="book-badge ${badgeClass}">${badgeLabel}</span>`:''}
+      <div class="book-cover">${coverHtml(b,'200px')}<span class="cover-cat">${b.category||'book'}</span></div>
+      <div class="book-body">
+        <div class="book-title">${b.title}</div>
+        <div class="book-author">✍️ ${b.author||'Không rõ'}</div>
+        <div class="book-rating"><span class="stars">${starsHtml(b.average_rating||0)}</span> ${(b.average_rating||0).toFixed(1)} (${b.total_reviews||0})</div>
+        <div class="book-footer">
+          <div><span class="book-price">${fmt(b.price)}</span></div>
+          ${oos?'<span class="oos-tag">Hết hàng</span>'
+            :`<button class="btn-cart" onclick="event.stopPropagation();addToCart(${b.id},${b.price},'${b.title.replace(/'/g,"\\'")}')">🛒 Thêm</button>`}
+        </div>
       </div>
     </div>`;
   }).join('');
 }
+</script>
 
-// ═══════════════════════════════════════════════════════════
-// BOOK DETAIL
-// ═══════════════════════════════════════════════════════════
-async function openDetail(bookId) {
-  currentBookId = bookId;
-  reviewRating = 5;
+<script>
+// ── BOOK DETAIL ───────────────────────────────────────────
+async function openDetail(bookId){
+  currentBookId=bookId;reviewRating=5;
   openModal('detailModal');
-  document.getElementById('detailBody').innerHTML = '<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
-  try {
-    const [bookR, revR] = await Promise.all([
-      fetch('/api/books/'+bookId+'/'),
-      fetch('/api/comments/by_book/?book_id='+bookId)
-    ]);
-    const book = await bookR.json();
-    const revData = revR.ok ? await revR.json() : {};
-    const reviews = revData.comments || [];
-    const avgRating = revData.average_rating || 0;
-    const totalRev  = revData.total_reviews || 0;
-    const emoji = {programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'}[book.category]||'📚';
-    const oos = book.stock <= 0;
-
-    document.getElementById('detailTitle').textContent = book.title;
-    document.getElementById('detailBody').innerHTML = `
+  document.getElementById('detailBody').innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
+  try{
+    const [bookR,revR]=await Promise.all([fetch('/api/books/'+bookId+'/'),fetch('/api/comments/by_book/?book_id='+bookId)]);
+    const book=await bookR.json();
+    const revData=revR.ok?await revR.json():{};
+    const reviews=revData.comments||[];
+    const avg=revData.average_rating||0;
+    const total=revData.total_reviews||0;
+    const oos=book.stock<=0;
+    const coverDetail=book.cover_image_url
+      ?`<img src="${book.cover_image_url}" alt="${book.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+      :`<span style="font-size:3rem">${EMOJI[book.category]||'📚'}</span>`;
+    document.getElementById('detailTitle').textContent=book.title;
+    document.getElementById('detailBody').innerHTML=`
       <div class="detail-grid">
-        <div class="detail-cover">${emoji}</div>
+        <div class="detail-cover">${coverDetail}</div>
         <div class="detail-info">
           <div class="detail-title">${book.title}</div>
           <div class="detail-author">✍️ ${book.author||'Không rõ tác giả'}</div>
           <div class="detail-meta">
             <span class="chip">📂 ${book.category||'—'}</span>
-            <span class="chip">📦 Kho: ${book.stock} cuốn</span>
-            ${book.publisher_detail ? `<span class="chip">🏢 ${book.publisher_detail.name}</span>` : ''}
+            <span class="chip">📦 Còn ${book.stock} cuốn</span>
+            ${book.publisher_detail?`<span class="chip">🏢 ${book.publisher_detail.name}</span>`:''}
           </div>
           <div class="detail-price">${fmt(book.price)}</div>
-          <div class="book-rating"><span class="stars">${starsHtml(avgRating)}</span> ${avgRating.toFixed(1)} (${totalRev} đánh giá)</div>
-          ${book.description ? `<div class="detail-desc">${book.description}</div>` : ''}
-          <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
-            ${oos
-              ? '<span class="oos" style="font-size:.9rem">Hết hàng</span>'
-              : `<button class="btn btn-p" onclick="addToCart(${book.id},${book.price},'${book.title.replace(/'/g,"\\'")}');closeModal('detailModal')">🛒 Thêm vào giỏ</button>`}
+          <div class="book-rating"><span class="stars">${starsHtml(avg)}</span> ${avg.toFixed(1)} · ${total} đánh giá</div>
+          ${book.description?`<div class="detail-desc">${book.description}</div>`:''}
+          <div style="display:flex;gap:.6rem;margin-top:.75rem;flex-wrap:wrap">
+            ${oos?'<span class="oos-tag" style="font-size:.85rem">Hết hàng</span>'
+              :`<button class="btn btn-p" style="padding:.65rem 1.5rem;font-size:.92rem" onclick="addToCart(${book.id},${book.price},'${book.title.replace(/'/g,"\\'")}');closeModal('detailModal')">🛒 Thêm vào giỏ hàng</button>
+                <a href="/cart/" class="btn btn-o">Xem giỏ hàng →</a>`}
           </div>
         </div>
       </div>
       <div class="reviews-sec">
-        <div class="sec-hdr"><div class="sec-title" style="font-size:1rem">💬 Đánh giá (${totalRev})</div></div>
-        <div id="reviewsList">
-          ${reviews.length ? reviews.map(rv => `
-            <div class="rev-card">
-              <div class="rev-hdr">
-                <span class="rev-author">👤 Khách hàng #${rv.customer_id}</span>
-                <div style="display:flex;align-items:center;gap:.5rem">
-                  <span class="stars" style="font-size:.9rem">${starsHtml(rv.rating)}</span>
-                  <span class="rev-date">${new Date(rv.created_at).toLocaleDateString('vi-VN')}</span>
-                </div>
-              </div>
-              <div class="rev-body">${rv.content}</div>
-            </div>`).join('') : '<div class="empty-state" style="padding:1rem 0">Chưa có đánh giá nào</div>'}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem">
+          <div style="font-size:1rem;font-weight:700">💬 Đánh giá (${total})</div>
+          ${total>0?`<div style="font-size:.85rem;color:var(--tm)">Trung bình: <strong style="color:var(--orange)">${avg.toFixed(1)}/5</strong></div>`:''}
         </div>
-        ${user ? `
+        ${reviews.length?reviews.map(rv=>`
+          <div class="rev-card">
+            <div class="rev-hdr">
+              <span class="rev-author">👤 Khách hàng #${rv.customer_id}</span>
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <span class="stars">${starsHtml(rv.rating)}</span>
+                <span class="rev-date">${new Date(rv.created_at).toLocaleDateString('vi-VN')}</span>
+              </div>
+            </div>
+            <div class="rev-body">${rv.content}</div>
+          </div>`).join('')
+          :'<div class="empty-state" style="padding:1rem 0">Chưa có đánh giá nào. Hãy là người đầu tiên!</div>'}
+        ${user?`
         <div class="write-rev">
-          <h4>✏️ Viết đánh giá</h4>
-          <div class="star-row" id="starRow">
-            ${[1,2,3,4,5].map(i=>`<button class="star-btn ${i<=5?'on':''}" onclick="setRating(${i})" id="star${i}">★</button>`).join('')}
-          </div>
-          <div class="form-group"><textarea id="revContent" rows="3" placeholder="Chia sẻ cảm nhận của bạn..."></textarea></div>
-          <button class="btn btn-p btn-sm" style="margin-top:.5rem" onclick="submitReview()">Gửi đánh giá</button>
-          <div id="revMsg" style="font-size:.8rem;color:var(--tm);margin-top:.4rem"></div>
-        </div>` : '<p style="font-size:.85rem;color:var(--tm);margin-top:.75rem">Đăng nhập để viết đánh giá</p>'}
+          <h4>✏️ Viết đánh giá của bạn</h4>
+          <div class="star-row" id="starRow">${[1,2,3,4,5].map(i=>`<button class="star-btn" id="star${i}" onclick="setRating(${i})">★</button>`).join('')}</div>
+          <div class="form-group"><textarea id="revContent" rows="3" placeholder="Chia sẻ cảm nhận của bạn về cuốn sách..."></textarea></div>
+          <button class="btn btn-p btn-sm" onclick="submitReview()">Gửi đánh giá</button>
+          <span id="revMsg" style="font-size:.8rem;color:var(--tm);margin-left:.5rem"></span>
+        </div>`
+        :`<p style="font-size:.85rem;color:var(--tm);margin-top:.75rem"><a href="/customer-login/" style="color:var(--p);font-weight:600">Đăng nhập</a> để viết đánh giá</p>`}
       </div>`;
     setRating(5);
-  } catch(e) {
-    document.getElementById('detailBody').innerHTML = '<div class="empty-state">Lỗi tải chi tiết sách</div>';
-  }
+  }catch(e){document.getElementById('detailBody').innerHTML='<div class="empty-state">Lỗi tải chi tiết sách</div>';}
 }
 
-function setRating(n) {
-  reviewRating = n;
-  for (let i=1;i<=5;i++) {
-    const s = document.getElementById('star'+i);
-    if (s) s.style.color = i<=n ? '#F59E0B' : '#D1D5DB';
-  }
+function setRating(n){reviewRating=n;for(let i=1;i<=5;i++){const s=document.getElementById('star'+i);if(s)s.style.color=i<=n?'#F59E0B':'#D1D5DB';}}
+
+async function submitReview(){
+  if(!user){toast('Đăng nhập để đánh giá','err');return;}
+  const content=document.getElementById('revContent').value.trim();
+  if(!content){toast('Nhập nội dung đánh giá','err');return;}
+  const msg=document.getElementById('revMsg');msg.textContent='Đang gửi...';
+  try{
+    const r=await api('/comments/',{method:'POST',body:JSON.stringify({customer_id:user.service_user_id,book_id:currentBookId,content,rating:reviewRating})});
+    const d=await r.json();
+    if(r.ok){msg.textContent='✅ Đã gửi!';document.getElementById('revContent').value='';setTimeout(()=>openDetail(currentBookId),800);}
+    else msg.textContent='❌ '+(d.error||JSON.stringify(d));
+  }catch(e){msg.textContent='❌ Lỗi kết nối';}
 }
 
-async function submitReview() {
-  if (!user) { toast('Đăng nhập để đánh giá','err'); return; }
-  const content = document.getElementById('revContent').value.trim();
-  if (!content) { toast('Nhập nội dung đánh giá','err'); return; }
-  const msg = document.getElementById('revMsg');
-  msg.textContent = 'Đang gửi...';
-  try {
-    const r = await apiFetch('/comments/', {
-      method:'POST',
-      body: JSON.stringify({ customer_id: user.service_user_id, book_id: currentBookId, content, rating: reviewRating })
-    });
-    const d = await r.json();
-    if (r.ok) {
-      msg.textContent = '✅ Đánh giá đã được gửi!';
-      document.getElementById('revContent').value = '';
-      setTimeout(() => openDetail(currentBookId), 800);
-    } else {
-      msg.textContent = '❌ ' + (d.error || JSON.stringify(d));
-    }
-  } catch(e) { msg.textContent = '❌ Lỗi kết nối'; }
-}
-</script>
-
-<script>
-// ═══════════════════════════════════════════════════════════
-// CART
-// ═══════════════════════════════════════════════════════════
-async function fetchCart() {
-  if (!user?.cart_id) return;
-  try {
-    const r = await apiFetch('/carts/'+user.cart_id+'/');
-    if (r.ok) { cartData = await r.json(); renderCart(); }
-  } catch(e) {}
+// ── CART ─────────────────────────────────────────────────
+async function addToCart(bookId,price,title){
+  if(!user){toast('Đăng nhập để thêm vào giỏ','err');window.location.href='/customer-login/?next=/';return;}
+  if(!user.cart_id){toast('Không tìm thấy giỏ hàng','err');return;}
+  try{
+    const r=await api('/customers/'+user.service_user_id+'/updateCart/',{method:'POST',body:JSON.stringify({book_id:bookId,quantity:1})});
+    if(r.ok){toast('✅ Đã thêm "'+title+'" vào giỏ','ok');fetchCartCount();}
+    else{const d=await r.json();toast('❌ '+(d.error||'Không thể thêm'),'err');}
+  }catch(e){toast('Lỗi kết nối','err');}
 }
 
-function renderCart() {
-  const el = document.getElementById('cartItems');
-  const items = cartData?.items || [];
-  document.getElementById('cartCount').textContent = items.length;
-  if (!items.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div>Giỏ hàng trống</div>';
-    document.getElementById('cartTotal').textContent = '0₫';
-    return;
-  }
-  let total = 0;
-  el.innerHTML = items.map(item => {
-    const sub = parseFloat(item.price_at_add||0) * item.quantity;
-    total += sub;
-    return `<div class="cart-item">
-      <div class="ci-info">
-        <div class="ci-title">📚 Sách #${item.book_id}</div>
-        <div class="ci-price">${fmt(item.price_at_add)} × ${item.quantity} = ${fmt(sub)}</div>
-      </div>
-      <div class="ci-ctrl">
-        <button class="qty-btn" onclick="updateQty(${item.book_id},${item.quantity-1})">−</button>
-        <span style="font-weight:700;font-size:.85rem;min-width:18px;text-align:center">${item.quantity}</span>
-        <button class="qty-btn" onclick="updateQty(${item.book_id},${item.quantity+1})">+</button>
-      </div>
-    </div>`;
-  }).join('');
-  document.getElementById('cartTotal').textContent = fmt(total);
-}
-
-async function addToCart(bookId, price, title) {
-  if (!user) { toast('Đăng nhập để thêm vào giỏ','err'); openModal('loginModal'); return; }
-  if (!user.cart_id) { toast('Không tìm thấy giỏ hàng','err'); return; }
-  try {
-    const r = await apiFetch('/customers/'+user.service_user_id+'/updateCart/', {
-      method:'POST',
-      body: JSON.stringify({ book_id: bookId, quantity: 1 })
-    });
-    if (r.ok) {
-      await fetchCart();
-      toast('✅ Đã thêm "'+title+'" vào giỏ','ok');
-    } else {
-      const d = await r.json();
-      toast('❌ '+(d.error||'Không thể thêm vào giỏ'),'err');
-    }
-  } catch(e) { toast('Lỗi kết nối','err'); }
-}
-
-async function updateQty(bookId, qty) {
-  if (!user?.cart_id) return;
-  try {
-    await apiFetch('/carts/'+user.cart_id+'/update_item_quantity/', {
-      method:'POST',
-      body: JSON.stringify({ book_id: bookId, quantity: qty })
-    });
-    await fetchCart();
-  } catch(e) {}
-}
-
-// ═══════════════════════════════════════════════════════════
-// CHECKOUT (SAGA)
-// ═══════════════════════════════════════════════════════════
-async function checkout() {
-  if (!user) { toast('Đăng nhập trước','err'); return; }
-  if (!cartData?.items?.length) { toast('Giỏ hàng trống','err'); return; }
-  const addr = document.getElementById('shipAddr').value.trim();
-  const pay  = document.getElementById('payMethod').value;
-  if (!addr) { toast('Nhập địa chỉ giao hàng','err'); return; }
-  const msg = document.getElementById('checkoutMsg');
-  msg.textContent = '⏳ Đang xử lý đơn hàng (Saga)...';
-  try {
-    const r = await apiFetch('/orders/checkout/', {
-      method:'POST',
-      body: JSON.stringify({
-        customer_id: user.service_user_id,
-        cart_id: user.cart_id,
-        shipping_address: addr,
-        payment_method: pay
-      })
-    });
-    const d = await r.json();
-    if (r.ok && d.success) {
-      msg.textContent = '';
-      toast('🎉 Đặt hàng thành công! Mã đơn: #'+d.order.id,'ok');
-      await fetchCart();
-      // Show saga steps
-      if (d.saga_steps?.length) {
-        const steps = d.saga_steps.map(s =>
-          `<div class="saga-step"><span class="${s.status==='ok'?'step-ok':'step-fail'}">${s.status==='ok'?'✓':'✗'}</span> ${s.step}</div>`
-        ).join('');
-        document.getElementById('checkoutMsg').innerHTML = '<div class="saga-steps">'+steps+'</div>';
-      }
-      switchTab('orders');
-    } else {
-      msg.textContent = '❌ '+(d.message||d.error||'Đặt hàng thất bại');
-      toast('Đặt hàng thất bại: '+(d.message||d.error||''),'err');
-    }
-  } catch(e) { msg.textContent = '❌ Lỗi kết nối'; toast('Lỗi kết nối','err'); }
-}
-
-// ═══════════════════════════════════════════════════════════
-// ORDERS
-// ═══════════════════════════════════════════════════════════
-async function loadOrders() {
-  const el = document.getElementById('ordersPane');
-  if (!user) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div>Đăng nhập để xem đơn hàng</div>'; return; }
-  el.innerHTML = '<div class="loading"><div class="spin"></div><br>Đang tải đơn hàng...</div>';
-  try {
-    const r = await apiFetch('/orders/by_customer/?customer_id='+user.service_user_id);
-    const d = await r.json();
-    const orders = d.orders || [];
-    if (!orders.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>Chưa có đơn hàng nào</div>';
-      return;
-    }
-    el.innerHTML = orders.map(o => `
-      <div class="order-card" onclick="openOrderDetail(${o.id})" style="cursor:pointer">
-        <div class="order-hdr">
-          <span class="order-id">Đơn #${o.id}</span>
-          ${statusBadge(o.status)}
-        </div>
-        <div class="order-items">📅 ${new Date(o.created_at).toLocaleString('vi-VN')} · ${o.items?.length||0} sản phẩm</div>
+// ── ORDERS ───────────────────────────────────────────────
+async function loadOrders(){
+  const el=document.getElementById('ordersPane');
+  if(!user){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔒</div>Đăng nhập để xem đơn hàng<br><a href="/customer-login/" class="btn btn-p btn-sm" style="display:inline-block;margin-top:.75rem">Đăng nhập</a></div>';return;}
+  el.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
+  try{
+    const r=await api('/orders/by_customer/?customer_id='+user.service_user_id);
+    const d=await r.json();const orders=d.orders||[];
+    if(!orders.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div>Chưa có đơn hàng nào<br><a href="/" onclick="backHome();return false" class="btn btn-p btn-sm" style="display:inline-block;margin-top:.75rem">Mua sắm ngay</a></div>';return;}
+    el.innerHTML=orders.map(o=>`
+      <div class="order-card" onclick="openOrderDetail(${o.id})">
+        <div class="order-hdr"><span class="order-id">Đơn #${o.id}</span>${statusBadge(o.status)}</div>
+        <div style="font-size:.82rem;color:var(--tm);margin-bottom:.4rem">📅 ${new Date(o.created_at).toLocaleString('vi-VN')} · ${o.items?.length||0} sản phẩm</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="order-total">${fmt(o.total_amount)}</div>
+          <div style="font-weight:800;color:var(--red);font-size:.95rem">${fmt(o.total_amount)}</div>
           ${o.status==='pending'?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelOrder(${o.id})">Hủy đơn</button>`:''}
         </div>
       </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="empty-state">Lỗi tải đơn hàng</div>'; }
+  }catch(e){el.innerHTML='<div class="empty-state">Lỗi tải đơn hàng</div>';}
 }
 
-async function openOrderDetail(orderId) {
+async function openOrderDetail(orderId){
   openModal('orderDetailModal');
-  const el = document.getElementById('orderDetailBody');
-  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
-  try {
-    const [oR, sR] = await Promise.all([
-      apiFetch('/orders/'+orderId+'/order_details/'),
-      apiFetch('/shipments/track_by_order/?order_id='+orderId)
-    ]);
-    const od = await oR.json();
-    const order = od.order || od;
-    const ship = sR.ok ? await sR.json() : null;
-    el.innerHTML = `
+  const el=document.getElementById('orderDetailBody');
+  el.innerHTML='<div class="loading"><div class="spin"></div></div>';
+  try{
+    const [oR,sR]=await Promise.all([api('/orders/'+orderId+'/order_details/'),api('/shipments/track_by_order/?order_id='+orderId)]);
+    const od=await oR.json();const order=od.order||od;
+    const ship=sR.ok?await sR.json():null;
+    el.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div><strong>Đơn hàng #${order.id}</strong> ${statusBadge(order.status)}</div>
-        <div class="order-total">${fmt(order.total_amount)}</div>
+        <div><strong style="font-size:1rem">Đơn hàng #${order.id}</strong> ${statusBadge(order.status)}</div>
+        <div style="font-weight:800;color:var(--red);font-size:1.1rem">${fmt(order.total_amount)}</div>
       </div>
-      <div style="font-size:.85rem;color:var(--tm);margin-bottom:.75rem">
-        📅 ${new Date(order.created_at).toLocaleString('vi-VN')}<br>
-        📍 ${order.shipping_address||'—'}
+      <div style="font-size:.85rem;color:var(--tm);margin-bottom:.85rem;line-height:1.7">
+        📅 ${new Date(order.created_at).toLocaleString('vi-VN')}<br>📍 ${order.shipping_address||'—'}
       </div>
-      <div class="sec-title" style="font-size:.95rem;margin-bottom:.5rem">Sản phẩm</div>
-      ${(order.items||[]).map(i=>`
-        <div class="cart-item">
-          <div class="ci-info"><div class="ci-title">📚 Sách #${i.book_id}</div><div class="ci-price">SL: ${i.quantity}</div></div>
-          <div style="font-weight:700;color:var(--pd)">${fmt(i.price)}</div>
-        </div>`).join('')}
-   
-      ${ship ? `
-      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--b)">
-        <div class="sec-title" style="font-size:.95rem;margin-bottom:.5rem">🚚 Vận chuyển</div>
-        <div style="font-size:.85rem;color:var(--tm)">
+      <div style="font-weight:700;margin-bottom:.6rem">Sản phẩm đặt mua</div>
+      ${(order.items||[]).map(i=>`<div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--b);font-size:.88rem"><span>📚 Sách #${i.book_id} × ${i.quantity}</span><span style="font-weight:700;color:var(--red)">${fmt(i.price)}</span></div>`).join('')}
+      ${ship?`<div style="margin-top:1rem;padding:1rem;background:var(--pll);border-radius:var(--rs);border:1px solid var(--b)">
+        <div style="font-weight:700;margin-bottom:.5rem">🚚 Thông tin vận chuyển</div>
+        <div style="font-size:.85rem;color:var(--tm);line-height:1.8">
           Mã tracking: <strong>${ship.tracking_number||'—'}</strong><br>
           Trạng thái: ${statusBadge(ship.status)}<br>
-          Dự kiến: ${ship.estimated_delivery||'—'}
+          Dự kiến giao: <strong>${ship.estimated_delivery||'—'}</strong>
         </div>
-      </div>` : ''}`;
-  } catch(e) { el.innerHTML = '<div class="empty-state">Lỗi tải chi tiết</div>'; }
+      </div>`:''}`;
+  }catch(e){el.innerHTML='<div class="empty-state">Lỗi tải chi tiết</div>';}
 }
 
-async function cancelOrder(orderId) {
-  if (!confirm('Hủy đơn hàng #'+orderId+'?')) return;
-  try {
-    const r = await apiFetch('/orders/'+orderId+'/cancel_order/', { method:'POST', body:'{}' });
-    const d = await r.json();
-    if (r.ok) { toast('Đã hủy đơn hàng','ok'); loadOrders(); }
+async function cancelOrder(orderId){
+  if(!confirm('Hủy đơn hàng #'+orderId+'?'))return;
+  try{
+    const r=await api('/orders/'+orderId+'/cancel_order/',{method:'POST',body:'{}'});
+    const d=await r.json();
+    if(r.ok){toast('Đã hủy đơn hàng','ok');loadOrders();}
     else toast('❌ '+(d.error||'Không thể hủy'),'err');
-  } catch(e) { toast('Lỗi kết nối','err'); }
+  }catch(e){toast('Lỗi kết nối','err');}
 }
 
-// ═══════════════════════════════════════════════════════════
-// RECOMMENDATIONS
-// ═══════════════════════════════════════════════════════════
-async function loadRecs() {
-  const el = document.getElementById('recsPane');
-  if (!user) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div>Đăng nhập để nhận gợi ý</div>'; return; }
-  el.innerHTML = '<div class="loading"><div class="spin"></div><br>Đang tạo gợi ý...</div>';
-  try {
-    const r = await fetch('/api/recommendations/get_recommendations/?customer_id='+user.service_user_id+'&limit=8');
-    const d = await r.json();
-    const recs = d.recommendations || [];
-    if (!recs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">💡</div>Chưa có gợi ý. Hãy mua sách để nhận gợi ý cá nhân hóa!</div>';
-      return;
-    }
-    el.innerHTML = recs.map(rec => {
-      const book = rec.book || {};
-      const info = rec.recommendation || rec;
-      const emoji = {programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'}[book.category]||'📚';
-      return `<div class="rec-card" onclick="openDetail(${book.id||info.recommended_book_id})">
-        <div class="rec-cover">${emoji}</div>
-        <div class="rec-info">
-          <div class="rec-title">${book.title||'Sách #'+info.recommended_book_id}</div>
-          <div class="rec-reason">💡 ${info.reason||'Phổ biến'}</div>
-          ${book.price ? `<div class="rec-price">${fmt(book.price)}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="empty-state">Lỗi tải gợi ý</div>'; }
-}
-
-// ═══════════════════════════════════════════════════════════
-// HEALTH & METRICS
-// ═══════════════════════════════════════════════════════════
-async function loadHealth() {
-  const el = document.getElementById('healthPane');
-  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
-  try {
-    const r = await fetch('/health/');
-    const d = await r.json();
-    const overall = d.status === 'healthy'
-      ? '<span style="color:#059669;font-weight:700">✅ Tất cả dịch vụ hoạt động bình thường</span>'
-      : '<span style="color:#F59E0B;font-weight:700">⚠️ Một số dịch vụ có vấn đề</span>';
-    const cards = Object.entries(d.services||{}).map(([svc, status]) => {
-      const dot = status==='healthy' ? 'dot-ok' : status==='degraded' ? 'dot-warn' : 'dot-err';
-      return `<div class="health-card"><div class="dot ${dot}"></div>${svc}</div>`;
-    }).join('');
-    el.innerHTML = `<div style="margin-bottom:.75rem">${overall}</div><div class="health-grid">${cards}</div>`;
-  } catch(e) { el.innerHTML = '<div class="empty-state">Không thể kiểm tra health</div>'; }
-}
-
-async function loadMetrics() {
-  const el = document.getElementById('metricsPane');
-  try {
-    const r = await fetch('/metrics/');
-    const d = await r.json();
-    el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem;margin-top:.5rem">
-        <div class="health-card" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-          <div style="font-size:.75rem;color:var(--tm)">Tổng requests</div>
-          <div style="font-size:1.3rem;font-weight:700;color:var(--pd)">${d.total_requests}</div>
-        </div>
-        <div class="health-card" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-          <div style="font-size:.75rem;color:var(--tm)">Lỗi</div>
-          <div style="font-size:1.3rem;font-weight:700;color:#DC2626">${d.total_errors}</div>
-        </div>
-        <div class="health-card" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-          <div style="font-size:.75rem;color:var(--tm)">Rate limited</div>
-          <div style="font-size:1.3rem;font-weight:700;color:#F59E0B">${d.rate_limited}</div>
-        </div>
-        <div class="health-card" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-          <div style="font-size:.75rem;color:var(--tm)">Auth thất bại</div>
-          <div style="font-size:1.3rem;font-weight:700;color:#EF4444">${d.auth_failures}</div>
-        </div>
+// ── PROFILE ──────────────────────────────────────────────
+async function loadProfileTab(){
+  if(!user)return;
+  const init=(user.username||'U')[0].toUpperCase();
+  document.getElementById('profileDisplay').innerHTML=`
+    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:.5rem">
+      <div class="profile-avatar-lg">${init}</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">${user.username}</div>
+        <div style="color:var(--tm);font-size:.85rem">${user.email||'—'}</div>
+        <span style="background:var(--pll);color:var(--pd);padding:.18rem .6rem;border-radius:20px;font-size:.73rem;font-weight:700">${user.role||'customer'}</span>
       </div>
-      <div style="margin-top:.75rem;font-size:.82rem;color:var(--tm)">
-        <strong>Theo service:</strong><br>
-        ${Object.entries(d.by_service||{}).map(([k,v])=>`${k}: <strong>${v}</strong>`).join(' · ')||'—'}
-      </div>`;
-  } catch(e) { el.innerHTML = '<div class="empty-state">Không thể tải metrics</div>'; }
-}
-
-// ═══════════════════════════════════════════════════════════
-// PROFILE & ADDRESS (CUSTOMER)
-// ═══════════════════════════════════════════════════════════
-async function loadProfileTab() {
-  if (!user) return;
-  const el = document.getElementById('profileDisplay');
-  el.innerHTML = `<div style="display:flex;gap:.85rem;align-items:center;margin-bottom:.5rem">
-    <div style="width:48px;height:48px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;font-weight:700">${user.username[0].toUpperCase()}</div>
-    <div><div style="font-weight:700;font-size:1.05rem">${user.username}</div>
-    <div style="color:var(--tm);font-size:.83rem">${user.email||'—'}</div>
-    <div style="margin-top:.25rem"><span style="background:var(--pll);color:var(--pd);padding:.15rem .55rem;border-radius:20px;font-size:.73rem;font-weight:700">${user.role||'customer'}</span></div></div>
-  </div>`;
-  document.getElementById('profEmail').value = user.email || '';
-  // Load customer detail for first/last name
-  if (user.service_user_id) {
-    try {
-      const r = await apiFetch('/customers/'+user.service_user_id+'/');
-      if (r.ok) {
-        const d = await r.json();
-        document.getElementById('profFirst').value = d.first_name || '';
-        document.getElementById('profLast').value = d.last_name || '';
-      }
-    } catch(e) {}
+    </div>`;
+  document.getElementById('profEmail').value=user.email||'';
+  if(user.service_user_id){
+    try{const r=await api('/customers/'+user.service_user_id+'/');if(r.ok){const d=await r.json();document.getElementById('profFirst').value=d.first_name||'';document.getElementById('profLast').value=d.last_name||'';}}catch(e){}
   }
   loadAddresses();
 }
 
-async function saveProfile() {
-  if (!user?.service_user_id) { toast('Không tìm thấy tài khoản','err'); return; }
-  const body = {
-    email: document.getElementById('profEmail').value,
-    first_name: document.getElementById('profFirst').value,
-    last_name: document.getElementById('profLast').value,
-  };
-  const msg = document.getElementById('profMsg');
-  msg.textContent = 'Đang lưu...';
-  try {
-    const r = await apiFetch('/customers/'+user.service_user_id+'/updateCustomer/', {
-      method:'PATCH', body: JSON.stringify(body)
-    });
-    if (r.ok) {
-      msg.textContent = '✅ Đã cập nhật';
-      user.email = body.email;
-      localStorage.setItem('cb_user', JSON.stringify(user));
-      toast('Cập nhật thành công','ok');
-    } else {
-      const d = await r.json();
-      msg.textContent = '❌ '+(d.error||JSON.stringify(d));
-    }
-  } catch(e) { msg.textContent = '❌ Lỗi kết nối'; }
+async function saveProfile(){
+  if(!user?.service_user_id)return;
+  const body={email:document.getElementById('profEmail').value,first_name:document.getElementById('profFirst').value,last_name:document.getElementById('profLast').value};
+  const msg=document.getElementById('profMsg');msg.textContent='Đang lưu...';
+  try{
+    const r=await api('/customers/'+user.service_user_id+'/updateCustomer/',{method:'PATCH',body:JSON.stringify(body)});
+    if(r.ok){msg.textContent='✅ Đã cập nhật';user.email=body.email;localStorage.setItem('cb_user',JSON.stringify(user));toast('Cập nhật thành công','ok');}
+    else{const d=await r.json();msg.textContent='❌ '+(d.error||JSON.stringify(d));}
+  }catch(e){msg.textContent='❌ Lỗi kết nối';}
 }
 
-// ── Addresses ─────────────────────────────────────────────
-async function loadAddresses() {
-  const el = document.getElementById('addrList');
-  try {
-    const r = await apiFetch('/addresses/');
-    if (!r.ok) { el.innerHTML = '<div class="empty-state">Lỗi tải địa chỉ</div>'; return; }
-    const d = await r.json();
-    const addrs = d.results || d;
-    if (!addrs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📍</div>Chưa có địa chỉ nào</div>';
-      return;
-    }
-    el.innerHTML = addrs.map(a => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;border:1px solid var(--b);border-radius:var(--rs);margin-bottom:.5rem;background:var(--bg)">
-        <div>
-          <div style="font-weight:600;font-size:.88rem">📍 ${a.street}</div>
-          <div style="font-size:.8rem;color:var(--tm)">${a.city}, ${a.country}</div>
-        </div>
+async function loadAddresses(){
+  const el=document.getElementById('addrList');
+  try{
+    const r=await api('/addresses/');if(!r.ok){el.innerHTML='<div class="empty-state" style="padding:1rem 0">Lỗi tải địa chỉ</div>';return;}
+    const d=await r.json();const addrs=d.results||d;
+    if(!addrs.length){el.innerHTML='<div class="empty-state" style="padding:1rem 0"><div class="empty-icon">📍</div>Chưa có địa chỉ nào</div>';return;}
+    el.innerHTML=addrs.map(a=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;border:1px solid var(--b);border-radius:var(--rs);margin-bottom:.5rem;background:var(--pll)">
+        <div><div style="font-weight:600;font-size:.88rem">📍 ${a.street}</div><div style="font-size:.8rem;color:var(--tm)">${a.city}, ${a.country}</div></div>
         <div style="display:flex;gap:.35rem">
           <button class="btn btn-ghost btn-sm" onclick="editAddr(${a.id},'${a.street.replace(/'/g,"\\'")}','${a.city}','${a.country}')">✏️</button>
-          <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none" onclick="deleteAddr(${a.id})">🗑️</button>
+          <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:none;cursor:pointer" onclick="deleteAddr(${a.id})">🗑️</button>
         </div>
       </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="empty-state">Lỗi tải địa chỉ</div>'; }
+  }catch(e){el.innerHTML='<div class="empty-state" style="padding:1rem 0">Lỗi tải địa chỉ</div>';}
 }
 
-function openAddrModal(id='', street='', city='', country='Việt Nam') {
-  document.getElementById('addrId').value = id;
-  document.getElementById('addrStreet').value = street;
-  document.getElementById('addrCity').value = city;
-  document.getElementById('addrCountry').value = country;
-  document.getElementById('addrModalTitle').textContent = id ? '✏️ Sửa địa chỉ' : '📍 Thêm địa chỉ';
+function openAddrModal(id='',street='',city='',country='Việt Nam'){
+  document.getElementById('addrId').value=id;document.getElementById('addrStreet').value=street;
+  document.getElementById('addrCity').value=city;document.getElementById('addrCountry').value=country;
+  document.getElementById('addrModalTitle').textContent=id?'✏️ Sửa địa chỉ':'📍 Thêm địa chỉ';
   openModal('addrModal');
 }
+function editAddr(id,street,city,country){openAddrModal(id,street,city,country);}
 
-function editAddr(id, street, city, country) { openAddrModal(id, street, city, country); }
-
-async function saveAddr() {
-  const id = document.getElementById('addrId').value;
-  const body = {
-    street: document.getElementById('addrStreet').value.trim(),
-    city: document.getElementById('addrCity').value.trim(),
-    country: document.getElementById('addrCountry').value.trim(),
-  };
-  if (!body.street || !body.city) { toast('Nhập đầy đủ thông tin địa chỉ','err'); return; }
-  try {
-    const url = id ? '/addresses/'+id+'/' : '/addresses/';
-    const method = id ? 'PATCH' : 'POST';
-    const r = await apiFetch(url, { method, body: JSON.stringify(body) });
-    if (r.ok) {
-      closeModal('addrModal');
-      toast(id ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ','ok');
-      loadAddresses();
-    } else {
-      const d = await r.json();
-      toast('❌ '+(d.error||JSON.stringify(d)),'err');
-    }
-  } catch(e) { toast('Lỗi kết nối','err'); }
+async function saveAddr(){
+  const id=document.getElementById('addrId').value;
+  const body={street:document.getElementById('addrStreet').value.trim(),city:document.getElementById('addrCity').value.trim(),country:document.getElementById('addrCountry').value.trim()};
+  if(!body.street||!body.city){toast('Nhập đầy đủ thông tin địa chỉ','err');return;}
+  try{
+    const r=await api(id?'/addresses/'+id+'/':'/addresses/',{method:id?'PATCH':'POST',body:JSON.stringify(body)});
+    if(r.ok){closeModal('addrModal');toast(id?'Đã cập nhật địa chỉ':'Đã thêm địa chỉ','ok');loadAddresses();}
+    else{const d=await r.json();toast('❌ '+(d.error||JSON.stringify(d)),'err');}
+  }catch(e){toast('Lỗi kết nối','err');}
 }
 
-async function deleteAddr(id) {
-  if (!confirm('Xóa địa chỉ này?')) return;
-  try {
-    const r = await apiFetch('/addresses/'+id+'/', { method:'DELETE' });
-    if (r.ok || r.status===204) { toast('Đã xóa địa chỉ','ok'); loadAddresses(); }
+async function deleteAddr(id){
+  if(!confirm('Xóa địa chỉ này?'))return;
+  try{
+    const r=await api('/addresses/'+id+'/',{method:'DELETE'});
+    if(r.ok||r.status===204){toast('Đã xóa địa chỉ','ok');loadAddresses();}
     else toast('Không thể xóa','err');
-  } catch(e) { toast('Lỗi kết nối','err'); }
+  }catch(e){toast('Lỗi kết nối','err');}
 }
 </script>
 </body>

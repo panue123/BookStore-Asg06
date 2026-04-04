@@ -3,34 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CloudBooks – Đăng nhập nội bộ</title>
+<title>Moon Books – Đăng nhập nội bộ</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--p:#3A85C0;--pl:#6AAED9;--pll:#B8D9EE;--pd:#1E5F8A;--bg:#E4F2FA;--s:#fff;--t:#1A3347;--tm:#4A6A80;--b:#C0D9EC;--r:12px;--rs:8px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;align-items:center;justify-content:center}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
 .box{background:var(--s);border-radius:var(--r);padding:2.5rem 2rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(30,95,138,.18)}
-.logo{font-size:1.4rem;font-weight:700;color:var(--pd);text-align:center;margin-bottom:.4rem}
+.logo{font-size:1.4rem;font-weight:700;color:var(--pd);text-align:center;margin-bottom:.4rem;text-decoration:none;display:block}
 .logo em{color:var(--p);font-style:normal}
 .subtitle{text-align:center;font-size:.85rem;color:var(--tm);margin-bottom:1.75rem}
 .form-group{display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem}
 label{font-size:.82rem;font-weight:600;color:var(--tm)}
-input{padding:.6rem .85rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.9rem;color:var(--t);background:var(--bg);font-family:inherit}
+input{padding:.6rem .85rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.9rem;color:var(--t);background:var(--bg);font-family:inherit;width:100%}
 input:focus{outline:none;border-color:var(--p)}
 .btn{width:100%;padding:.8rem;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.5rem;font-family:inherit;transition:background .2s}
 .btn:hover{background:var(--pd)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 .err{color:#DC2626;font-size:.83rem;text-align:center;margin-top:.75rem;min-height:1.2rem}
 .back{text-align:center;margin-top:1rem;font-size:.83rem;color:var(--tm)}
 .back a{color:var(--p);font-weight:600;text-decoration:none}
 .role-tabs{display:flex;gap:.4rem;margin-bottom:1.5rem;background:var(--bg);border-radius:var(--rs);padding:.3rem}
 .rtab{flex:1;padding:.45rem;border:none;border-radius:6px;background:transparent;font-weight:600;font-size:.85rem;color:var(--tm);cursor:pointer;font-family:inherit;transition:all .2s}
 .rtab.active{background:var(--p);color:#fff}
+.info-box{background:var(--pll);border:1px solid var(--pl);border-radius:var(--rs);padding:.65rem .85rem;font-size:.82rem;color:var(--pd);margin-bottom:1rem;text-align:center}
 </style>
 </head>
 <body>
 <div class="box">
-  <div class="logo">☁️ Cloud<em>Books</em></div>
+  <a href="/" class="logo">🌙 Moon<em>Books</em></a>
   <div class="subtitle">Cổng đăng nhập nội bộ</div>
+  <div class="info-box">🔒 Dành cho nhân viên và quản lý. <a href="/customer-login/" style="color:var(--pd);font-weight:700">Khách hàng đăng nhập tại đây →</a></div>
   <div class="role-tabs">
     <button class="rtab active" id="tab-staff" onclick="setRole('staff')">👔 Staff</button>
     <button class="rtab" id="tab-manager" onclick="setRole('manager')">📊 Manager</button>
@@ -45,7 +48,7 @@ input:focus{outline:none;border-color:var(--p)}
   </div>
   <button class="btn" onclick="doLogin()" id="loginBtn">Đăng nhập</button>
   <div class="err" id="errMsg"></div>
-  <div class="back"><a href="/">← Về trang khách hàng</a></div>
+  <div class="back"><a href="/">← Về trang chủ</a></div>
 </div>
 <script>
 let selectedRole = 'staff';
@@ -55,13 +58,13 @@ function setRole(r) {
   document.getElementById('tab-manager').classList.toggle('active', r==='manager');
 }
 
-// Nếu đã login đúng role thì redirect luôn
 const saved = localStorage.getItem('cb_user');
 if (saved) {
   try {
     const u = JSON.parse(saved);
     if (u.role==='staff'||u.role==='admin') { window.location.href='/staff/'; }
     else if (u.role==='manager') { window.location.href='/manager/'; }
+    else if (u.role==='customer') { window.location.href='/'; }
   } catch(e) {}
 }
 
