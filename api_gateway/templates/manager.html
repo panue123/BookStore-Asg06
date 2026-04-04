@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CloudBooks – Manager Portal</title>
+<title>MoonBooks – Manager Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -130,6 +130,7 @@ tr:hover td{background:#FAFBFF}
       <div class="sec-hdr">
         <div class="sec-title">🗂️ Danh mục & Tìm kiếm sách</div>
         <div style="display:flex;gap:.5rem;align-items:center">
+          <button class="btn btn-p btn-sm" onclick="openBookModal()">+ Thêm sách</button>
           <input type="text" id="catalogSearch" placeholder="Tìm theo tên, tác giả..." style="padding:.35rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:#F8FAFC;width:200px">
           <select id="catalogCat" style="padding:.35rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:#F8FAFC">
             <option value="">Tất cả thể loại</option>
@@ -1080,6 +1081,7 @@ function renderCatalogTable(books) {
         <td style="display:flex;gap:.3rem">
           <button class="btn btn-ghost btn-sm" onclick="editBook(${b.id},'${b.title.replace(/'/g,"\\'")}','${b.author||''}','${b.category}',${b.price},${b.stock},'${(b.description||'').replace(/'/g,"\\'")}','${b.cover_image_url||''}')">✏️ Sửa</button>
           <button class="btn btn-p btn-sm" onclick="openStockModal(${b.id},'${b.title.replace(/'/g,"\\'")}',${b.stock})">📦 Kho</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id},'${b.title.replace(/'/g,"\\'")}')">🗑️ Xóa</button>
         </td>
       </tr>`).join('')}</tbody>
     </table>`;

@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moon Books – Đăng nhập / Đăng ký</title>
+<title>MoonBooks – Đăng nhập / Đăng ký</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--p:#3B82F6;--pl:#93C5FD;--pll:#EFF6FF;--pd:#1D4ED8;--bg:#F0F7FF;--s:#fff;--t:#1E293B;--tm:#64748B;--b:#DBEAFE;--r:16px;--rs:10px;--sh:0 4px 24px rgba(59,130,246,.14)}
-body{font-family:'Be Vietnam Pro',sans-serif;background:linear-gradient(135deg,#EFF6FF 0%,#DBEAFE 60%,#E0F2FE 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+:root{--p:#1E40AF;--pl:#60A5FA;--pll:#EFF6FF;--pd:#1D4ED8;--bg:#F4F8FF;--s:#fff;--t:#10203A;--tm:#5A6B85;--b:#D7E5FF;--r:16px;--rs:10px;--sh:0 6px 28px rgba(30,64,175,.14)}
+body{font-family:'Be Vietnam Pro',sans-serif;background:radial-gradient(circle at 20% 10%,#EAF2FF 0%,#DBEAFE 46%,#D8EAFE 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
 .wrap{width:100%;max-width:440px}
 .logo-area{text-align:center;margin-bottom:1.5rem}
-.logo{font-size:1.7rem;font-weight:800;color:var(--pd);text-decoration:none;display:inline-flex;align-items:center;gap:.5rem}
-.logo-icon{font-size:1.8rem}
+.logo{font-size:2rem;font-weight:800;color:var(--pd);text-decoration:none;display:inline-flex;align-items:center;letter-spacing:.01em}
+.logo em{color:var(--p);font-style:normal}
 .logo-sub{font-size:.85rem;color:var(--tm);margin-top:.35rem}
-.box{background:var(--s);border-radius:var(--r);padding:2rem 2rem 1.75rem;box-shadow:var(--sh);border:1px solid rgba(59,130,246,.1)}
+.box{background:var(--s);border-radius:var(--r);padding:2rem 2rem 1.75rem;box-shadow:var(--sh);border:1px solid rgba(30,64,175,.1)}
 .tabs{display:flex;background:#F1F5F9;border-radius:var(--rs);padding:.3rem;margin-bottom:1.75rem;gap:.3rem}
 .rtab{flex:1;padding:.55rem;border:none;border-radius:8px;font-weight:600;font-size:.88rem;color:var(--tm);cursor:pointer;font-family:inherit;transition:all .2s;background:transparent}
 .rtab.active{background:var(--s);color:var(--p);box-shadow:0 2px 8px rgba(0,0,0,.08)}
@@ -23,7 +23,7 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:linear-gradient(135deg,#
 .form-group input{width:100%;padding:.7rem 1rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.92rem;color:var(--t);background:#F8FBFF;font-family:inherit;transition:all .2s}
 .form-group input:focus{outline:none;border-color:var(--p);background:var(--s);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
 .btn-main{width:100%;padding:.85rem;background:var(--p);color:#fff;border:none;border-radius:var(--rs);font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:.5rem}
-.btn-main:hover{background:var(--pd);transform:translateY(-1px);box-shadow:0 4px 14px rgba(59,130,246,.35)}
+.btn-main:hover{background:var(--pd);transform:translateY(-1px);box-shadow:0 6px 16px rgba(30,64,175,.32)}
 .btn-main:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
 .err{color:#DC2626;font-size:.82rem;text-align:center;margin-top:.65rem;min-height:1.1rem;font-weight:500}
 .divider{text-align:center;color:var(--tm);font-size:.8rem;margin:.85rem 0;position:relative}
@@ -32,7 +32,7 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:linear-gradient(135deg,#
 .link-row{text-align:center;font-size:.83rem;color:var(--tm);margin-top:.5rem}
 .link-row a{color:var(--p);font-weight:600;text-decoration:none}
 .link-row a:hover{text-decoration:underline}
-.staff-link{display:block;text-align:center;margin-top:1.25rem;font-size:.8rem;color:var(--tm);padding:.6rem;border:1px dashed var(--b);border-radius:var(--rs)}
+.staff-link{display:block;text-align:center;margin-top:1.25rem;font-size:.8rem;color:var(--tm);padding:.6rem;border:1px dashed var(--b);border-radius:var(--rs);background:#F8FBFF}
 .staff-link a{color:var(--tm);text-decoration:none;font-weight:600}
 .staff-link a:hover{color:var(--p)}
 </style>
@@ -40,8 +40,8 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:linear-gradient(135deg,#
 <body>
 <div class="wrap">
   <div class="logo-area">
-    <a href="/" class="logo"><span class="logo-icon">🌙</span> Moon Books</a>
-    <div class="logo-sub">Nhà sách trực tuyến hàng đầu Việt Nam</div>
+    <a href="/" class="logo">🌙 Moon<em>Books</em></a>
+    <div class="logo-sub">Đăng nhập hoặc tạo tài khoản để tiếp tục mua sắm</div>
   </div>
   <div class="box">
     <div class="tabs">
@@ -89,7 +89,7 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:linear-gradient(135deg,#
       <div class="link-row">Đã có tài khoản? <a href="#" onclick="showPane('login');return false">Đăng nhập</a></div>
     </div>
 
-    <div class="staff-link">🔒 Nhân viên / Quản lý? <a href="/login/">Đăng nhập tại đây →</a></div>
+    <div class="staff-link">Nhân viên / Quản lý? <a href="/login/">Đăng nhập tại đây →</a></div>
   </div>
 </div>
 <script>

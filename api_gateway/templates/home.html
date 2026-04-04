@@ -3,29 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moon Books – Nhà sách trực tuyến</title>
+<title>MoonBooks – Nhà sách trực tuyến</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --p:#3B82F6;--pl:#93C5FD;--pll:#EFF6FF;--pd:#1D4ED8;--pdd:#1E3A8A;
-  --bg:#F0F7FF;--s:#fff;--t:#1E293B;--tm:#64748B;--b:#DBEAFE;
-  --sh:0 2px 12px rgba(59,130,246,.10);--shl:0 8px 32px rgba(59,130,246,.18);
+  --p:#2E6E94;--pl:#78AFCB;--pll:#EEF6FB;--pd:#245A7A;--pdd:#1B4762;
+  --bg:#F2F7FA;--s:#fff;--t:#13283A;--tm:#597185;--b:#D3E3EE;
+  --sh:0 2px 12px rgba(46,110,148,.10);--shl:0 10px 30px rgba(46,110,148,.18);
   --r:14px;--rs:10px;
-  --orange:#F97316;--green:#10B981;--red:#EF4444
+  --orange:#F59E0B;--green:#0EA5A4;--red:#DC2626
 }
 body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column}
 button,input,select,textarea{font-family:inherit}
 a{text-decoration:none;color:inherit}
 
 /* ── TOP BAR ── */
-.topbar{background:var(--pdd);color:#fff;padding:.35rem 2rem;font-size:.78rem;display:flex;justify-content:space-between;align-items:center}
-.topbar a{color:#93C5FD;font-weight:600}
+.topbar{background:#F0F6FA;color:var(--tm);padding:.45rem 2rem;font-size:.78rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--b)}
+.topbar a{color:var(--pd);font-weight:700}
 
 /* ── NAV ── */
 nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;align-items:center;position:sticky;top:0;z-index:300;gap:1rem;border-bottom:1px solid var(--b)}
-.logo{font-size:1.35rem;font-weight:800;color:var(--pdd);display:flex;align-items:center;gap:.4rem;flex-shrink:0;white-space:nowrap}
-.logo-icon{font-size:1.4rem}
+.logo{font-size:1.35rem;font-weight:800;color:var(--pdd);display:flex;align-items:center;gap:.4rem;flex-shrink:0;white-space:nowrap;letter-spacing:.01em}
+.logo em{color:var(--p);font-style:normal}
+.logo-icon{display:none}
 .nav-search{display:flex;gap:0;flex:1;max-width:520px;border:2px solid var(--p);border-radius:var(--rs);overflow:hidden}
 .nav-search select{padding:.5rem .7rem;border:none;border-right:1px solid var(--b);background:#F8FBFF;font-size:.82rem;color:var(--tm);cursor:pointer;flex-shrink:0}
 .nav-search input{flex:1;padding:.5rem .9rem;border:none;color:var(--t);background:#F8FBFF;font-size:.88rem}
@@ -60,23 +61,25 @@ nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;ali
 .cat-link:hover,.cat-link.active{color:var(--p);border-bottom-color:var(--p)}
 
 /* ── HERO BANNER ── */
-.hero{background:linear-gradient(135deg,var(--pdd) 0%,var(--pd) 50%,#2563EB 100%);padding:3rem 2rem;color:#fff;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:-40%;right:-10%;width:500px;height:500px;background:rgba(255,255,255,.05);border-radius:50%}
-.hero::after{content:'';position:absolute;bottom:-30%;left:5%;width:300px;height:300px;background:rgba(255,255,255,.04);border-radius:50%}
-.hero-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;position:relative;z-index:1}
+.hero{background:radial-gradient(circle at 20% 20%,#2A678E 0%,#245A7A 40%,#1B4762 100%);padding:3rem 2rem;color:#fff;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(100deg,rgba(191,219,254,.08),rgba(191,219,254,0));pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-220px;right:-150px;width:540px;height:540px;background:radial-gradient(circle,rgba(147,197,253,.18),rgba(147,197,253,0) 70%);border-radius:50%}
+.hero-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:2rem;align-items:center;position:relative;z-index:1}
 .hero-title{font-size:2.2rem;font-weight:800;line-height:1.2;margin-bottom:.75rem}
-.hero-title em{color:#FCD34D;font-style:normal}
-.hero-sub{font-size:1rem;opacity:.88;margin-bottom:1.5rem;line-height:1.6}
+.hero-title em{color:#BFDBFE;font-style:normal}
+.hero-sub{font-size:1rem;opacity:.88;margin-bottom:1.5rem;line-height:1.7;max-width:620px}
 .hero-actions{display:flex;gap:.75rem;flex-wrap:wrap}
 .hero-btn{padding:.75rem 1.75rem;border-radius:var(--rs);font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;border:none}
-.hero-btn-primary{background:#FCD34D;color:var(--pdd)}.hero-btn-primary:hover{background:#FDE68A;transform:translateY(-2px)}
-.hero-btn-secondary{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4)}.hero-btn-secondary:hover{background:rgba(255,255,255,.25)}
+.hero-btn-primary{background:#DBEAFE;color:#0F2C79}.hero-btn-primary:hover{background:#BFDBFE;transform:translateY(-2px)}
+.hero-btn-secondary{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.35)}.hero-btn-secondary:hover{background:rgba(255,255,255,.2)}
 .hero-stats{display:flex;gap:2rem;margin-top:1.5rem}
 .hero-stat{text-align:center}
-.hero-stat-num{font-size:1.5rem;font-weight:800;color:#FCD34D}
+.hero-stat-num{font-size:1.5rem;font-weight:800;color:#BFDBFE}
 .hero-stat-label{font-size:.78rem;opacity:.8}
-.hero-books{display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap}
-.hero-book-thumb{width:90px;height:120px;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);flex-shrink:0;background:rgba(255,255,255,.1)}
+.hero-visual{position:relative;min-height:320px;display:flex;justify-content:flex-end}
+.hero-main-image{width:min(470px,100%);height:320px;object-fit:cover;border-radius:18px;box-shadow:0 16px 38px rgba(0,0,0,.24);border:2px solid rgba(255,255,255,.22)}
+.hero-books{position:absolute;right:16px;bottom:-28px;display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:nowrap;padding:.5rem;background:rgba(27,71,98,.78);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.2);border-radius:12px;max-width:94%;overflow-x:auto}
+.hero-book-thumb{width:72px;height:96px;border-radius:8px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.28);flex-shrink:0;background:rgba(255,255,255,.12)}
 .hero-book-thumb img{width:100%;height:100%;object-fit:cover}
 
 /* ── MAIN LAYOUT ── */
@@ -94,9 +97,9 @@ nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;ali
 .promo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:2rem}
 .promo-card{border-radius:var(--r);padding:1.25rem 1.5rem;color:#fff;position:relative;overflow:hidden;cursor:pointer;transition:transform .2s}
 .promo-card:hover{transform:translateY(-3px)}
-.promo-card-1{background:linear-gradient(135deg,#F97316,#EF4444)}
-.promo-card-2{background:linear-gradient(135deg,#8B5CF6,#6D28D9)}
-.promo-card-3{background:linear-gradient(135deg,#10B981,#059669)}
+.promo-card-1{background:linear-gradient(135deg,#245A7A,#2E6E94)}
+.promo-card-2{background:linear-gradient(135deg,#1F536F,#2A678E)}
+.promo-card-3{background:linear-gradient(135deg,#2E6E94,#3A86A9)}
 .promo-title{font-size:1rem;font-weight:800;margin-bottom:.3rem}
 .promo-sub{font-size:.8rem;opacity:.88}
 .promo-badge{position:absolute;top:.75rem;right:.75rem;background:rgba(255,255,255,.25);padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:700}
@@ -144,7 +147,7 @@ nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;ali
 .pg-info{font-size:.82rem;color:var(--tm);padding:0 .5rem}
 
 /* ── MODAL ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(3px)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;padding:1rem;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .overlay.open{display:flex}
 .modal{background:var(--s);border-radius:var(--r);padding:1.75rem;width:100%;max-width:480px;box-shadow:var(--shl);max-height:92vh;overflow-y:auto}
 .modal-lg{max-width:860px}
@@ -200,23 +203,17 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
 .footer-col a{display:block;font-size:.82rem;opacity:.75;margin-bottom:.4rem;color:#fff;transition:opacity .2s}
 .footer-col a:hover{opacity:1}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.15);padding-top:1rem;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;opacity:.65;flex-wrap:wrap;gap:.5rem}
-@media(max-width:1024px){.cat-grid{grid-template-columns:repeat(3,1fr)}.promo-grid{grid-template-columns:1fr 1fr}.hero-inner{grid-template-columns:1fr}.hero-books{display:none}.footer-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:768px){.main-wrap{padding:1rem}.nav{padding:.65rem 1rem;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}.books-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.hero{padding:2rem 1rem}.hero-title{font-size:1.5rem}.promo-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}.detail-cover{height:200px}.footer-grid{grid-template-columns:1fr}}
+@media(max-width:1024px){.cat-grid{grid-template-columns:repeat(3,1fr)}.promo-grid{grid-template-columns:1fr 1fr}.hero-inner{grid-template-columns:1fr}.hero-visual{min-height:280px}.hero-main-image{height:280px}.hero-books{position:static;margin-top:.9rem;justify-content:flex-start}.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.main-wrap{padding:1rem}.nav{padding:.65rem 1rem;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}.books-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.hero{padding:2rem 1rem 1.5rem}.hero-title{font-size:1.5rem}.hero-main-image{height:220px}.promo-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}.detail-cover{height:200px}.footer-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ═══ TOP BAR ═══ -->
-<div class="topbar">
-  <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 150.000₫ | 📞 Hotline: 1800-6789</span>
-  <span><a href="/login/">Nhân viên / Quản lý</a></span>
-</div>
-
 <!-- ═══ NAV ═══ -->
 <nav>
-  <a href="/" class="logo"><span class="logo-icon">🌙</span> Moon Books</a>
+  <a href="/" class="logo">🌙 Moon<em>Books</em></a>
   <div class="nav-search">
-    <select id="searchCatFilter">
+    <select id="searchCatFilter" title="Lọc danh mục tìm kiếm" aria-label="Lọc danh mục tìm kiếm">
       <option value="">Tất cả</option>
       <option value="programming">Lập trình</option>
       <option value="science">Khoa học</option>
@@ -233,15 +230,21 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
   </div>
 </nav>
 
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 150.000₫ | 📞 Hotline: 1800-6789</span>
+  <span><a href="/login/">Nhân viên / Quản lý</a></span>
+</div>
+
 <!-- ═══ CATEGORY NAV ═══ -->
 <div class="cat-nav">
   <div class="cat-nav-inner">
     <span class="cat-link active" onclick="filterCat('')">Tất cả</span>
-    <span class="cat-link" onclick="filterCat('programming')">💻 Lập trình</span>
-    <span class="cat-link" onclick="filterCat('science')">🔬 Khoa học</span>
-    <span class="cat-link" onclick="filterCat('history')">📜 Lịch sử & Kỹ năng</span>
-    <span class="cat-link" onclick="filterCat('fiction')">📖 Tiểu thuyết</span>
-    <span class="cat-link" onclick="filterCat('math')">📐 Toán học</span>
+    <span class="cat-link" onclick="filterCat('programming')">Lập trình</span>
+    <span class="cat-link" onclick="filterCat('science')">Khoa học</span>
+    <span class="cat-link" onclick="filterCat('history')">Lịch sử & Kỹ năng</span>
+    <span class="cat-link" onclick="filterCat('fiction')">Tiểu thuyết</span>
+    <span class="cat-link" onclick="filterCat('math')">Toán học</span>
   </div>
 </div>
 
@@ -254,8 +257,8 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
         <div class="hero-title">Khám phá thế giới<br>qua từng <em>trang sách</em></div>
         <div class="hero-sub">Hơn 10.000 đầu sách chất lượng cao. Giao hàng nhanh toàn quốc. Giá tốt nhất thị trường.</div>
         <div class="hero-actions">
-          <button class="hero-btn hero-btn-primary" onclick="document.getElementById('bookSection').scrollIntoView({behavior:'smooth'})">🛍️ Mua sắm ngay</button>
-          <button class="hero-btn hero-btn-secondary" onclick="filterCat('programming')">💻 Sách lập trình</button>
+          <button class="hero-btn hero-btn-primary" onclick="document.getElementById('bookSection').scrollIntoView({behavior:'smooth'})">Mua sắm ngay</button>
+          <button class="hero-btn hero-btn-secondary" onclick="filterCat('programming')">Khám phá danh mục</button>
         </div>
         <div class="hero-stats">
           <div class="hero-stat"><div class="hero-stat-num">10K+</div><div class="hero-stat-label">Đầu sách</div></div>
@@ -263,7 +266,10 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
           <div class="hero-stat"><div class="hero-stat-num">4.8★</div><div class="hero-stat-label">Đánh giá</div></div>
         </div>
       </div>
-      <div class="hero-books" id="heroBooksPreview"></div>
+      <div class="hero-visual">
+        <img class="hero-main-image" src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80" alt="Không gian đọc sách chuyên nghiệp" loading="eager">
+        <div class="hero-books" id="heroBooksPreview"></div>
+      </div>
     </div>
   </div>
 
@@ -272,17 +278,17 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
     <div class="promo-grid" style="margin-top:1.5rem">
       <div class="promo-card promo-card-1" onclick="filterCat('programming')">
         <div class="promo-badge">HOT</div>
-        <div class="promo-title">💻 Sách Lập Trình</div>
+        <div class="promo-title">Sách Lập Trình</div>
         <div class="promo-sub">Giảm đến 30% cho sách kỹ thuật</div>
       </div>
       <div class="promo-card promo-card-2" onclick="filterCat('fiction')">
         <div class="promo-badge">MỚI</div>
-        <div class="promo-title">📖 Tiểu Thuyết Hay</div>
+        <div class="promo-title">Tiểu Thuyết Hay</div>
         <div class="promo-sub">Bestseller tháng này</div>
       </div>
       <div class="promo-card promo-card-3" onclick="filterCat('science')">
         <div class="promo-badge">ĐỀ XUẤT</div>
-        <div class="promo-title">🔬 Khoa Học & Tự Nhiên</div>
+        <div class="promo-title">Khoa Học & Tự Nhiên</div>
         <div class="promo-sub">Mở rộng kiến thức mỗi ngày</div>
       </div>
     </div>
@@ -308,7 +314,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
           <div style="font-size:.8rem;color:var(--tm);margin-top:.2rem" id="booksMeta">Đang tải...</div>
         </div>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <select id="sortBy" onchange="sortBooks()" style="padding:.38rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.82rem;background:#F8FBFF">
+          <select id="sortBy" onchange="sortBooks()" title="Sắp xếp sách" aria-label="Sắp xếp sách" style="padding:.38rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.82rem;background:#F8FBFF">
             <option value="">Mặc định</option>
             <option value="price_asc">Giá tăng dần</option>
             <option value="price_desc">Giá giảm dần</option>
@@ -382,7 +388,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
   <div class="footer-inner">
     <div class="footer-grid">
       <div class="footer-brand">
-        <div class="logo" style="color:#fff;font-size:1.2rem">🌙 Moon Books</div>
+        <div class="logo" style="color:#fff;font-size:1.2rem">🌙 Moon<em>Books</em></div>
         <p>Nhà sách trực tuyến hàng đầu Việt Nam. Mang tri thức đến mọi nhà với giá tốt nhất.</p>
         <div style="margin-top:.85rem;display:flex;gap:.5rem">
           <span style="background:rgba(255,255,255,.15);padding:.3rem .6rem;border-radius:6px;font-size:.78rem">📘 Facebook</span>
@@ -413,7 +419,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Moon Books. Tất cả quyền được bảo lưu.</span>
+      <span>© 2026 MoonBooks. Tất cả quyền được bảo lưu.</span>
       <span>Được xây dựng với ❤️ tại Việt Nam</span>
     </div>
   </div>
@@ -466,6 +472,22 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function authH(){const h={'Content-Type':'application/json'};if(user?.access_token)h['Authorization']='Bearer '+user.access_token;return h;}
 async function api(path,opts={}){opts.headers={...authH(),...(opts.headers||{})};return fetch(API+path,opts);}
+async function fetchAllPages(url){
+  let next=url, out=[], guard=0;
+  while(next&&guard<40){
+    const r=await fetch(next);
+    if(!r.ok)throw new Error('load failed');
+    const data=await r.json();
+    if(Array.isArray(data)){out=out.concat(data);break;}
+    out=out.concat(data.results||data.books||[]);
+    next=data.next||null;
+    if(next&&next.startsWith('http')){
+      try{const u=new URL(next);next=u.pathname+u.search;}catch(e){}
+    }
+    guard++;
+  }
+  return out;
+}
 function fmt(n){return Number(n).toLocaleString('vi-VN')+'₫';}
 function starsHtml(r){const n=Math.round(r||0);return'★'.repeat(n)+'☆'.repeat(5-n);}
 function statusBadge(s){const m={pending:'s-pending Chờ xử lý',paid:'s-paid Đã thanh toán',shipped:'s-shipped Đang giao',canceled:'s-canceled Đã hủy',delivered:'s-delivered Đã giao'};const p=(m[s]||'s-pending '+s).split(' ');return`<span class="status-badge ${p[0]}">${p.slice(1).join(' ')}</span>`;}
@@ -529,12 +551,9 @@ async function loadBooks(page=1){
   grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải sách...</div>';
   document.getElementById('pagination').innerHTML='';
   try{
-    let url='/api/books/?page_size=200';
+    let url='/api/books/?page=1';
     if(currentCat)url+='&category='+currentCat;
-    const r=await fetch(url);
-    if(!r.ok)throw new Error();
-    const data=await r.json();
-    allBooks=Array.isArray(data)?data:(data.results||data.books||[]);
+    allBooks=await fetchAllPages(url);
     // Update category counts
     updateCatCounts(allBooks);
     // Hero preview
@@ -556,9 +575,23 @@ function updateCatCounts(books){
 function renderHeroPreview(books){
   const el=document.getElementById('heroBooksPreview');
   if(!el)return;
-  el.innerHTML=books.filter(b=>b.cover_image_url).slice(0,4).map(b=>`
-    <div class="hero-book-thumb" onclick="openDetail(${b.id})">
-      <img src="${b.cover_image_url}" alt="${b.title}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+  const fallback=[
+    'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=320&q=80',
+    'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=320&q=80',
+    'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=320&q=80',
+    'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=320&q=80'
+  ];
+  const items=books.filter(b=>b.cover_image_url).slice(0,4);
+  if(items.length){
+    el.innerHTML=items.map(b=>`
+      <div class="hero-book-thumb" onclick="openDetail(${b.id})">
+        <img src="${b.cover_image_url}" alt="${b.title}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+      </div>`).join('');
+    return;
+  }
+  el.innerHTML=fallback.map((src,i)=>`
+    <div class="hero-book-thumb">
+      <img src="${src}" alt="Ảnh sách mẫu ${i+1}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
     </div>`).join('');
 }
 

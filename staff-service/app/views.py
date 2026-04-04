@@ -70,6 +70,20 @@ def _log(actor, action, *, resource_type="", resource_id="", message="", meta=No
         pass
 
 
+def _gateway_role(request):
+    role = (
+        request.headers.get('X-User-Role')
+        or request.META.get('HTTP_X_USER_ROLE')
+        or request.META.get('X_USER_ROLE')
+        or ''
+    )
+    return role.strip().lower()
+
+
+def _gateway_can_manage_staff(request):
+    return _gateway_role(request) in (Role.ADMIN, Role.MANAGER)
+
+
 class StaffViewSet(viewsets.ModelViewSet):
     """Staff Service - Staff management and operations"""
     queryset = Staff.objects.all()
@@ -126,13 +140,25 @@ class StaffViewSet(viewsets.ModelViewSet):
         email = request.data.get('email')
         role = request.data.get('role', Role.STAFF)
         department = request.data.get('department', '')
-        
-        try:
-            requester = Staff.objects.get(id=requester_id)
-            if not _has_permission(requester, PermissionType.MANAGE_STAFF):
-                return Response({'error': 'You do not have permission to create staff'}, status=status.HTTP_403_FORBIDDEN)
-        except Staff.DoesNotExist:
-            return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not username or not password or not email:
+            return Response({'error': 'username, email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        requester = None
+        gw_role = _gateway_role(request)
+
+        # Preferred path: trust JWT role forwarded by API Gateway.
+        if gw_role in (Role.ADMIN, Role.MANAGER):
+            pass
+        else:
+            if not requester_id:
+                return Response({'error': 'requester_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                requester = Staff.objects.get(id=requester_id)
+                if not _has_permission(requester, PermissionType.MANAGE_STAFF):
+                    return Response({'error': 'You do not have permission to create staff'}, status=status.HTTP_403_FORBIDDEN)
+            except Staff.DoesNotExist:
+                return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
         
         try:
             staff = Staff.objects.create_user(
@@ -142,7 +168,17 @@ class StaffViewSet(viewsets.ModelViewSet):
                 role=role,
                 department=department
             )
-            _log(requester, "create_staff", resource_type="staff", resource_id=staff.id, meta={"role": role})
+            _log(
+                requester,
+                "create_staff",
+                resource_type="staff",
+                resource_id=staff.id,
+                meta={
+                    "role": role,
+                    "gateway_role": gw_role,
+                    "requester_id": requester_id,
+                },
+            )
             return Response({
                 'message': 'Staff created successfully',
                 'staff': StaffSerializer(staff).data
@@ -302,15 +338,19 @@ class StaffViewSet(viewsets.ModelViewSet):
     def activity_logs(self, request):
         """Get audit logs (manager/admin recommended)"""
         requester_id = request.query_params.get('requester_id')
-        if not requester_id:
+        gw_manage = _gateway_can_manage_staff(request)
+        if not requester_id and not gw_manage:
             return Response({'error': 'requester_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            requester = Staff.objects.get(id=requester_id)
-        except Staff.DoesNotExist:
-            return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
+        requester = None
+        if requester_id:
+            try:
+                requester = Staff.objects.get(id=requester_id)
+            except Staff.DoesNotExist:
+                if not gw_manage:
+                    return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _has_permission(requester, PermissionType.VIEW_AUDIT_LOG):
+        if not gw_manage and not _has_permission(requester, PermissionType.VIEW_AUDIT_LOG):
             return Response({'error': 'You do not have permission to view audit logs'}, status=status.HTTP_403_FORBIDDEN)
 
         limit = int(request.query_params.get('limit', 50))
@@ -327,15 +367,19 @@ class StaffViewSet(viewsets.ModelViewSet):
     def create_shift(self, request):
         """Create/schedule a shift (requires manage_shifts)"""
         requester_id = request.data.get('requester_id')
-        if not requester_id:
+        gw_manage = _gateway_can_manage_staff(request)
+        if not requester_id and not gw_manage:
             return Response({'error': 'requester_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            requester = Staff.objects.get(id=requester_id)
-        except Staff.DoesNotExist:
-            return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
+        requester = None
+        if requester_id:
+            try:
+                requester = Staff.objects.get(id=requester_id)
+            except Staff.DoesNotExist:
+                if not gw_manage:
+                    return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _has_permission(requester, PermissionType.MANAGE_SHIFTS):
+        if not gw_manage and not _has_permission(requester, PermissionType.MANAGE_SHIFTS):
             return Response({'error': 'You do not have permission to manage shifts'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = ShiftSerializer(data=request.data)
@@ -396,22 +440,26 @@ class StaffViewSet(viewsets.ModelViewSet):
     def shifts(self, request):
         """List shifts (filter by staff_id)"""
         requester_id = request.query_params.get('requester_id')
-        if not requester_id:
+        gw_manage = _gateway_can_manage_staff(request)
+        if not requester_id and not gw_manage:
             return Response({'error': 'requester_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            requester = Staff.objects.get(id=requester_id)
-        except Staff.DoesNotExist:
-            return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
+        requester = None
+        if requester_id:
+            try:
+                requester = Staff.objects.get(id=requester_id)
+            except Staff.DoesNotExist:
+                if not gw_manage:
+                    return Response({'error': 'Requester not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _has_permission(requester, PermissionType.VIEW_SHIFTS):
+        if not gw_manage and not _has_permission(requester, PermissionType.VIEW_SHIFTS):
             return Response({'error': 'You do not have permission to view shifts'}, status=status.HTTP_403_FORBIDDEN)
 
         staff_id = request.query_params.get('staff_id')
         limit = int(request.query_params.get('limit', 50))
 
         qs = Shift.objects.all()
-        if _has_permission(requester, PermissionType.MANAGE_SHIFTS):
+        if gw_manage or _has_permission(requester, PermissionType.MANAGE_SHIFTS):
             if staff_id:
                 qs = qs.filter(staff_id=staff_id)
         else:

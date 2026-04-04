@@ -107,11 +107,44 @@ foreach ($svc in $services) {
 Write-Host ""
 Write-Host "Seeding default accounts..." -ForegroundColor Cyan
 
-# Customer admin
-docker compose exec -T customer-service python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin','admin@bookstore.com','admin123'); print('customer-service: admin/admin123 ready')"
+# Important: login checks identities in auth-service, not directly in domain DBs.
+# Seed through auth-service register endpoint so auth + service records stay linked.
+function Register-AuthUserIfMissing {
+    param(
+        [string]$Username,
+        [string]$Email,
+        [string]$Password,
+        [string]$Role,
+        [string]$Department = ""
+    )
 
-# Staff admin
-docker compose exec -T staff-service python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); User.objects.filter(username='staffadmin').exists() or User.objects.create_superuser('staffadmin','staffadmin@bookstore.com','admin123',role='admin'); print('staff-service: staffadmin/admin123 ready')"
+    $payload = @{
+        username = $Username
+        email = $Email
+        password = $Password
+        role = $Role
+    }
+    if ($Department) {
+        $payload.department = $Department
+    }
+
+    try {
+        $result = Invoke-RestMethod -Method POST -Uri "http://localhost:8012/api/auth/register/" -ContentType "application/json" -Body ($payload | ConvertTo-Json)
+        Write-Host "auth-service: created $Username/$Password ($Role)" -ForegroundColor Green
+    } catch {
+        # 409 on existing user is expected on reruns.
+        $msg = $_.Exception.Message
+        if ($msg -match "409") {
+            Write-Host "auth-service: $Username already exists" -ForegroundColor Yellow
+        } else {
+            Write-Host "auth-service: failed to create $Username -> $msg" -ForegroundColor Red
+        }
+    }
+}
+
+Register-AuthUserIfMissing -Username "admin" -Email "admin@bookstore.com" -Password "admin123" -Role "customer"
+Register-AuthUserIfMissing -Username "staffadmin" -Email "staffadmin@bookstore.com" -Password "admin123" -Role "staff" -Department "operations"
+Register-AuthUserIfMissing -Username "manager" -Email "manager@bookstore.com" -Password "admin123" -Role "manager" -Department "sales"
 
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
