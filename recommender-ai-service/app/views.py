@@ -1,338 +1,350 @@
-import requests
-from collections import Counter, defaultdict
+"""
+AI Assistant Service – Views
+─────────────────────────────
+Endpoints:
+  /api/recommendations/          – GET list / generate
+  /api/recommendations/track/    – POST track interaction
+  /api/recommendations/behavior/ – GET behavior profile
+  /api/recommendations/popular/  – GET popular books
 
-from django.db import models
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
+  /api/ai/chat/                  – POST chatbot message
+  /api/ai/kb/                    – GET/POST knowledge base
+  /api/ai/kb/ingest_books/       – POST ingest books from book-service
+  /api/ai/kb/seed/               – POST seed default FAQ
+  /api/ai/health/                – GET health check
+"""
+import uuid
+import logging
+
+from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import CustomerBookInteraction, Recommendation
-from .serializers import CustomerBookInteractionSerializer, RecommendationSerializer
+from .models import (
+    CustomerBookInteraction, CustomerBehaviorProfile,
+    Recommendation, KBEntry, ChatSession, ChatMessage,
+)
+from .serializers import (
+    CustomerBookInteractionSerializer, CustomerBehaviorProfileSerializer,
+    RecommendationSerializer, KBEntrySerializer,
+    ChatSessionSerializer, ChatMessageSerializer,
+)
+from .ai import behavior as beh, recommender, kb as kb_module, rag, chatbot
+from .clients import book_client
+
+logger = logging.getLogger(__name__)
 
 
-def _extract_results(data):
-    if isinstance(data, dict) and isinstance(data.get("results"), list):
-        return data["results"]
-    if isinstance(data, list):
-        return data
-    return []
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _ok(data, code=200):
+    return Response(data, status=code)
+
+def _err(msg, code=400):
+    return Response({'error': msg}, status=code)
 
 
-def _safe_get_json(url, *, params=None, timeout=10):
+# ═══════════════════════════════════════════════════════════
+# RECOMMENDATION ENDPOINTS
+# ═══════════════════════════════════════════════════════════
+
+@api_view(['GET'])
+def recommendations_list(request):
+    """
+    GET /api/recommendations/?customer_id=<id>&limit=<n>&refresh=1
+    Returns personalized recommendations.
+    """
+    customer_id = request.query_params.get('customer_id')
+    limit       = int(request.query_params.get('limit', 8))
+    refresh     = request.query_params.get('refresh', '0') == '1'
+
+    if not customer_id:
+        # Return popular books for anonymous users
+        popular = beh.get_popular_books(limit=limit)
+        books = []
+        for p in popular:
+            book = book_client.get_book(p['book_id'])
+            if book:
+                books.append({**book, 'popularity_score': p['total_score']})
+        return _ok({'source': 'popular', 'recommendations': books})
+
+    customer_id = int(customer_id)
+
+    # Use cache unless refresh requested
+    if not refresh:
+        cached = recommender.get_cached(customer_id)
+        if cached:
+            return _ok({
+                'customer_id': customer_id,
+                'source': 'cache',
+                'recommendations': cached,
+            })
+
+    recs = recommender.generate(customer_id, limit=limit)
+    return _ok({
+        'customer_id': customer_id,
+        'source': 'generated',
+        'recommendations': recs,
+    })
+
+
+@api_view(['POST'])
+def track_interaction(request):
+    """
+    POST /api/recommendations/track/
+    Body: {customer_id, book_id, interaction_type, rating?}
+    interaction_type: view | search | cart | purchase | rate
+    """
+    customer_id      = request.data.get('customer_id')
+    book_id          = request.data.get('book_id')
+    interaction_type = request.data.get('interaction_type', 'view')
+    rating           = request.data.get('rating')
+
+    if not customer_id or not book_id:
+        return _err('customer_id and book_id are required')
+
+    result = beh.track(
+        customer_id=int(customer_id),
+        book_id=int(book_id),
+        interaction_type=interaction_type,
+        rating=int(rating) if rating else None,
+    )
+    return _ok(result, 200)
+
+
+@api_view(['GET'])
+def behavior_profile(request):
+    """
+    GET /api/recommendations/behavior/?customer_id=<id>&refresh=1
+    Returns behavior profile with likely-to-buy books.
+    """
+    customer_id = request.query_params.get('customer_id')
+    if not customer_id:
+        return _err('customer_id required')
+
+    customer_id = int(customer_id)
+    refresh = request.query_params.get('refresh', '0') == '1'
+
+    if refresh:
+        profile = beh.build_profile(customer_id)
+    else:
+        profile = beh.get_profile(customer_id)
+        if not profile:
+            profile = beh.build_profile(customer_id)
+
+    # Enrich likely_to_buy with book details
+    likely_books = []
+    for bid in profile.likely_to_buy[:10]:
+        book = book_client.get_book(bid)
+        score = beh.get_book_scores(customer_id).get(bid, 0)
+        if book:
+            likely_books.append({**book, 'behavior_score': score})
+
+    return _ok({
+        'customer_id':    customer_id,
+        'top_categories': profile.top_categories,
+        'top_authors':    profile.top_authors,
+        'total_score':    profile.total_score,
+        'likely_to_buy':  likely_books,
+        'updated_at':     profile.updated_at.isoformat(),
+    })
+
+
+@api_view(['GET'])
+def popular_books(request):
+    """
+    GET /api/recommendations/popular/?limit=10
+    Returns globally popular books based on interaction scores.
+    """
+    limit = int(request.query_params.get('limit', 10))
+    popular = beh.get_popular_books(limit=limit)
+    result = []
+    for p in popular:
+        book = book_client.get_book(p['book_id'])
+        if book:
+            result.append({
+                **book,
+                'popularity_score':    p['total_score'],
+                'interaction_count':   p['interaction_count'],
+            })
+    return _ok({'popular_books': result, 'count': len(result)})
+
+
+# ═══════════════════════════════════════════════════════════
+# CHATBOT ENDPOINTS
+# ═══════════════════════════════════════════════════════════
+
+@api_view(['POST'])
+def chat(request):
+    """
+    POST /api/ai/chat/
+    Body: {
+        message: str,
+        session_id?: str,       # omit to start new session
+        customer_id?: int,
+        username?: str
+    }
+    """
+    message     = (request.data.get('message') or '').strip()
+    session_id  = request.data.get('session_id') or str(uuid.uuid4())
+    customer_id = request.data.get('customer_id')
+    username    = request.data.get('username', 'bạn')
+
+    if not message:
+        return _err('message is required')
+
+    # Get or create session
+    session, _ = ChatSession.objects.get_or_create(
+        session_id=session_id,
+        defaults={'customer_id': customer_id},
+    )
+    if customer_id and not session.customer_id:
+        session.customer_id = customer_id
+        session.save(update_fields=['customer_id'])
+
+    # Build history context (last 6 messages)
+    history = list(
+        session.messages.order_by('-timestamp')[:6]
+        .values('role', 'content')
+    )
+    history.reverse()
+
+    # Save user message
+    ChatMessage.objects.create(
+        session=session,
+        role='user',
+        content=message,
+    )
+
+    # Run chatbot
+    ctx = {
+        'customer_id': int(customer_id) if customer_id else None,
+        'username':    username,
+        'history':     history,
+    }
+    response = chatbot.chat(message, ctx)
+
+    # Save assistant message
+    ChatMessage.objects.create(
+        session=session,
+        role='assistant',
+        content=response['text'],
+        metadata={
+            'intent': response.get('intent', 'unknown'),
+            'books':  [b.get('id') for b in response.get('books', []) if b.get('id')],
+        },
+    )
+
+    return _ok({
+        'session_id': session_id,
+        'response':   response['text'],
+        'intent':     response.get('intent', 'unknown'),
+        'books':      response.get('books', []),
+        'orders':     response.get('orders', []),
+        'kb_entries': response.get('kb_entries', []),
+    })
+
+
+@api_view(['GET'])
+def chat_history(request):
+    """
+    GET /api/ai/chat/history/?session_id=<id>
+    """
+    session_id = request.query_params.get('session_id')
+    if not session_id:
+        return _err('session_id required')
     try:
-        resp = requests.get(url, params=params, timeout=timeout)
-        if resp.status_code >= 300:
-            return None
-        return resp.json()
-    except requests.exceptions.RequestException:
-        return None
+        session = ChatSession.objects.get(session_id=session_id)
+    except ChatSession.DoesNotExist:
+        return _err('Session not found', 404)
+    messages = session.messages.all().values('role', 'content', 'timestamp', 'metadata')
+    return _ok({
+        'session_id': session_id,
+        'messages':   list(messages),
+    })
 
 
-class RecommenderViewSet(viewsets.ViewSet):
+# ═══════════════════════════════════════════════════════════
+# KNOWLEDGE BASE ENDPOINTS
+# ═══════════════════════════════════════════════════════════
+
+@api_view(['GET', 'POST'])
+def kb_list(request):
     """
-    Recommendation service.
-
-    This is a pragmatic hybrid recommender for development:
-    - Content-based: category/author affinity from purchases & ratings
-    - Popularity-based: average rating + review volume
-    - Collaborative-lite: uses any stored interactions (if present)
+    GET  /api/ai/kb/?category=<cat>  – list entries
+    POST /api/ai/kb/                 – add entry
     """
+    if request.method == 'GET':
+        cat = request.query_params.get('category')
+        qs  = KBEntry.objects.all().order_by('-updated_at')
+        if cat:
+            qs = qs.filter(category=cat)
+        return _ok({
+            'count':   qs.count(),
+            'entries': KBEntrySerializer(qs[:50], many=True).data,
+            'stats':   kb_module.get_stats(),
+        })
 
-    def list(self, request):
-        customer_id = request.query_params.get("customer_id")
-        if customer_id:
-            return self.get_recommendations(request)
-        return Response(
-            {
-                "message": "Provide customer_id to get personalized recommendations.",
-                "example": "/api/recommendations/?customer_id=1&limit=5",
-            },
-            status=status.HTTP_200_OK,
-        )
+    # POST
+    category = request.data.get('category', 'general')
+    title    = request.data.get('title', '').strip()
+    content  = request.data.get('content', '').strip()
+    keywords = request.data.get('keywords', [])
 
-    @action(detail=False, methods=["get"])
-    def get_recommendations(self, request):
-        customer_id = request.query_params.get("customer_id")
-        limit = int(request.query_params.get("limit", 5))
+    if not title or not content:
+        return _err('title and content are required')
 
-        if not customer_id:
-            return Response(
-                {"error": "customer_id parameter is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    entry = kb_module.add_entry(category, title, content, keywords, source='api')
+    return _ok(KBEntrySerializer(entry).data, 201)
 
-        cached = Recommendation.objects.filter(customer_id=customer_id).order_by("-score")[:limit]
-        if cached.exists():
-            return Response(
-                {
-                    "customer_id": customer_id,
-                    "recommendations": RecommendationSerializer(cached, many=True).data,
-                    "source": "cache",
-                },
-                status=status.HTTP_200_OK,
-            )
 
-        return self._generate_recommendations(customer_id, limit)
+@api_view(['POST'])
+def kb_seed(request):
+    """POST /api/ai/kb/seed/ – seed default FAQ/policy entries."""
+    count = kb_module.seed_default_kb()
+    return _ok({'seeded': count, 'message': f'Seeded {count} default KB entries'})
 
-    @action(detail=False, methods=["post"])
-    def track_interaction(self, request):
-        """
-        Track user behavior for better recommendations.
 
-        POST body:
-        - customer_id (int)
-        - book_id (int)
-        - interaction_type (view|cart|purchase|rate)
-        - rating (int 1-5, optional)
-        """
-        serializer = CustomerBookInteractionSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def kb_ingest_books(request):
+    """
+    POST /api/ai/kb/ingest_books/
+    Fetches all books from book-service and ingests them into KB.
+    """
+    books = book_client.get_all_books()
+    if not books:
+        return _err('Could not fetch books from book-service', 503)
 
-        customer_id = serializer.validated_data["customer_id"]
-        book_id = serializer.validated_data["book_id"]
-        interaction_type = serializer.validated_data["interaction_type"]
-        rating = serializer.validated_data.get("rating")
+    ingested = 0
+    for book in books:
+        kb_module.ingest_book(book)
+        ingested += 1
 
-        obj, created = CustomerBookInteraction.objects.get_or_create(
-            customer_id=customer_id,
-            book_id=book_id,
-            interaction_type=interaction_type,
-            defaults={"rating": rating},
-        )
-        if not created and rating is not None:
-            obj.rating = rating
-            obj.save(update_fields=["rating"])
+    return _ok({'ingested': ingested, 'message': f'Ingested {ingested} books into KB'})
 
-        return Response(
-            {
-                "message": "interaction tracked",
-                "created": created,
-                "interaction": CustomerBookInteractionSerializer(obj).data,
-            },
-            status=status.HTTP_200_OK,
-        )
 
-    @action(detail=False, methods=["post"])
-    def click_recommendation(self, request):
-        recommendation_id = request.data.get("recommendation_id")
-        if not recommendation_id:
-            return Response(
-                {"error": "recommendation_id is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+@api_view(['GET'])
+def kb_search(request):
+    """
+    GET /api/ai/kb/search/?q=<query>&top_k=3
+    """
+    query = request.query_params.get('q', '')
+    top_k = int(request.query_params.get('top_k', 3))
+    if not query:
+        return _err('q parameter required')
+    results = rag.retrieve(query, top_k=top_k)
+    return _ok({'query': query, 'results': results})
 
-        try:
-            rec = Recommendation.objects.get(id=recommendation_id)
-        except Recommendation.DoesNotExist:
-            return Response({"error": "Recommendation not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        rec.clicked = True
-        rec.save(update_fields=["clicked"])
-        return Response(
-            {"message": "click tracked", "recommendation": RecommendationSerializer(rec).data},
-            status=status.HTTP_200_OK,
-        )
+# ═══════════════════════════════════════════════════════════
+# HEALTH
+# ═══════════════════════════════════════════════════════════
 
-    @action(detail=False, methods=["get"])
-    def similar_books(self, request):
-        book_id = request.query_params.get("book_id")
-        limit = int(request.query_params.get("limit", 5))
-        if not book_id:
-            return Response({"error": "book_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Use stored interactions (if present) as a collaborative hint.
-        fans = CustomerBookInteraction.objects.filter(
-            book_id=book_id, interaction_type__in=["rate", "purchase"], rating__gte=4
-        ).values_list("customer_id", flat=True)
-
-        similar = (
-            CustomerBookInteraction.objects.filter(customer_id__in=fans, rating__gte=4)
-            .exclude(book_id=book_id)
-            .values("book_id")
-            .annotate(score=models.Count("customer_id"))
-            .order_by("-score")[:limit]
-        )
-
-        return Response(
-            {"book_id": book_id, "similar_books": [i["book_id"] for i in similar]},
-            status=status.HTTP_200_OK,
-        )
-
-    @action(detail=False, methods=["get"])
-    def trending_books(self, request):
-        limit = int(request.query_params.get("limit", 10))
-
-        comments = _safe_get_json("http://comment-rate-service:8000/api/comments/")
-        comments = _extract_results(comments) if comments is not None else []
-
-        stats = defaultdict(lambda: {"count": 0, "sum": 0.0})
-        for c in comments if isinstance(comments, list) else []:
-            book_id = c.get("book_id")
-            rating = c.get("rating")
-            if not book_id or rating is None:
-                continue
-            stats[book_id]["count"] += 1
-            stats[book_id]["sum"] += float(rating)
-
-        # Fetch books and attach popularity score.
-        books = _safe_get_json("http://book-service:8000/api/books/")
-        books = _extract_results(books) if books is not None else []
-
-        def popularity(book):
-            s = stats.get(book.get("id"), {"count": 0, "sum": 0.0})
-            avg = (s["sum"] / s["count"]) if s["count"] else 0.0
-            return (avg, s["count"])
-
-        ranked = sorted(books, key=popularity, reverse=True)[:limit]
-        for b in ranked:
-            s = stats.get(b.get("id"), {"count": 0, "sum": 0.0})
-            b["average_rating"] = (s["sum"] / s["count"]) if s["count"] else 0.0
-            b["total_reviews"] = s["count"]
-
-        return Response({"trending": ranked}, status=status.HTTP_200_OK)
-
-    def _generate_recommendations(self, customer_id, limit):
-        # Fetch all books once (avoid N requests).
-        books_payload = _safe_get_json("http://book-service:8000/api/books/")
-        books = _extract_results(books_payload) if books_payload is not None else []
-        if not books:
-            return Response(
-                {"customer_id": customer_id, "recommendations": [], "source": "generated"},
-                status=status.HTTP_200_OK,
-            )
-
-        book_by_id = {b.get("id"): b for b in books if isinstance(b, dict) and b.get("id") is not None}
-
-        # Purchased books from order-service (best signal).
-        orders_payload = _safe_get_json(
-            "http://order-service:8000/api/orders/by_customer/", params={"customer_id": customer_id}
-        )
-        orders = []
-        if isinstance(orders_payload, dict) and isinstance(orders_payload.get("orders"), list):
-            orders = orders_payload["orders"]
-        elif isinstance(orders_payload, list):
-            orders = orders_payload
-
-        purchased_book_ids = []
-        for order in orders if isinstance(orders, list) else []:
-            for item in order.get("items", []) if isinstance(order, dict) else []:
-                book_id = item.get("book_id")
-                if book_id is not None:
-                    purchased_book_ids.append(book_id)
-
-        purchased_set = set(purchased_book_ids)
-
-        # Ratings from comment service (secondary signal).
-        comments_payload = _safe_get_json(
-            "http://comment-rate-service:8000/api/comments/by_customer/",
-            params={"customer_id": customer_id},
-        )
-        comments = []
-        if isinstance(comments_payload, dict) and isinstance(comments_payload.get("comments"), list):
-            comments = comments_payload["comments"]
-        elif isinstance(comments_payload, list):
-            comments = comments_payload
-
-        rated_high = set()
-        for c in comments if isinstance(comments, list) else []:
-            if c.get("rating", 0) >= 4 and c.get("book_id") is not None:
-                rated_high.add(c.get("book_id"))
-
-        # Build affinity profile.
-        category_counts = Counter()
-        author_counts = Counter()
-        for book_id in purchased_book_ids:
-            b = book_by_id.get(book_id)
-            if not b:
-                continue
-            if b.get("category"):
-                category_counts[b["category"]] += 2
-            if b.get("author"):
-                author_counts[b["author"]] += 1
-
-        for book_id in rated_high:
-            b = book_by_id.get(book_id)
-            if not b:
-                continue
-            if b.get("category"):
-                category_counts[b["category"]] += 3
-            if b.get("author"):
-                author_counts[b["author"]] += 2
-
-        top_categories = {c for c, _ in category_counts.most_common(3)}
-        top_authors = {a for a, _ in author_counts.most_common(3)}
-
-        # Global popularity stats.
-        all_comments_payload = _safe_get_json("http://comment-rate-service:8000/api/comments/")
-        all_comments = _extract_results(all_comments_payload) if all_comments_payload is not None else []
-        pop = defaultdict(lambda: {"count": 0, "sum": 0.0})
-        for c in all_comments if isinstance(all_comments, list) else []:
-            book_id = c.get("book_id")
-            rating = c.get("rating")
-            if book_id is None or rating is None:
-                continue
-            pop[book_id]["count"] += 1
-            pop[book_id]["sum"] += float(rating)
-
-        def popularity_score(book_id):
-            s = pop.get(book_id, {"count": 0, "sum": 0.0})
-            avg = (s["sum"] / s["count"]) if s["count"] else 0.0
-            volume = min(s["count"], 50) / 50.0
-            return (avg / 5.0) * 0.5 + volume * 0.3
-
-        candidates = []
-        for b in books:
-            if not isinstance(b, dict):
-                continue
-            book_id = b.get("id")
-            if book_id is None or book_id in purchased_set:
-                continue
-            if b.get("stock", 0) <= 0:
-                continue
-
-            score = 0.0
-            reason_parts = []
-
-            if top_categories and b.get("category") in top_categories:
-                score += 1.0
-                reason_parts.append("category match")
-            if top_authors and b.get("author") in top_authors:
-                score += 0.7
-                reason_parts.append("author match")
-
-            score += popularity_score(book_id)
-            if pop.get(book_id, {}).get("count", 0) > 0:
-                reason_parts.append("popular")
-
-            candidates.append((score, book_id, ", ".join(reason_parts) or "popular"))
-
-        candidates.sort(key=lambda x: x[0], reverse=True)
-        chosen = candidates[:limit]
-
-        Recommendation.objects.filter(customer_id=customer_id).delete()
-        recs = []
-        for score, book_id, reason in chosen:
-            recs.append(
-                Recommendation.objects.create(
-                    customer_id=customer_id,
-                    recommended_book_id=book_id,
-                    score=float(score),
-                    reason=reason,
-                )
-            )
-
-        # Include book detail payload for convenience (gateway can also join).
-        payload = []
-        for rec in recs:
-            payload.append(
-                {
-                    "recommendation": RecommendationSerializer(rec).data,
-                    "book": book_by_id.get(rec.recommended_book_id),
-                }
-            )
-
-        return Response(
-            {"customer_id": customer_id, "recommendations": payload, "source": "generated"},
-            status=status.HTTP_200_OK,
-        )
+@api_view(['GET'])
+def health(request):
+    return _ok({
+        'service': 'recommender-ai-service',
+        'status':  'healthy',
+        'modules': ['behavior', 'recommender', 'kb', 'rag', 'chatbot'],
+        'kb_stats': kb_module.get_stats(),
+    })

@@ -39,15 +39,18 @@ SERVICE_MAP = {
     'manager':         'manager-service',
     'managers':        'manager-service',
     'recommendations': 'recommender-ai-service',
+    'ai':              'recommender-ai-service',
+    'v1':              'recommender-ai-service',   # /api/v1/* → AI service
 }
 
-# Routes that do NOT require JWT
 PUBLIC_ROUTES = {
-    'auth',       # login / register / refresh
-    'books',      # browsing is public
-    'catalog',    # search is public
-    'comments',   # reading reviews is public
+    'auth',
+    'books',
+    'catalog',
+    'comments',
     'recommendations',
+    'ai',
+    'v1',
 }
 
 # ── Rate limiter (sliding window, per IP) ─────────────────────────────────────
@@ -232,7 +235,7 @@ HEALTH_SERVICES = {
     'ship-service':           'http://ship-service:8000/api/shipments/',
     'comment-rate-service':   'http://comment-rate-service:8000/api/comments/',
     'catalog-service':        'http://catalog-service:8000/api/catalog/',
-    'recommender-ai-service': 'http://recommender-ai-service:8000/api/recommendations/',
+    'recommender-ai-service': 'http://recommender-ai-service:8000/api/ai/health/',
 }
 
 

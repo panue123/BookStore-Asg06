@@ -271,6 +271,8 @@ services:
         condition: service_healthy
     networks:
       - bookstore-network
+    volumes:
+      - ai_artifacts:/app/artifacts
     environment:
       - DEBUG=1
       - DJANGO_SETTINGS_MODULE=recommender_ai_service.settings
@@ -278,6 +280,16 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=root
       - DB_HOST=db-postgres
+      - BOOK_SERVICE_URL=http://book-service:8000
+      - CATALOG_SERVICE_URL=http://catalog-service:8000
+      - CUSTOMER_SERVICE_URL=http://customer-service:8000
+      - ORDER_SERVICE_URL=http://order-service:8000
+      - COMMENT_SERVICE_URL=http://comment-rate-service:8000
+      - SHIP_SERVICE_URL=http://ship-service:8000
+      - PAY_SERVICE_URL=http://pay-service:8000
+      - ARTIFACTS_DIR=/app/artifacts
+      - EMBED_DIM=64
+      - LOG_LEVEL=INFO
 
   # ═══════════════════════════════════════════════════════════
   # API GATEWAY
@@ -312,3 +324,4 @@ volumes:
   mysql_data:
   postgres_data:
   rabbitmq_data:
+  ai_artifacts:
