@@ -78,9 +78,25 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def updateCustomer(self, request, pk=None):
         """Update customer profile - only own profile"""
         customer = self.get_object()
-        
-        # Check: only customer can update their own profile
-        if request.user.id != customer.id:
+
+        # Gateway forwards domain id in X-Service-User-Id.
+        # Fallback to X-User-Id for backward compatibility when ids are aligned.
+        requester_id = (
+            request.headers.get('X-Service-User-Id')
+            or request.META.get('HTTP_X_SERVICE_USER_ID')
+            or request.headers.get('X-User-Id')
+            or request.META.get('HTTP_X_USER_ID')
+        )
+        if requester_id is None and getattr(request, 'user', None) and request.user.is_authenticated:
+            requester_id = request.user.id
+
+        try:
+            requester_id = int(requester_id)
+        except (TypeError, ValueError):
+            requester_id = None
+
+        # Only allow updating own profile.
+        if requester_id != customer.id:
             return Response({'error': 'You can only update your own profile'}, status=status.HTTP_403_FORBIDDEN)
         
         serializer = self.get_serializer(customer, data=request.data, partial=True)

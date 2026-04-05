@@ -58,11 +58,12 @@ def register(request):
         except Exception:
             pass
     elif role == UserRole.STAFF:
+        staff_role = request.data.get('staff_role', 'staff')
         try:
             resp = requests.post(
                 'http://staff-service:8000/api/staff/',
                 json={'username': username, 'email': email, 'password': password,
-                      'role': 'staff', 'department': request.data.get('department', '')},
+                      'role': staff_role, 'department': request.data.get('department', '')},
                 timeout=10,
             )
             if resp.status_code == 201:

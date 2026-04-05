@@ -113,8 +113,52 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def cancel_order(self, request, pk=None):
         order = self.get_object()
-        if order.status == OrderStatus.SHIPPED:
-            return Response({'error': 'Cannot cancel shipped orders'}, status=400)
+
+        role = (
+            request.headers.get('X-User-Role')
+            or request.META.get('HTTP_X_USER_ROLE')
+            or ''
+        ).strip().lower()
+        service_user_id = (
+            request.headers.get('X-Service-User-Id')
+            or request.META.get('HTTP_X_SERVICE_USER_ID')
+        )
+        try:
+            service_user_id = int(service_user_id) if service_user_id is not None else None
+        except (TypeError, ValueError):
+            service_user_id = None
+
+        if order.status in (OrderStatus.CANCELED, OrderStatus.SHIPPED):
+            return Response({'error': f'Cannot cancel order in status: {order.status}'}, status=400)
+
+        # Customer can only cancel their own order and only while pending.
+        if role == 'customer':
+            if service_user_id != order.customer_id:
+                return Response({'error': 'You can only cancel your own orders'}, status=403)
+            if order.status != OrderStatus.PENDING:
+                return Response({'error': 'Only pending orders can be canceled by customer'}, status=400)
+
+        # Staff/manager/admin are allowed to cancel pending/paid orders.
+        # If already paid, trigger refund best-effort.
+        if order.status == OrderStatus.PAID:
+            try:
+                pay_lookup = requests.get(
+                    'http://pay-service:8000/api/payments/by_order/',
+                    params={'order_id': order.id},
+                    timeout=8,
+                )
+                if pay_lookup.status_code == 200:
+                    payment = pay_lookup.json()
+                    payment_id = payment.get('id')
+                    if payment_id:
+                        requests.post(
+                            f'http://pay-service:8000/api/payments/{payment_id}/refund/',
+                            json={},
+                            timeout=8,
+                        )
+            except requests.RequestException:
+                logger.warning('Refund request failed for order %s', order.id)
+
         order.status = OrderStatus.CANCELED
         order.save()
         return Response({'message': 'Order canceled', 'order': OrderSerializer(order).data})

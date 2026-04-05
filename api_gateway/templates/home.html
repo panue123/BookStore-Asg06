@@ -23,17 +23,17 @@ a{text-decoration:none;color:inherit}
 .topbar a{color:var(--pd);font-weight:700}
 
 /* ── NAV ── */
-nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:flex;align-items:center;position:sticky;top:0;z-index:300;gap:1rem;border-bottom:1px solid var(--b)}
+nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:grid;grid-template-columns:auto minmax(420px,620px) auto;align-items:center;position:sticky;top:0;z-index:300;gap:1rem;border-bottom:1px solid var(--b)}
 .logo{font-size:1.35rem;font-weight:800;color:var(--pdd);display:flex;align-items:center;gap:.4rem;flex-shrink:0;white-space:nowrap;letter-spacing:.01em}
 .logo em{color:var(--p);font-style:normal}
 .logo-icon{display:none}
-.nav-search{display:flex;gap:0;flex:1;max-width:520px;border:2px solid var(--p);border-radius:var(--rs);overflow:hidden}
+.nav-search{display:flex;gap:0;width:100%;max-width:620px;justify-self:center;border:2px solid var(--p);border-radius:var(--rs);overflow:hidden}
 .nav-search select{padding:.5rem .7rem;border:none;border-right:1px solid var(--b);background:#F8FBFF;font-size:.82rem;color:var(--tm);cursor:pointer;flex-shrink:0}
 .nav-search input{flex:1;padding:.5rem .9rem;border:none;color:var(--t);background:#F8FBFF;font-size:.88rem}
 .nav-search input:focus{outline:none;background:var(--s)}
 .nav-search button{padding:.5rem 1rem;background:var(--p);color:#fff;border:none;font-weight:700;font-size:.88rem;cursor:pointer;transition:background .2s;flex-shrink:0}
 .nav-search button:hover{background:var(--pd)}
-.nav-right{display:flex;gap:.45rem;align-items:center;margin-left:auto;flex-shrink:0}
+.nav-right{display:flex;gap:.45rem;align-items:center;justify-self:end;flex-shrink:0}
 .btn{padding:.45rem .95rem;border-radius:var(--rs);font-weight:600;font-size:.84rem;border:none;cursor:pointer;transition:all .2s;line-height:1.4}
 .btn-o{background:transparent;border:1.5px solid var(--p);color:var(--p)}.btn-o:hover{background:var(--pll)}
 .btn-p{background:var(--p);color:#fff}.btn-p:hover{background:var(--pd)}
@@ -204,7 +204,8 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
 .footer-col a:hover{opacity:1}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.15);padding-top:1rem;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;opacity:.65;flex-wrap:wrap;gap:.5rem}
 @media(max-width:1024px){.cat-grid{grid-template-columns:repeat(3,1fr)}.promo-grid{grid-template-columns:1fr 1fr}.hero-inner{grid-template-columns:1fr}.hero-visual{min-height:280px}.hero-main-image{height:280px}.hero-books{position:static;margin-top:.9rem;justify-content:flex-start}.footer-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:768px){.main-wrap{padding:1rem}.nav{padding:.65rem 1rem;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}.books-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.hero{padding:2rem 1rem 1.5rem}.hero-title{font-size:1.5rem}.hero-main-image{height:220px}.promo-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}.detail-cover{height:200px}.footer-grid{grid-template-columns:1fr}}
+@media(max-width:980px){.nav{display:flex;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}}
+@media(max-width:768px){.main-wrap{padding:1rem}.nav{padding:.65rem 1rem;display:flex;flex-wrap:wrap}.nav-search{max-width:100%;order:3;flex:0 0 100%}.books-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.hero{padding:2rem 1rem 1.5rem}.hero-title{font-size:1.5rem}.hero-main-image{height:220px}.promo-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}.detail-cover{height:200px}.footer-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -596,6 +597,7 @@ function renderHeroPreview(books){
 }
 
 function filterCat(cat){
+  showPane('home');
   currentCat=cat;
   // Update cat nav
   document.querySelectorAll('.cat-link').forEach(el=>{
@@ -605,7 +607,9 @@ function filterCat(cat){
   const catNames={programming:'💻 Sách Lập Trình',science:'🔬 Khoa Học',history:'📜 Lịch Sử & Kỹ Năng',fiction:'📖 Tiểu Thuyết',math:'📐 Toán Học','':`Tất cả sách`};
   if(title)title.textContent=catNames[cat]||'Tất cả sách';
   loadBooks(1);
-  document.getElementById('bookSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+  requestAnimationFrame(()=>{
+    document.getElementById('bookSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
 }
 
 function sortBooks(){sortAndRender();}

@@ -192,6 +192,7 @@ def api_proxy(request, path):
         headers['X-User-Id']   = str(auth_payload.get('sub', ''))
         headers['X-User-Role'] = str(auth_payload.get('role', ''))
         headers['X-Username']  = str(auth_payload.get('username', ''))
+        headers['X-Service-User-Id'] = str(auth_payload.get('service_user_id', ''))
 
     try:
         resp = requests.request(

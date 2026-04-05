@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CloudBooks – Staff Portal</title>
+<title>MoonBooks – Staff Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -795,14 +795,32 @@ async function doDeliverOrder(shipmentId) {
 // ── OVERRIDE: Books with search filter ────────────────────
 let allBooksData = [];
 
+async function fetchAllBooks() {
+  const books = [];
+  let page = 1;
+  while (true) {
+    const r = await fetch('/api/books/?page=' + page);
+    if (!r.ok) throw new Error('failed to load books page ' + page);
+    const data = await r.json();
+    if (Array.isArray(data)) return data;
+
+    books.push(...(data.results || []));
+    if (!data.next) break;
+
+    const m = String(data.next).match(/[?&]page=(\d+)/);
+    if (!m) break;
+    const nextPage = parseInt(m[1], 10);
+    if (!Number.isFinite(nextPage) || nextPage === page) break;
+    page = nextPage;
+  }
+  return books;
+}
+
 async function loadBooks() {
   const el=document.getElementById('booksPane');
   el.innerHTML='<div class="loading" style="padding:2rem"><div class="spin"></div></div>';
   try {
-    const r=await fetch('/api/books/?page_size=200');
-    if(!r.ok) throw new Error();
-    const data=await r.json();
-    allBooksData=Array.isArray(data)?data:(data.results||[]);
+    allBooksData = await fetchAllBooks();
     renderBooksTable(allBooksData);
   } catch(e) { el.innerHTML='<div class="empty">Lỗi tải sách</div>'; }
 }
