@@ -545,6 +545,27 @@ function showPane(name){
 }
 function backHome(){showPane('home');}
 
+async function trackBehavior(productId, interactionType, extra = {}) {
+  if (!user?.service_user_id) return;
+  const body = {
+    customer_id: user.service_user_id,
+    interaction_type: interactionType,
+    ...extra,
+  };
+  if (productId !== undefined && productId !== null) {
+    body.product_id = productId;
+  }
+  try {
+    await fetch('/api/v1/track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    // Non-blocking analytics event.
+  }
+}
+
 // ── BOOKS ────────────────────────────────────────────────
 async function loadBooks(page=1){
   currentPage=page;
@@ -655,6 +676,9 @@ async function doSearch(){
     const data=await r.json();
     const books=data.results||data.books||(Array.isArray(data)?data:[]);
     document.getElementById('searchMeta').textContent=books.length+' kết quả';
+    if (q) {
+      trackBehavior(0, 'search', {query: q});
+    }
     renderBooks(books,grid);
   }catch(e){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Lỗi tìm kiếm</div>';}
 }
@@ -687,6 +711,7 @@ function renderBooks(books,grid){
 // ── BOOK DETAIL ───────────────────────────────────────────
 async function openDetail(bookId){
   currentBookId=bookId;reviewRating=5;
+  trackBehavior(bookId, 'view');
   openModal('detailModal');
   document.getElementById('detailBody').innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
   try{
@@ -763,7 +788,7 @@ async function submitReview(){
   try{
     const r=await api('/comments/',{method:'POST',body:JSON.stringify({customer_id:user.service_user_id,book_id:currentBookId,content,rating:reviewRating})});
     const d=await r.json();
-    if(r.ok){msg.textContent='✅ Đã gửi!';document.getElementById('revContent').value='';setTimeout(()=>openDetail(currentBookId),800);}
+    if(r.ok){msg.textContent='✅ Đã gửi!';trackBehavior(currentBookId,'rate',{rating:reviewRating});document.getElementById('revContent').value='';setTimeout(()=>openDetail(currentBookId),800);}
     else msg.textContent='❌ '+(d.error||JSON.stringify(d));
   }catch(e){msg.textContent='❌ Lỗi kết nối';}
 }
@@ -774,7 +799,7 @@ async function addToCart(bookId,price,title){
   if(!user.cart_id){toast('Không tìm thấy giỏ hàng','err');return;}
   try{
     const r=await api('/customers/'+user.service_user_id+'/updateCart/',{method:'POST',body:JSON.stringify({book_id:bookId,quantity:1})});
-    if(r.ok){toast('✅ Đã thêm "'+title+'" vào giỏ','ok');fetchCartCount();}
+    if(r.ok){toast('✅ Đã thêm "'+title+'" vào giỏ','ok');trackBehavior(bookId,'cart');fetchCartCount();}
     else{const d=await r.json();toast('❌ '+(d.error||'Không thể thêm'),'err');}
   }catch(e){toast('Lỗi kết nối','err');}
 }
@@ -1009,8 +1034,16 @@ async function sendChat(quickAction) {
       appendMsg(d.answer || d.response, 'bot');
 
       // Show book cards if returned
-      if (d.books && d.books.length) {
-        const booksHtml = d.books.slice(0, 3).map(b =>
+      const bookCandidates = (d.books && d.books.length)
+        ? d.books
+        : (d.recommendations || []).map(r => ({
+            id: r.id || r.product_id,
+            title: r.title,
+            price: r.price,
+          }));
+
+      if (bookCandidates.length) {
+        const booksHtml = bookCandidates.slice(0, 3).map(b =>
           `<div style="background:var(--pll);border-radius:8px;padding:.4rem .6rem;margin-top:.3rem;font-size:.78rem;cursor:pointer" onclick="openDetail(${b.id})">
             📚 <strong>${b.title}</strong><br>
             <span style="color:var(--pd)">${Number(b.price).toLocaleString('vi-VN')}₫</span>

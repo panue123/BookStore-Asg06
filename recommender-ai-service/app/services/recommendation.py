@@ -19,6 +19,7 @@ from ..clients.catalog_client import catalog_client
 from ..clients.order_client import order_client
 from ..clients.comment_client import comment_client
 from ..core.config import PURCHASE_THRESHOLD, RECOMMENDATION_LIMIT
+from .behavior_analysis import behavior_service
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,27 @@ def get_personalized(
         for bid, cnt in book_counts.items():
             book_scores[bid] += w * cnt
 
+    interaction_totals = {
+        itype: sum(book_counts.values())
+        for itype, book_counts in interactions.items()
+    }
+
+    # Use behavior profile signals to avoid one-size-fits-all recommendations.
+    propensity = 0.0
+    segment = "casual"
+    profile_pref_cats: set[str] = set()
+    try:
+        profile = behavior_service.analyze(customer_id, interaction_totals)
+        propensity = float(profile.get("purchase_propensity_score", 0.0) or 0.0)
+        segment = str(profile.get("customer_segment", "casual") or "casual")
+        profile_pref_cats = {
+            c.get("category")
+            for c in profile.get("preferred_categories", [])
+            if isinstance(c, dict) and c.get("category")
+        }
+    except Exception as exc:
+        logger.debug("Behavior profile unavailable for C%s: %s", customer_id, exc)
+
     purchased = _get_purchased_ids(customer_id)
 
     # Category/author affinity from high-score books
@@ -81,6 +103,8 @@ def get_personalized(
 
     top_cats    = {c for c, _ in sorted(cat_affinity.items(), key=lambda x: x[1], reverse=True)[:3]}
     top_authors = {a for a, _ in sorted(author_affinity.items(), key=lambda x: x[1], reverse=True)[:3]}
+    if not top_cats and profile_pref_cats:
+        top_cats = set(list(profile_pref_cats)[:3])
 
     # Fetch all books
     all_books = catalog_client.get_all_products(limit=500)
@@ -91,6 +115,13 @@ def get_personalized(
     ratings     = _rating_map(product_ids)
 
     candidates: list[dict] = []
+    segment_boost = {
+        "new": 0.95,
+        "casual": 1.0,
+        "engaged": 1.06,
+        "loyal": 1.1,
+        "champion": 1.12,
+    }
     for book in all_books:
         bid = book.get("id")
         if not bid or bid in purchased or book.get("stock", 0) <= 0:
@@ -117,6 +148,9 @@ def get_personalized(
         if book.get("category") in top_cats:
             score += 2.0
             reasons.append(f"thể loại {book['category']} bạn yêu thích")
+        elif book.get("category") in profile_pref_cats:
+            score += 1.2
+            reasons.append(f"phù hợp hồ sơ sở thích thể loại của bạn")
 
         # Author match
         if book.get("author") in top_authors:
@@ -129,6 +163,10 @@ def get_personalized(
         rm = ratings.get(bid, {})
         if rm.get("avg", 0) >= 4.0:
             reasons.append(f"đánh giá cao ({rm['avg']:.1f}★/{rm['count']} lượt)")
+
+        # Calibrate score by per-customer behavior profile.
+        score *= (1.0 + max(0.0, min(propensity, 1.0)) * 0.25)
+        score *= segment_boost.get(segment, 1.0)
 
         if score > 0 or not reasons:
             candidates.append({

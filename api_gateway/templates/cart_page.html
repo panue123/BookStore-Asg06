@@ -306,12 +306,31 @@ function updateSummary(items) {
   document.getElementById('sumTotal').textContent = fmt(total);
 }
 
+async function trackBehavior(productId, interactionType, extra = {}) {
+  if (!user?.service_user_id) return;
+  const body = {
+    customer_id: user.service_user_id,
+    product_id: productId,
+    interaction_type: interactionType,
+    ...extra,
+  };
+  try {
+    await fetch('/api/v1/track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    // Keep checkout/cart UX unaffected by analytics failures.
+  }
+}
+
 async function updateQty(bookId, newQty) {
   const cartId = user.cart_id||cartData?.id;
   if (!cartId) return;
   try {
     const r = await fetch(`${API}/carts/${cartId}/update_item_quantity/`,{method:'POST',headers:authH(),body:JSON.stringify({book_id:bookId,quantity:newQty})});
-    if (r.ok) { cartData=await r.json(); renderCart(); toast(newQty===0?'Đã xóa sản phẩm':'Đã cập nhật số lượng','ok'); }
+    if (r.ok) { cartData=await r.json(); if(newQty>0)trackBehavior(bookId,'cart'); renderCart(); toast(newQty===0?'Đã xóa sản phẩm':'Đã cập nhật số lượng','ok'); }
     else { const d=await r.json(); toast(d.error||'Không thể cập nhật','err'); }
   } catch(e) { toast('Lỗi kết nối','err'); }
 }
@@ -344,6 +363,7 @@ async function checkout() {
     if (r.ok && d.success) {
       const steps = d.saga_steps||[];
       sagaSteps.innerHTML = steps.map(s=>`<div class="saga-step"><span class="${s.status==='ok'?'step-ok':'step-fail'}">${s.status==='ok'?'✓':'✗'}</span> ${stepLabel(s.step)}</div>`).join('');
+      items.forEach(i => trackBehavior(i.book_id, 'purchase'));
       toast('Đặt hàng thành công! 🎉','ok');
       msgEl.innerHTML=`<span style="color:#059669;font-weight:600">✅ Đơn hàng #${d.order?.id} đã được tạo!</span>`;
       cartData=null;

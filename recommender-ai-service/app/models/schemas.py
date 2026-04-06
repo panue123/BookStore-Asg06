@@ -17,7 +17,9 @@ class ChatResponse(BaseModel):
     session_id:      str
     intent:          str
     answer:          str
+    response:        Optional[str] = None
     recommendations: list[dict] = []
+    books:           list[dict] = []
     sources:         list[dict] = []
     meta:            dict       = {}
 
@@ -79,7 +81,7 @@ class KBReindexResponse(BaseModel):
 
 class TrackRequest(BaseModel):
     customer_id:      int
-    product_id:       int
+    product_id:       Optional[int] = None
     interaction_type: str   # view | search | cart | purchase | rate
     rating:           Optional[int] = None
     query:            Optional[str] = None   # for search interactions

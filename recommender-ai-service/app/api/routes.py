@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..models.schemas import (
+from .schemas import (
     ChatRequest, ChatResponse,
     RecommendationResponse, RecommendationItem,
     SimilarProductResponse,
@@ -74,7 +74,8 @@ def recommend(
         # Load interactions from DB
         interactions: dict = {}
         try:
-            from app.models import CustomerBookInteraction  # type: ignore
+            from django.apps import apps
+            CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
             qs = CustomerBookInteraction.objects.filter(customer_id=customer_id)
             for ix in qs:
                 interactions.setdefault(ix.interaction_type, {})[ix.book_id] = ix.count
@@ -124,7 +125,8 @@ def analyze_customer(customer_id: int):
     try:
         interactions: dict[str, int] = {}
         try:
-            from app.models import CustomerBookInteraction  # type: ignore
+            from django.apps import apps
+            CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
             qs = CustomerBookInteraction.objects.filter(customer_id=customer_id)
             for ix in qs:
                 interactions[ix.interaction_type] = interactions.get(ix.interaction_type, 0) + ix.count
@@ -150,10 +152,20 @@ def track_interaction(req: TrackRequest):
             django.setup()
         except RuntimeError:
             pass  # already set up
-        from app.models import CustomerBookInteraction  # type: ignore
+        from django.apps import apps
+        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
+
+        product_id = req.product_id
+        if product_id is None:
+            if req.interaction_type == "search":
+                # Keep global search behavior even when no concrete product is clicked.
+                product_id = 0
+            else:
+                raise HTTPException(status_code=422, detail="product_id is required for this interaction_type")
+
         obj, created = CustomerBookInteraction.objects.get_or_create(
             customer_id=req.customer_id,
-            book_id=req.product_id,
+            book_id=product_id,
             interaction_type=req.interaction_type,
             defaults={"count": 1, "rating": req.rating},
         )
@@ -164,8 +176,9 @@ def track_interaction(req: TrackRequest):
             obj.save(update_fields=["count", "rating", "timestamp"])
         return {
             "customer_id":      req.customer_id,
-            "product_id":       req.product_id,
+            "product_id":       product_id,
             "interaction_type": req.interaction_type,
+            "query":            req.query,
             "count":            obj.count,
             "created":          created,
         }

@@ -120,8 +120,14 @@ def _compose_product_advice(entities: dict, data: dict, customer_id: int | None)
     budget_max = entities.get("budget_max")
     category   = entities.get("category")
     keywords   = entities.get("product_keywords", [])
+    not_found_title = data.get("not_found_title")
 
     if not recs:
+        if not_found_title:
+            return (
+                f"Mình chưa tìm thấy sách tên '{not_found_title}' trong kho hiện tại. "
+                "Bạn có thể thử tên đầy đủ hơn hoặc cho mình biết tác giả để tìm chính xác hơn."
+            )
         context = data.get("rag_context", "")
         if context:
             return f"Dựa trên thông tin tôi có:\n\n{context}\n\nBạn muốn tìm hiểu thêm về sách nào?"
@@ -195,8 +201,109 @@ def _compose_general_search(entities: dict, data: dict, customer_id: int | None)
     recs    = data.get("recommendations", [])
     sources = data.get("sources", [])
     keywords = entities.get("product_keywords", [])
+    ask_price = entities.get("ask_price", False)
+    ask_stock = entities.get("ask_stock", False)
+    ask_best_price = entities.get("ask_best_price", False)
+    ask_compare_price = entities.get("ask_compare_price", False)
+    ask_next_book = entities.get("ask_next_book", False)
+    ask_bestseller = entities.get("ask_bestseller", False)
+    ask_new_books = entities.get("ask_new_books", False)
+    ask_same_author = entities.get("ask_same_author", False)
+    book_title = entities.get("book_title")
+    book_titles = entities.get("book_titles", [])
+    resolved_author = data.get("resolved_author")
 
     if recs:
+        if ask_compare_price and len(recs) >= 2:
+            sorted_by_price = sorted(recs, key=lambda x: float(x.get("price", 0) or 0))
+            cheapest = sorted_by_price[0]
+            expensive = sorted_by_price[-1]
+            lines = ["⚖️ **So sánh giá sách**"]
+            for b in sorted_by_price[:4]:
+                lines.append(f"• **{b.get('title', 'Sách')}**: {_fmt_price(float(b.get('price', 0) or 0))}")
+            lines.append("")
+            lines.append(f"✅ Rẻ hơn: **{cheapest.get('title', 'Sách')}**")
+            lines.append(f"💸 Đắt hơn: **{expensive.get('title', 'Sách')}**")
+            return "\n".join(lines)
+
+        if ask_best_price:
+            sorted_by_price = sorted(recs, key=lambda x: float(x.get("price", 0) or 0))
+            best = sorted_by_price[0]
+            lines = [
+                "💸 **Quyển có giá tốt nhất hiện tại**",
+                f"📘 **{best.get('title', 'Sách')}** — {_fmt_price(float(best.get('price', 0) or 0))}",
+            ]
+            if isinstance(best.get("stock"), int):
+                stock = int(best.get("stock", 0) or 0)
+                lines.append("✅ Còn hàng" if stock > 0 else "⚠️ Tạm hết hàng")
+
+            if len(sorted_by_price) > 1:
+                lines.append("\nMột vài lựa chọn giá tốt khác:")
+                for b in sorted_by_price[1:3]:
+                    lines.append(f"• {b.get('title', 'Sách')} — {_fmt_price(float(b.get('price', 0) or 0))}")
+            return "\n".join(lines)
+
+        if ask_stock:
+            lines = []
+            for b in recs[:3]:
+                raw_stock = b.get("stock")
+                if raw_stock is None:
+                    status = "ℹ️ Chưa có dữ liệu tồn kho"
+                else:
+                    stock = int(raw_stock or 0)
+                    status = f"✅ Còn {stock} cuốn" if stock > 0 else "⚠️ Tạm hết hàng"
+                lines.append(f"📦 **{b.get('title', 'Sách')}**: {status}")
+            if book_title and lines:
+                lines.insert(0, f"Tình trạng kho cho '{book_title}':")
+            return "\n".join(lines)
+
+        if ask_price:
+            if entities.get("budget_min") is not None or entities.get("budget_max") is not None:
+                lines = ["💰 **Các sách trong tầm giá bạn yêu cầu**"]
+                for b in sorted(recs[:5], key=lambda x: float(x.get("price", 0) or 0)):
+                    lines.append(
+                        f"• **{b.get('title', 'Sách')}**: {_fmt_price(float(b.get('price', 0) or 0))}"
+                    )
+                return "\n".join(lines)
+
+            lines = []
+            for b in recs[:3]:
+                lines.append(
+                    f"💰 **{b.get('title', 'Sách')}** hiện có giá {_fmt_price(float(b.get('price', 0) or 0))}"
+                )
+            if book_title and lines:
+                lines.insert(0, f"Thông tin giá cho '{book_title}':")
+            return "\n".join(lines)
+
+        if ask_next_book:
+            lines = ["📚 **Bạn có thể đọc/mua tiếp các cuốn này**", ""]
+            for b in recs[:5]:
+                lines.append(_fmt_book(b))
+                lines.append("")
+            return "\n".join(lines)
+
+        if ask_bestseller:
+            lines = ["🔥 **Sách bán chạy / phổ biến**", ""]
+            for b in recs[:5]:
+                lines.append(_fmt_book(b))
+                lines.append("")
+            return "\n".join(lines)
+
+        if ask_new_books:
+            lines = ["🆕 **Sách mới trong kho**", ""]
+            for b in recs[:5]:
+                lines.append(_fmt_book(b))
+                lines.append("")
+            return "\n".join(lines)
+
+        if ask_same_author:
+            head = f"✍️ **Các sách cùng tác giả {resolved_author}**" if resolved_author else "✍️ **Các sách cùng tác giả**"
+            lines = [head, ""]
+            for b in recs[:6]:
+                lines.append(_fmt_book(b))
+                lines.append("")
+            return "\n".join(lines)
+
         kw_str = ", ".join(keywords[:3]) if keywords else "từ khóa của bạn"
         lines  = [f"🔍 **Kết quả tìm kiếm: '{kw_str}'**", ""]
         for b in recs[:5]:
@@ -206,6 +313,17 @@ def _compose_general_search(entities: dict, data: dict, customer_id: int | None)
 
     if sources:
         return f"🔍 **Thông tin tìm thấy:**\n\n{sources[0]['content']}"
+
+    if ask_stock and book_title:
+        return f"Mình chưa thấy dữ liệu tồn kho cho '{book_title}' lúc này. Bạn thử lại sau ít phút nhé."
+    if ask_best_price and book_titles:
+        return "Mình chưa tìm được thông tin giá để so sánh giữa các cuốn bạn vừa quan tâm."
+    if ask_compare_price and book_titles:
+        return "Mình chưa đủ dữ liệu để so sánh giá giữa các cuốn bạn nêu. Bạn thử ghi rõ tên từng cuốn trong dấu nháy nhé."
+    if ask_next_book:
+        return "Mình chưa có đủ ngữ cảnh để gợi ý cuốn tiếp theo. Bạn có thể nêu cuốn bạn vừa đọc hoặc vừa xem."
+    if ask_same_author:
+        return "Mình chưa tìm thấy sách cùng tác giả theo yêu cầu. Bạn thử cho mình tên tác giả cụ thể nhé."
 
     kw_str = ", ".join(keywords[:3]) if keywords else "từ khóa"
     return (

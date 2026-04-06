@@ -235,7 +235,7 @@ HEALTH_SERVICES = {
     'ship-service':           'http://ship-service:8000/api/shipments/',
     'comment-rate-service':   'http://comment-rate-service:8000/api/comments/',
     'catalog-service':        'http://catalog-service:8000/api/catalog/',
-    'recommender-ai-service': 'http://recommender-ai-service:8000/api/ai/health/',
+    'recommender-ai-service': 'http://recommender-ai-service:8000/health',
 }
 
 

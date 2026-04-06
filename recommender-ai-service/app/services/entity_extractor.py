@@ -85,8 +85,8 @@ def _extract_budget(text: str) -> tuple[float | None, float | None]:
         budget_min = lo * 1000 if lo < 10000 else lo
         budget_max = hi * 1000 if hi < 10000 else hi
 
-    # Pattern: "trên 200k", "above 200k"
-    above = re.search(r"(?:trên|tren|above|>|từ|tu)\s*(\d+(?:[.,]\d+)?)\s*(?:k|nghìn)?", text, re.I)
+    # Pattern: "trên 200k", "above 200k", "> 200000"
+    above = re.search(r"(?:trên|tren|above|>)\s*(\d+(?:[.,]\d+)?)\s*(?:k|nghìn|nghin|đồng|dong|vnd)?", text, re.I)
     if above and not range_match:
         val = float(above.group(1).replace(",", "."))
         budget_min = val * 1000 if val < 10000 else val
@@ -131,10 +131,98 @@ def _extract_rating_threshold(text: str) -> float | None:
 
 
 def _extract_author(text: str) -> str | None:
-    m = re.search(r"(?:tác giả|tac gia|author|của|cua)\s+([A-ZÀ-Ỹa-zà-ỹ][A-ZÀ-Ỹa-zà-ỹ\s]{2,30})", text)
+    m = re.search(r"(?:tác giả|tac gia|author|của|cua)\s+([A-ZÀ-Ỹa-zà-ỹ][A-ZÀ-Ỹa-zà-ỹ\s\.]{2,40})", text)
     if m:
         return m.group(1).strip()
     return None
+
+
+def _is_price_question(text: str) -> bool:
+    t = text.lower()
+    if re.search(r"\b(bao nhiêu tiền|bao nhieu tien|giá bao nhiêu|gia bao nhieu|price|cost|mức giá|muc gia|tầm giá|tam gia)\b", t, re.I):
+        return True
+    if re.search(r"\bgia\b", t) and not re.search(r"\btac\s+gia\b", t):
+        return True
+    if re.search(r"\b(giá|gia)\s*(dưới|duoi|trên|tren|<|>|từ|tu|đến|den|k|vnd|đồng|dong|\d)", t, re.I):
+        return True
+    return False
+
+
+def _is_stock_question(text: str) -> bool:
+    return bool(re.search(r"\b(còn hàng không|con hang khong|còn không|con khong|hết hàng chưa|het hang chua|hết hàng không|het hang khong|in stock|available|availability)\b", text, re.I))
+
+
+def _is_best_price_question(text: str) -> bool:
+    return bool(re.search(r"\b(giá\s+tốt\s+nhất|gia\s+tot\s+nhat|rẻ\s+nhất|re\s+nhat|cheapest|best\s+price|giá\s+thấp\s+nhất|gia\s+thap\s+nhat)\b", text, re.I))
+
+
+def _is_compare_price_question(text: str) -> bool:
+    return bool(re.search(r"\b(rẻ hơn|re hon|đắt hơn|dat hon|cao hơn|thấp hơn|thap hon|so sánh giá|so sanh gia|compare|đắt nhất|dat nhat)\b", text, re.I))
+
+
+def _is_next_book_question(text: str) -> bool:
+    return bool(re.search(r"\b(đọc cuốn nào tiếp|doc cuon nao tiep|mua cuốn nào tiếp|mua cuon nao tiep|nên đọc cuốn nào tiếp|nen doc cuon nao tiep|next book|đọc tiếp|doc tiep)\b", text, re.I))
+
+
+def _is_bestseller_question(text: str) -> bool:
+    return bool(re.search(r"\b(bán chạy|ban chay|best\s*seller|popular|phổ biến|pho bien|top\s*sách|top\s*sach)\b", text, re.I))
+
+
+def _is_new_books_question(text: str) -> bool:
+    return bool(re.search(r"\b(sách mới|sach moi|mới nhất|moi nhat|new\s*arrivals|new books|vừa ra mắt|vua ra mat)\b", text, re.I))
+
+
+def _is_same_author_question(text: str) -> bool:
+    return bool(re.search(r"\b(cùng tác giả|cung tac gia|same author|của tác giả|cua tac gia|author)\b", text, re.I))
+
+
+def _extract_book_titles_for_compare(text: str) -> list[str]:
+    # Examples: "Dune va Cosmos cuon nao re hon", "so sanh gia Clean Code va Dune"
+    m = re.search(
+        r"([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})\s+(?:và|va|vs|với|voi)\s+([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})",
+        text,
+        re.I,
+    )
+    if not m:
+        return []
+
+    noise = r"\b(cuon|quyen|sach|nao|re|dat|hon|gia|bao|nhieu|tien|co|khong|đắt|rẻ)\b"
+    t1 = re.sub(noise, " ", m.group(1), flags=re.I).strip(" .,!?:;\"'()[]")
+    t2 = re.sub(noise, " ", m.group(2), flags=re.I).strip(" .,!?:;\"'()[]")
+    t1 = re.sub(r"\s+", " ", t1)
+    t2 = re.sub(r"\s+", " ", t2)
+    out = []
+    for t in (t1, t2):
+        if len(t) >= 2 and t.lower() not in {"nào", "nao"}:
+            out.append(t)
+    return out[:2]
+
+
+def _extract_book_title(text: str) -> str | None:
+    quoted = re.search(r"[\"']([^\"']{2,80})[\"']", text)
+    if quoted:
+        q = quoted.group(1).strip()
+        if len(q) >= 2:
+            return q
+
+    # Examples: "mua cuon Romeo", "tim quyen Clean Code"
+    m = re.search(
+        r"(?:cuốn|cuon|quyển|quyen|tựa|tua|tên|ten)\s+([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    title = m.group(1).strip(" .,!?:;\"'()[]")
+    if len(title) < 2:
+        return None
+    first_word = title.split()[0].lower() if title.split() else ""
+    if first_word in {"nao", "nào", "gi", "gì", "bao", "co", "có", "con", "còn"}:
+        return None
+    lowered = title.lower()
+    if re.search(r"\b(gia|giá|tot|tốt|nhat|nhất|hang|khong|không|bao\s+nhieu)\b", lowered, re.I):
+        return None
+    return title
 
 
 def _extract_product_keywords(text: str, category: str | None) -> list[str]:
@@ -145,7 +233,7 @@ def _extract_product_keywords(text: str, category: str | None) -> list[str]:
         "là", "la", "có", "co", "được", "duoc", "với", "voi", "trong",
         "the", "a", "an", "is", "are", "to", "for", "me", "my", "i",
         "gợi", "goi", "ý", "y", "sách", "sach", "book", "books",
-        "muốn", "muon", "cần", "can", "mua", "buy",
+        "muốn", "muon", "cần", "can", "mua", "buy", "cuốn", "cuon", "quyển", "quyen",
     }
     words = re.findall(r"\b\w{3,}\b", text.lower())
     keywords = [w for w in words if w not in stopwords]
@@ -177,6 +265,30 @@ def extract(message: str, intent: str) -> dict[str, Any]:
     if category:
         entities["category"] = category
 
+    if _is_price_question(text):
+        entities["ask_price"] = True
+
+    if _is_stock_question(text):
+        entities["ask_stock"] = True
+
+    if _is_best_price_question(text):
+        entities["ask_best_price"] = True
+
+    if _is_compare_price_question(text):
+        entities["ask_compare_price"] = True
+
+    if _is_next_book_question(text):
+        entities["ask_next_book"] = True
+
+    if _is_bestseller_question(text):
+        entities["ask_bestseller"] = True
+
+    if _is_new_books_question(text):
+        entities["ask_new_books"] = True
+
+    if _is_same_author_question(text):
+        entities["ask_same_author"] = True
+
     if intent in ("order_support",):
         order_id = _extract_order_id(text)
         if order_id:
@@ -193,6 +305,16 @@ def extract(message: str, intent: str) -> dict[str, Any]:
     author = _extract_author(text)
     if author:
         entities["author"] = author
+
+    book_title = _extract_book_title(text)
+    if book_title:
+        entities["book_title"] = book_title
+
+    compare_titles = _extract_book_titles_for_compare(text)
+    if len(compare_titles) >= 2:
+        entities["book_titles"] = compare_titles
+        if "book_title" not in entities:
+            entities["book_title"] = compare_titles[0]
 
     keywords = _extract_product_keywords(text, category)
     if keywords:
