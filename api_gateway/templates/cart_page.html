@@ -19,6 +19,16 @@ nav{background:var(--s);padding:.75rem 2rem;box-shadow:var(--sh);display:flex;ju
 .btn-o{background:transparent;border:1.5px solid var(--p);color:var(--p)}.btn-o:hover{background:var(--pll)}
 .btn-sm{padding:.35rem .75rem;font-size:.8rem}
 .btn-ghost{background:transparent;border:1px solid var(--b);color:var(--tm)}.btn-ghost:hover{border-color:var(--p);color:var(--p)}
+.profile-wrap{position:relative}
+.profile-btn{display:flex;align-items:center;gap:.4rem;padding:.38rem .7rem;border:1.5px solid var(--b);border-radius:var(--rs);background:var(--s);cursor:pointer;font-size:.84rem;font-weight:600;color:var(--t);transition:all .2s}
+.profile-btn:hover{border-color:var(--p);background:var(--pll)}
+.avatar{width:24px;height:24px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:800;flex-shrink:0}
+.dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--s);border:1.5px solid var(--b);border-radius:var(--r);box-shadow:var(--shl);min-width:220px;z-index:500;overflow:hidden;display:none}
+.dropdown.open{display:block}
+.dd-item{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;font-size:.86rem;font-weight:600;color:var(--t);cursor:pointer;transition:background .15s;border:none;background:transparent;width:100%;text-align:left;text-decoration:none}
+.dd-item:hover{background:var(--pll);color:var(--pd)}
+.dd-sep{height:1px;background:var(--b);margin:.2rem 0}
+.dd-header{padding:.6rem 1rem .3rem;font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em}
 main{flex:1;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;width:100%}
 .page-hdr{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
 .page-title{font-size:1.4rem;font-weight:800}
@@ -76,11 +86,7 @@ main{flex:1;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;width:100%}
 <body>
 <nav>
   <a href="/" class="logo">🌙 Moon<em>Books</em></a>
-  <div class="nav-right">
-    <span id="navUser" style="font-size:.88rem;font-weight:600;color:var(--pd)"></span>
-    <a href="/" class="btn btn-ghost btn-sm">← Tiếp tục mua sắm</a>
-    <button class="btn btn-o btn-sm" id="logoutBtn" style="display:none" onclick="doLogout()">Đăng xuất</button>
-  </div>
+  <div class="nav-right" id="navRight"></div>
 </nav>
 <main>
   <div class="page-hdr">
@@ -140,8 +146,8 @@ const EMOJI = {programming:'💻',science:'🔬',history:'📜',fiction:'📖',m
 document.addEventListener('DOMContentLoaded', () => {
   try { user = JSON.parse(localStorage.getItem('cb_user')||'null'); } catch(e){}
   if (!user) { window.location.href = '/customer-login/?next=/cart/'; return; }
-  document.getElementById('navUser').textContent = '👤 ' + user.username;
-  document.getElementById('logoutBtn').style.display = '';
+  updateNav();
+  document.addEventListener('click',e=>{if(!e.target.closest('.profile-wrap'))closeDropdown();});
   loadSavedAddresses();
   loadCart();
 });
@@ -156,6 +162,29 @@ function authH() {
   const h={'Content-Type':'application/json'};
   if(user?.access_token) h['Authorization']='Bearer '+user.access_token;
   return h;
+}
+function toggleDropdown(e){e.stopPropagation();document.getElementById('profileDropdown')?.classList.toggle('open');}
+function closeDropdown(){document.getElementById('profileDropdown')?.classList.remove('open');}
+function updateNav(){
+  const el=document.getElementById('navRight');
+  if(!user||!el)return;
+  const init=(user.username||'U')[0].toUpperCase();
+  el.innerHTML=`
+    <a href="/" class="btn btn-ghost btn-sm">← Tiếp tục mua sắm</a>
+    <div class="profile-wrap">
+      <button class="profile-btn" onclick="toggleDropdown(event)">
+        <div class="avatar">${init}</div>${user.username} <span style="font-size:.7rem;color:var(--tm)">▾</span>
+      </button>
+      <div class="dropdown" id="profileDropdown">
+        <div class="dd-header">${user.username}</div>
+        <div class="dd-sep"></div>
+        <a class="dd-item" href="/?pane=profile">👤 Thông tin cá nhân</a>
+        <a class="dd-item" href="/?pane=ratings">⭐ Đánh giá của tôi</a>
+        <a class="dd-item" href="/?pane=orders">📦 Đơn hàng của tôi</a>
+        <div class="dd-sep"></div>
+        <button class="dd-item" onclick="doLogout()" style="color:#DC2626">🚪 Đăng xuất</button>
+      </div>
+    </div>`;
 }
 function doLogout() { localStorage.removeItem('cb_user'); window.location.href='/customer-login/'; }
 

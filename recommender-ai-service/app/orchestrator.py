@@ -124,6 +124,88 @@ def _get_interactions(customer_id: int) -> dict[str, dict[int, int]]:
         return {}
 
 
+def _get_customer_ratings(customer_id: int) -> dict[int, int]:
+    """Extract customer's own rating history: {book_id: rating_value}."""
+    try:
+        from django.apps import apps
+        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
+        qs = CustomerBookInteraction.objects.filter(
+            customer_id=customer_id,
+            interaction_type="rate",
+            rating__isnull=False
+        )
+        result: dict[int, int] = {}
+        for ix in qs:
+            if ix.rating is not None:
+                result[ix.book_id] = ix.rating
+        logger.debug("Loaded %d ratings for C%s", len(result), customer_id)
+        return result
+    except Exception as exc:
+        logger.debug("Could not load customer ratings: %s", exc)
+        return {}
+
+
+def _get_bestseller_from_interactions(limit: int = 8) -> list[dict]:
+    """Build bestseller list from tracked purchase/cart/view interactions."""
+    try:
+        from django.apps import apps
+        from django.db.models import Sum
+        from .clients.catalog_client import catalog_client
+
+        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
+        # Prefer purchase signal, then cart/view as weaker fallback signals.
+        rows = (
+            CustomerBookInteraction.objects
+            .filter(interaction_type__in=["purchase", "cart", "view"])
+            .values("book_id", "interaction_type")
+            .annotate(total=Sum("count"))
+        )
+
+        # Aggregate weighted engagement per book.
+        weighted: dict[int, float] = {}
+        for r in rows:
+            bid = int(r.get("book_id") or 0)
+            if not bid:
+                continue
+            itype = str(r.get("interaction_type") or "")
+            total = float(r.get("total") or 0)
+            w = 6.0 if itype == "purchase" else (2.0 if itype == "cart" else 1.0)
+            weighted[bid] = weighted.get(bid, 0.0) + (total * w)
+
+        if not weighted:
+            return []
+
+        all_books = catalog_client.get_all_products(limit=500)
+        book_map = {
+            int(b.get("id")): b for b in all_books
+            if b.get("id") and int(b.get("stock", 0) or 0) > 0
+        }
+
+        ranked_ids = sorted(weighted.keys(), key=lambda bid: weighted.get(bid, 0), reverse=True)
+        out: list[dict] = []
+        for bid in ranked_ids:
+            b = book_map.get(bid)
+            if not b:
+                continue
+            out.append({
+                "product_id": b.get("id"),
+                "title": b.get("title", ""),
+                "author": b.get("author", ""),
+                "category": b.get("category", ""),
+                "price": float(b.get("price", 0) or 0),
+                "stock": int(b.get("stock", 0) or 0),
+                "score": round(float(weighted.get(bid, 0)), 3),
+                "reason": "bán chạy theo lịch sử mua gần đây",
+                "avg_rating": 0,
+            })
+            if len(out) >= limit:
+                break
+        return out
+    except Exception as exc:
+        logger.debug("Could not build bestseller from interactions: %s", exc)
+        return []
+
+
 class ChatOrchestrator:
     def process(
         self,
@@ -148,8 +230,16 @@ class ChatOrchestrator:
         # 2. Entity extraction
         entities = extract_entities(message, intent)
 
-        # Context-aware follow-up: if user asks price/stock without title, reuse recent title from session.
-        if (entities.get("ask_price") or entities.get("ask_stock")) and not entities.get("book_title"):
+        # Context-aware follow-up: if user asks price/stock without explicit filters/title,
+        # reuse recent title from session. Do not infer when user provides budget filters.
+        has_budget_filter = bool(
+            entities.get("budget_min") is not None or entities.get("budget_max") is not None
+        )
+        if (
+            (entities.get("ask_price") or entities.get("ask_stock"))
+            and not entities.get("book_title")
+            and not has_budget_filter
+        ):
             inferred_title = _infer_book_title_from_history(session_id, message)
             if inferred_title:
                 entities["book_title"] = inferred_title
@@ -184,6 +274,10 @@ class ChatOrchestrator:
         ):
             intent = "general_search"
 
+        # Any explicit budget filter should be treated as product search.
+        if entities.get("budget_min") is not None or entities.get("budget_max") is not None:
+            intent = "general_search"
+
         # 3. Dispatch to services
         data: dict[str, Any] = {}
         recommendations: list[dict] = []
@@ -205,6 +299,7 @@ class ChatOrchestrator:
         elif intent == "product_advice":
             # Behavior + Recommendation + RAG context
             interactions = _get_interactions(customer_id) if customer_id else {}
+            customer_ratings = _get_customer_ratings(customer_id) if customer_id else {}
             flat_interactions = {
                 itype: {bid: cnt for bid, cnt in book_counts.items()}
                 for itype, book_counts in interactions.items()
@@ -248,7 +343,7 @@ class ChatOrchestrator:
                     # Add similar books around the top match to keep recommendation behavior.
                     top_match_id = matched_recs[0].get("product_id") if matched_recs else None
                     if top_match_id:
-                        similar = rec_svc.get_similar(int(top_match_id), limit=3)
+                        similar = rec_svc.get_similar(int(top_match_id), limit=3, customer_ratings=customer_ratings)
                         recommendations = matched_recs + similar
                     else:
                         recommendations = matched_recs
@@ -260,6 +355,7 @@ class ChatOrchestrator:
             recs = rec_svc.get_personalized(
                 customer_id=customer_id or 0,
                 interactions=flat_interactions,
+                customer_ratings=customer_ratings,
                 budget_min=entities.get("budget_min"),
                 budget_max=entities.get("budget_max"),
                 category=entities.get("category"),
@@ -271,6 +367,7 @@ class ChatOrchestrator:
                 relaxed = rec_svc.get_personalized(
                     customer_id=customer_id or 0,
                     interactions=flat_interactions,
+                    customer_ratings=customer_ratings,
                     budget_min=entities.get("budget_min"),
                     budget_max=entities.get("budget_max"),
                     category=None,
@@ -306,6 +403,7 @@ class ChatOrchestrator:
             category = entities.get("category")
             from .clients.catalog_client import catalog_client
 
+            customer_ratings = _get_customer_ratings(customer_id) if customer_id else {}
             recent_recs = _get_recent_recommendations(session_id)
             is_followup = bool(entities.get("ask_price") or entities.get("ask_stock") or entities.get("ask_best_price"))
             has_explicit_filter = bool(
@@ -320,12 +418,14 @@ class ChatOrchestrator:
             )
 
             if entities.get("ask_bestseller"):
-                recommendations = rec_svc.get_popular(limit=8)
+                recommendations = _get_bestseller_from_interactions(limit=8)
                 if not recommendations:
+                    recommendations = rec_svc.get_popular(limit=8)
+                if not recommendations:
+                    # Last-resort fallback if no rating + no interaction signal.
                     all_books = catalog_client.get_all_products(limit=300)
                     all_books = [b for b in all_books if (b.get("id") and int(b.get("stock", 0) or 0) > 0)]
-                    # Fallback heuristic: use newest available inventory as "popular gần đây" when ratings are sparse.
-                    all_books.sort(key=lambda b: int(b.get("id", 0) or 0), reverse=True)
+                    all_books.sort(key=lambda b: int(b.get("stock", 0) or 0), reverse=True)
                     for b in all_books[:8]:
                         recommendations.append({
                             "product_id": b.get("id"),
@@ -335,7 +435,7 @@ class ChatOrchestrator:
                             "price": float(b.get("price", 0) or 0),
                             "stock": int(b.get("stock", 0) or 0),
                             "score": 0.0,
-                            "reason": "phổ biến gần đây",
+                            "reason": "được quan tâm nhiều trong kho",
                             "avg_rating": 0,
                         })
                 data["recommendations"] = recommendations
@@ -400,7 +500,7 @@ class ChatOrchestrator:
                     if found:
                         base_id = found[0].get("id")
                 if base_id:
-                    recommendations = rec_svc.get_similar(int(base_id), limit=8)
+                    recommendations = rec_svc.get_similar(int(base_id), limit=8, customer_ratings=customer_ratings)
                 data["recommendations"] = recommendations
                 data["sources"] = []
 
@@ -457,6 +557,22 @@ class ChatOrchestrator:
                         min_price=entities.get("budget_min"),
                         max_price=entities.get("budget_max"),
                     )
+                elif (
+                    (entities.get("ask_price") or entities.get("ask_best_price"))
+                    and (entities.get("budget_min") is not None or entities.get("budget_max") is not None)
+                ):
+                    # Price-only commerce query: avoid fulltext search term pollution like "gia tren 200000".
+                    all_books = catalog_client.get_all_products(limit=500)
+                    books = []
+                    for b in all_books:
+                        p = float(b.get("price", 0) or 0)
+                        if entities.get("budget_min") is not None and p < float(entities.get("budget_min") or 0):
+                            continue
+                        if entities.get("budget_max") is not None and p > float(entities.get("budget_max") or 0):
+                            continue
+                        if category and b.get("category") != category:
+                            continue
+                        books.append(b)
                 else:
                     books = catalog_client.search_products(
                         query=query,
@@ -486,10 +602,23 @@ class ChatOrchestrator:
                 recommendations = recs
                 data["recommendations"] = recs
 
-                # Also RAG
-                rag_entries = rag_retrieve(message, top_k=2)
-                sources = rag_entries
-                data["sources"] = rag_entries
+                # Only use RAG fallback for non-commerce queries.
+                is_commerce_query = bool(
+                    entities.get("ask_price")
+                    or entities.get("ask_stock")
+                    or entities.get("ask_best_price")
+                    or entities.get("ask_compare_price")
+                    or entities.get("ask_next_book")
+                    or entities.get("ask_bestseller")
+                    or entities.get("ask_new_books")
+                    or entities.get("ask_same_author")
+                    or entities.get("budget_min") is not None
+                    or entities.get("budget_max") is not None
+                )
+                if not is_commerce_query:
+                    rag_entries = rag_retrieve(message, top_k=2)
+                    sources = rag_entries
+                    data["sources"] = rag_entries
 
         else:  # fallback
             entries = rag_retrieve(message, top_k=2)

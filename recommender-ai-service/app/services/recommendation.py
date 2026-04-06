@@ -54,11 +54,18 @@ def get_personalized(
     budget_min: float | None = None,
     budget_max: float | None = None,
     category: str | None = None,
+    customer_ratings: dict[int, int] | None = None,  # {book_id: rating_value}
 ) -> list[dict[str, Any]]:
     """
     Generate personalized recommendations.
     interactions: {interaction_type: {book_id: count}}
+    customer_ratings: {book_id: rating_value} - customer's own historical ratings
+    
+    Filter logic:
+      - Exclude books rated < 3⭐ (bad experience)
+      - Boost books rated >= 4⭐ (highly recommend)
     """
+    customer_ratings = customer_ratings or {}
     # Flatten to {book_id: weighted_score}
     book_scores: dict[int, float] = defaultdict(float)
     for itype, book_counts in interactions.items():
@@ -127,6 +134,13 @@ def get_personalized(
         if not bid or bid in purchased or book.get("stock", 0) <= 0:
             continue
 
+        # Filter: exclude books customer rated poorly (< 3⭐)
+        if bid in customer_ratings:
+            cust_rating = customer_ratings[bid]
+            if cust_rating < 3:
+                logger.debug("Excluding B%s for C%s (low rating: %d⭐)", bid, customer_id, cust_rating)
+                continue
+
         price = float(book.get("price", 0))
         if budget_min is not None and price < budget_min:
             continue
@@ -143,6 +157,13 @@ def get_personalized(
         if bscore >= PURCHASE_THRESHOLD:
             score += bscore * 0.4
             reasons.append(f"bạn đã tương tác {int(bscore)} lần")
+
+        # Boost: prioritize books customer rated highly (>= 4⭐)
+        if bid in customer_ratings:
+            cust_rating = customer_ratings[bid]
+            if cust_rating >= 4:
+                score += 5.0
+                reasons.append(f"bạn đã đánh giá cao ⭐{cust_rating} trước đây")
 
         # Category match
         if book.get("category") in top_cats:
@@ -185,11 +206,20 @@ def get_personalized(
     return candidates[:limit]
 
 
-def get_similar(product_id: int, limit: int = 6) -> list[dict[str, Any]]:
+def get_similar(
+    product_id: int, 
+    limit: int = 6,
+    customer_ratings: dict[int, int] | None = None,  # {book_id: rating_value}
+) -> list[dict[str, Any]]:
     """
     Content-based similar products.
     Similarity = same category + author + price range proximity.
+    
+    Applies customer rating filtering:
+      - Exclude books rated < 3⭐
+      - Boost books rated >= 4⭐
     """
+    customer_ratings = customer_ratings or {}
     target = catalog_client.get_product_by_id(product_id)
     if not target:
         return []
@@ -208,6 +238,12 @@ def get_similar(product_id: int, limit: int = 6) -> list[dict[str, Any]]:
         if not bid or bid == product_id or book.get("stock", 0) <= 0:
             continue
 
+        # Filter: exclude books customer rated poorly (< 3⭐)
+        if bid in customer_ratings:
+            cust_rating = customer_ratings[bid]
+            if cust_rating < 3:
+                continue
+
         score   = 0.0
         reasons = []
 
@@ -224,6 +260,13 @@ def get_similar(product_id: int, limit: int = 6) -> list[dict[str, Any]]:
             if price_diff < 0.3:
                 score += 1.0
                 reasons.append("tầm giá tương đương")
+
+        # Boost: prioritize books customer rated highly (>= 4⭐)
+        if bid in customer_ratings:
+            cust_rating = customer_ratings[bid]
+            if cust_rating >= 4:
+                score += 3.5
+                reasons.append(f"bạn đánh giá cao ⭐{cust_rating}")
 
         pop = _popularity_score(bid, ratings)
         score += pop

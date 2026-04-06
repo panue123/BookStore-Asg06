@@ -141,6 +141,12 @@ def _is_price_question(text: str) -> bool:
     t = text.lower()
     if re.search(r"\b(bao nhiêu tiền|bao nhieu tien|giá bao nhiêu|gia bao nhieu|price|cost|mức giá|muc gia|tầm giá|tam gia)\b", t, re.I):
         return True
+    if re.search(r"\b(sách|sach)\s*(trên|tren|dưới|duoi)\s*\d+\b", t, re.I):
+        return True
+    if re.search(r"\b(sách|sach)\s*(từ|tu)\s*\d+\s*(đến|den|-)\s*\d+\b", t, re.I):
+        return True
+    if re.search(r"\b(trên|tren|dưới|duoi)\s*\d+\s*(k|nghìn|nghin|đồng|dong|vnd)?\b", t, re.I):
+        return True
     if re.search(r"\bgia\b", t) and not re.search(r"\btac\s+gia\b", t):
         return True
     if re.search(r"\b(giá|gia)\s*(dưới|duoi|trên|tren|<|>|từ|tu|đến|den|k|vnd|đồng|dong|\d)", t, re.I):
@@ -179,16 +185,25 @@ def _is_same_author_question(text: str) -> bool:
 def _extract_book_titles_for_compare(text: str) -> list[str]:
     # Examples: "Dune va Cosmos cuon nao re hon", "so sanh gia Clean Code va Dune"
     m = re.search(
-        r"([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})\s+(?:và|va|vs|với|voi)\s+([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})",
+        r"([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60}?)\s+(?:và|va|vs|với|voi)\s+([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})",
         text,
         re.I,
     )
     if not m:
+        # Fallback for comma-separated compare prompts: "Dune, Cosmos cuốn nào rẻ hơn"
+        m = re.search(
+            r"([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})\s*,\s*([A-ZÀ-Ỹa-zà-ỹ0-9][A-ZÀ-Ỹa-zà-ỹ0-9\s\-\+\.#]{1,60})",
+            text,
+            re.I,
+        )
+    if not m:
         return []
 
-    noise = r"\b(cuon|quyen|sach|nao|re|dat|hon|gia|bao|nhieu|tien|co|khong|đắt|rẻ)\b"
+    noise = r"\b(cuon|cuốn|quyen|quyển|sach|sách|nao|nào|re|rẻ|dat|đắt|hon|hơn|gia|giá|bao|nhieu|nhiêu|tien|tiền|co|có|khong|không|so\s+sanh|sánh)\b"
     t1 = re.sub(noise, " ", m.group(1), flags=re.I).strip(" .,!?:;\"'()[]")
     t2 = re.sub(noise, " ", m.group(2), flags=re.I).strip(" .,!?:;\"'()[]")
+    # Remove common trailing question tails that can cling to 2nd title.
+    t2 = re.sub(r"\b(cuốn|cuon|quyển|quyen)?\s*(nào|nao)?\s*(rẻ|re|đắt|dat)?\s*(hơn|hon)?\s*$", "", t2, flags=re.I).strip(" .,!?:;\"'()[]")
     t1 = re.sub(r"\s+", " ", t1)
     t2 = re.sub(r"\s+", " ", t2)
     out = []
