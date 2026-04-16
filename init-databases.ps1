@@ -78,9 +78,42 @@ if ($elapsed -ge $MaxWaitSeconds) {
     exit 1
 }
 
+Write-Host ""
+Write-Host "[3.5/5] Ensuring PostgreSQL databases exist..." -ForegroundColor Cyan
+function Ensure-PostgresDatabase {
+    param([string]$DbName)
+    $query = "SELECT 1 FROM pg_database WHERE datname = '$DbName';"
+    $exists = docker compose exec -T db-postgres psql -U postgres -tAc $query
+    if (-not $exists -or -not $exists.Trim()) {
+        Write-Host "Creating database: $DbName" -ForegroundColor Yellow
+        docker compose exec -T db-postgres psql -U postgres -c "CREATE DATABASE $DbName;" | Out-Null
+    } else {
+        Write-Host "Database exists: $DbName" -ForegroundColor Green
+    }
+}
+
+$pgDbs = @(
+    "bookstore_book",
+    "bookstore_cart",
+    "bookstore_catalog",
+    "bookstore_comment",
+    "bookstore_customer",
+    "bookstore_order",
+    "bookstore_pay",
+    "bookstore_product",
+    "bookstore_recommender",
+    "bookstore_ship",
+    "bookstore_staff"
+)
+
+foreach ($db in $pgDbs) {
+    Ensure-PostgresDatabase -DbName $db
+}
+
 $services = @(
     "customer-service",
     "book-service",
+    "product-service",
     "cart-service",
     "order-service",
     "pay-service",

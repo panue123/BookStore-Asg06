@@ -5,8 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # ── Service URLs ──────────────────────────────────────────────────────────────
-BOOK_SERVICE_URL     = os.getenv("BOOK_SERVICE_URL",     "http://book-service:8000")
-CATALOG_SERVICE_URL  = os.getenv("CATALOG_SERVICE_URL",  "http://catalog-service:8000")
+PRODUCT_SERVICE_URL  = os.getenv("PRODUCT_SERVICE_URL",  "http://product-service:8000")
 CUSTOMER_SERVICE_URL = os.getenv("CUSTOMER_SERVICE_URL", "http://customer-service:8000")
 ORDER_SERVICE_URL    = os.getenv("ORDER_SERVICE_URL",    "http://order-service:8000")
 COMMENT_SERVICE_URL  = os.getenv("COMMENT_SERVICE_URL",  "http://comment-rate-service:8000")

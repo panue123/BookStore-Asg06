@@ -12,10 +12,10 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-CART_SVC   = 'http://cart-service:8000'
-PAY_SVC    = 'http://pay-service:8000'
-SHIP_SVC   = 'http://ship-service:8000'
-BOOK_SVC   = 'http://book-service:8000'
+CART_SVC    = 'http://cart-service:8000'
+PAY_SVC     = 'http://pay-service:8000'
+SHIP_SVC    = 'http://ship-service:8000'
+PRODUCT_SVC = 'http://product-service:8000'   # replaces BOOK_SVC
 
 _TIMEOUT = 15
 
@@ -106,15 +106,18 @@ class OrderSaga:
         self.steps.append({'step': 'clear_cart', 'status': 'ok'})
 
     def _step_update_stock(self):
-        """Decrement stock for each book ordered."""
+        """Decrement stock for each product ordered via product-service."""
         for item in self.items:
             try:
-                book_resp = requests.get(f'{BOOK_SVC}/api/books/{item["book_id"]}/', timeout=5)
-                if book_resp.status_code == 200:
-                    current_stock = book_resp.json().get('stock', 0)
+                pid = item.get("product_id") or item.get("book_id")
+                if not pid:
+                    continue
+                prod_resp = requests.get(f'{PRODUCT_SVC}/api/products/{pid}/', timeout=5)
+                if prod_resp.status_code == 200:
+                    current_stock = prod_resp.json().get('stock', 0)
                     new_stock = max(0, current_stock - item['quantity'])
                     requests.patch(
-                        f'{BOOK_SVC}/api/books/{item["book_id"]}/update_stock/',
+                        f'{PRODUCT_SVC}/api/products/{pid}/',
                         json={'stock': new_stock}, timeout=5,
                     )
             except Exception:

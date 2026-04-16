@@ -1,3 +1,4 @@
+import os
 import requests
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -5,6 +6,9 @@ from rest_framework.response import Response
 from django.db.models import Avg, Count
 from .models import Comment
 from .serializers import CommentSerializer, CommentCreateSerializer
+
+
+ALLOW_COMMENT_WITHOUT_ORDER_CHECK = os.getenv('ALLOW_COMMENT_WITHOUT_ORDER_CHECK', '0') == '1'
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
@@ -26,7 +30,8 @@ class CommentViewSet(viewsets.ModelViewSet):
             try:
                 order_resp = requests.post(
                     'http://order-service:8000/api/orders/verify_purchase/',
-                    data={'customer_id': customer_id, 'book_id': book_id}
+                    data={'customer_id': customer_id, 'book_id': book_id},
+                    timeout=8,
                 )
                 if order_resp.status_code == 200:
                     purchase_data = order_resp.json()
@@ -35,9 +40,17 @@ class CommentViewSet(viewsets.ModelViewSet):
                             {'error': 'You must purchase this book before rating'},
                             status=status.HTTP_403_FORBIDDEN
                         )
+                elif not ALLOW_COMMENT_WITHOUT_ORDER_CHECK:
+                    return Response(
+                        {'error': 'Could not verify purchase. Please try again later.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    )
             except requests.exceptions.RequestException:
-                # If order service is down, allow comment anyway
-                pass
+                if not ALLOW_COMMENT_WITHOUT_ORDER_CHECK:
+                    return Response(
+                        {'error': 'Order service unavailable, cannot verify purchase.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    )
             
             comment = serializer.save()
             return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
@@ -149,45 +162,4 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Response({
             'message': 'Comment marked as helpful',
             'comment': CommentSerializer(comment).data
-        }, status=status.HTTP_200_OK)
-        
-        comments = Comment.objects.filter(book_id=book_id).order_by('-created_at')
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'])
-    def by_customer(self, request):
-        """Get all comments by a customer"""
-        customer_id = request.query_params.get('customer_id')
-        if not customer_id:
-            return Response({'error': 'customer_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        comments = Comment.objects.filter(customer_id=customer_id).order_by('-created_at')
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['patch'])
-    def increment_helpful(self, request, pk=None):
-        """Increment helpful count"""
-        comment = self.get_object()
-        comment.helpful_count += 1
-        comment.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'])
-    def get_average_rating(self, request):
-        """Get average rating for a book"""
-        book_id = request.query_params.get('book_id')
-        if not book_id:
-            return Response({'error': 'book_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        comments = Comment.objects.filter(book_id=book_id)
-        if not comments.exists():
-            return Response({'book_id': book_id, 'average_rating': 0, 'count': 0}, status=status.HTTP_200_OK)
-        
-        avg_rating = sum(c.rating for c in comments) / comments.count()
-        return Response({
-            'book_id': book_id,
-            'average_rating': round(avg_rating, 2),
-            'count': comments.count()
         }, status=status.HTTP_200_OK)

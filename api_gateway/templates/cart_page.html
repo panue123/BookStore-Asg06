@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moon Books – Giỏ hàng</title>
+<title>E-commerce – Giỏ hàng</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -56,6 +56,17 @@ main{flex:1;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;width:100%}
 .btn-remove:hover{background:#FEE2E2;color:#EF4444}
 .empty-cart{text-align:center;padding:3.5rem 1rem;color:var(--tm)}
 .empty-icon{font-size:3.5rem;margin-bottom:.85rem}
+.reco-box{background:var(--s);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border:1px solid var(--b);margin-top:1rem}
+.reco-hdr{padding:.9rem 1.1rem;border-bottom:1px solid var(--b);font-weight:700;background:#F8FBFE}
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.8rem;padding:1rem}
+.reco-card{border:1px solid var(--b);border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;transition:all .2s}
+.reco-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.reco-cover{height:120px;background:linear-gradient(135deg,var(--pll),#DCECF6);display:flex;align-items:center;justify-content:center;font-size:2rem}
+.reco-cover img{width:100%;height:100%;object-fit:cover}
+.reco-body{padding:.55rem .65rem}
+.reco-title{font-size:.82rem;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.1em}
+.reco-price{font-size:.84rem;color:var(--pd);font-weight:800;margin-top:.35rem}
+.reco-reason{font-size:.72rem;color:var(--tm);margin-top:.25rem;line-height:1.3}
 /* Summary */
 .summary-box{background:var(--s);border-radius:var(--r);box-shadow:var(--sh);padding:1.25rem;position:sticky;top:5rem;border:1px solid var(--b)}
 .summary-title{font-weight:700;font-size:1rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--b)}
@@ -85,7 +96,7 @@ main{flex:1;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;width:100%}
 </head>
 <body>
 <nav>
-  <a href="/" class="logo">🌙 Moon<em>Books</em></a>
+  <a href="/" class="logo">🛍️ E-<em>commerce</em></a>
   <div class="nav-right" id="navRight"></div>
 </nav>
 <main>
@@ -101,6 +112,10 @@ main{flex:1;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;width:100%}
           <button class="btn btn-ghost btn-sm" onclick="loadCart()">🔄 Làm mới</button>
         </div>
         <div id="cartItemsPane"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+      <div class="reco-box" id="cartRecoBox" style="display:none">
+        <div class="reco-hdr">💡 Gợi ý cho bạn trước khi thanh toán</div>
+        <div class="reco-grid" id="cartRecoGrid"></div>
       </div>
     </div>
     <div class="summary-box">
@@ -285,6 +300,8 @@ function renderCart() {
   if (!items.length) {
     pane.innerHTML='<div class="empty-cart"><div class="empty-icon">🛒</div><div style="font-weight:600;font-size:1rem;margin-bottom:.5rem">Giỏ hàng trống</div><p style="font-size:.88rem;margin-bottom:1rem">Hãy thêm sách vào giỏ để tiếp tục</p><a href="/" class="btn btn-p btn-sm" style="display:inline-block">Khám phá sách ngay</a></div>';
     updateSummary([]);
+    const box=document.getElementById('cartRecoBox');
+    if(box)box.style.display='none';
     return;
   }
   pane.innerHTML = items.map(item=>`
@@ -293,7 +310,7 @@ function renderCart() {
       <div class="ci-info">
         <div class="ci-title" id="title-${item.book_id}">Đang tải...</div>
         <div class="ci-author" id="author-${item.book_id}"></div>
-        <div class="ci-unit">${fmt(item.price_at_add)} / cuốn</div>
+        <div class="ci-unit" id="unit-${item.book_id}">${fmt(item.price_at_add)} / cái</div>
       </div>
       <div class="ci-right">
         <div class="ci-subtotal">${fmt(parseFloat(item.price_at_add)*item.quantity)}</div>
@@ -307,15 +324,80 @@ function renderCart() {
     </div>`).join('');
   updateSummary(items);
   items.forEach(item=>fetchBookInfo(item.book_id));
+  loadCartRecommendations(items);
+}
+
+function renderRecoCard(b){
+  const bid=b.product_id||b.id;
+  const cover=b.cover_image_url||b.cover_image||'';
+  const price=fmt(b.price||0);
+  return `<div class="reco-card" onclick="window.location.href='/?ref=cart&product_id=${bid}'">
+    <div class="reco-cover">${cover?`<img src="${cover}" alt="${b.title||''}" onerror="this.parentElement.innerHTML='📚'">`:'📚'}</div>
+    <div class="reco-body">
+      <div class="reco-title">${b.title||''}</div>
+      <div class="reco-price">${price}</div>
+      ${b.reason?`<div class="reco-reason">${b.reason}</div>`:''}
+    </div>
+  </div>`;
+}
+
+async function loadCartRecommendations(items){
+  const box=document.getElementById('cartRecoBox');
+  const grid=document.getElementById('cartRecoGrid');
+  if(!box||!grid)return;
+  if(!items||!items.length){box.style.display='none';return;}
+
+  box.style.display='';
+  grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div></div>';
+
+  const firstId=items[0].book_id;
+  const customerId=user?.service_user_id;
+  try{
+    const calls=[fetch('/api/v1/recommend/similar/'+firstId+'?limit=4')];
+    if(customerId)calls.push(fetch('/api/v1/recommend/collaborative/'+customerId+'?limit=4'));
+    const rs=await Promise.all(calls);
+
+    const related=rs[0].ok?await rs[0].json():{};
+    const collab=(rs[1]&&rs[1].ok)?await rs[1].json():{};
+    const list=[];
+    (related.similar||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||'',reason:i.reason||'liên quan đến sản phẩm trong giỏ'}));
+    (collab.items||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||''}));
+
+    const uniq=[];
+    const seen=new Set(items.map(i=>String(i.book_id)));
+    for(const it of list){
+      const k=String(it.product_id||it.id);
+      if(!k||seen.has(k))continue;
+      seen.add(k);
+      uniq.push(it);
+      if(uniq.length>=6)break;
+    }
+
+    if(!uniq.length){
+      box.style.display='none';
+      return;
+    }
+    grid.innerHTML=uniq.map(renderRecoCard).join('');
+  }catch(_){
+    box.style.display='none';
+  }
 }
 
 async function fetchBookInfo(bookId) {
   try {
-    const r = await fetch(`${API}/books/${bookId}/`);
+    const r = await fetch(`${API}/products/${bookId}/`);
     if (!r.ok) return;
-    const b = await r.json();
+    const raw = await r.json();
+    const b = {
+      ...raw,
+      title: raw.title || raw.name || '',
+      author: raw.author || (raw.attributes && raw.attributes.author) || '',
+      category: raw.category || raw.category_name || 'book',
+      cover_image_url: raw.cover_image_url || raw.cover_image || '',
+    };
     const titleEl = document.getElementById('title-'+bookId);
     const authorEl = document.getElementById('author-'+bookId);
+    const unitEl = document.getElementById('unit-'+bookId);
     const coverEl = document.getElementById('cover-'+bookId);
     if (titleEl) titleEl.textContent = b.title||'Sách #'+bookId;
     if (authorEl) authorEl.textContent = b.author||'';
@@ -396,7 +478,7 @@ async function checkout() {
       toast('Đặt hàng thành công! 🎉','ok');
       msgEl.innerHTML=`<span style="color:#059669;font-weight:600">✅ Đơn hàng #${d.order?.id} đã được tạo!</span>`;
       cartData=null;
-      setTimeout(()=>window.location.href='/',2500);
+      setTimeout(()=>window.location.href='/?showOrderDetail='+d.order.id,2500);
     } else {
       sagaSteps.innerHTML=`<div class="saga-step"><span class="step-fail">✗</span> ${d.error||'Đặt hàng thất bại'}</div>`;
       toast(d.error||'Đặt hàng thất bại','err');

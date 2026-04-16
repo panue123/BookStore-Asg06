@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MoonBooks – Nhà sách trực tuyến</title>
+<title>E-commerce – Mua sắm thông minh</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -212,17 +212,22 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
 
 <!-- ═══ NAV ═══ -->
 <nav>
-  <a href="/" class="logo">🌙 Moon<em>Books</em></a>
+  <a href="/" class="logo">🛍️ E-<em>commerce</em></a>
   <div class="nav-search">
     <select id="searchCatFilter" title="Lọc danh mục tìm kiếm" aria-label="Lọc danh mục tìm kiếm">
       <option value="">Tất cả</option>
-      <option value="programming">Lập trình</option>
-      <option value="science">Khoa học</option>
-      <option value="history">Lịch sử</option>
-      <option value="fiction">Tiểu thuyết</option>
-      <option value="math">Toán học</option>
+      <option value="books">Sách</option>
+      <option value="electronics">Điện tử</option>
+      <option value="fashion">Thời trang</option>
+      <option value="home-appliances">Gia dụng</option>
+      <option value="beauty">Làm đẹp</option>
+      <option value="sports">Thể thao</option>
+      <option value="toys">Đồ chơi</option>
+      <option value="grocery">Thực phẩm</option>
+      <option value="office-supplies">Văn phòng phẩm</option>
+      <option value="automotive">Ô tô & Xe máy</option>
     </select>
-    <input type="text" id="navSearch" placeholder="Tìm sách, tác giả, thể loại..." onkeydown="if(event.key==='Enter')doSearch()">
+    <input type="text" id="navSearch" placeholder="Tìm sản phẩm, thương hiệu, danh mục..." onkeydown="if(event.key==='Enter')doSearch()">
     <button onclick="doSearch()">🔍 Tìm</button>
   </div>
   <div class="nav-right" id="navRight">
@@ -241,11 +246,16 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
 <div class="cat-nav">
   <div class="cat-nav-inner">
     <span class="cat-link active" onclick="filterCat('')">Tất cả</span>
-    <span class="cat-link" onclick="filterCat('programming')">Lập trình</span>
-    <span class="cat-link" onclick="filterCat('science')">Khoa học</span>
-    <span class="cat-link" onclick="filterCat('history')">Lịch sử & Kỹ năng</span>
-    <span class="cat-link" onclick="filterCat('fiction')">Tiểu thuyết</span>
-    <span class="cat-link" onclick="filterCat('math')">Toán học</span>
+    <span class="cat-link" onclick="filterCat('books')">📚 Sách</span>
+    <span class="cat-link" onclick="filterCat('electronics')">📱 Điện tử</span>
+    <span class="cat-link" onclick="filterCat('fashion')">👗 Thời trang</span>
+    <span class="cat-link" onclick="filterCat('home-appliances')">🏠 Gia dụng</span>
+    <span class="cat-link" onclick="filterCat('beauty')">💄 Làm đẹp</span>
+    <span class="cat-link" onclick="filterCat('sports')">⚽ Thể thao</span>
+    <span class="cat-link" onclick="filterCat('toys')">🧸 Đồ chơi</span>
+    <span class="cat-link" onclick="filterCat('grocery')">🛒 Thực phẩm</span>
+    <span class="cat-link" onclick="filterCat('office-supplies')">🖊️ Văn phòng</span>
+    <span class="cat-link" onclick="filterCat('automotive')">🚗 Ô tô & Xe máy</span>
   </div>
 </div>
 
@@ -255,67 +265,56 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
   <div class="hero">
     <div class="hero-inner">
       <div>
-        <div class="hero-title">Khám phá thế giới<br>qua từng <em>trang sách</em></div>
-        <div class="hero-sub">Hơn 10.000 đầu sách chất lượng cao. Giao hàng nhanh toàn quốc. Giá tốt nhất thị trường.</div>
+        <div class="hero-title">Mua sắm thông minh<br>với <em>AI tư vấn</em> riêng</div>
+        <div class="hero-sub">Nhiều danh mục sản phẩm như sách, điện tử, thời trang, gia dụng và hơn nữa. Gợi ý được cá nhân hóa theo hành vi mua sắm của bạn.</div>
         <div class="hero-actions">
           <button class="hero-btn hero-btn-primary" onclick="document.getElementById('bookSection').scrollIntoView({behavior:'smooth'})">Mua sắm ngay</button>
-          <button class="hero-btn hero-btn-secondary" onclick="filterCat('programming')">Khám phá danh mục</button>
+          <button class="hero-btn hero-btn-secondary" onclick="openChat()">🤖 Hỏi AI tư vấn</button>
         </div>
         <div class="hero-stats">
-          <div class="hero-stat"><div class="hero-stat-num">10K+</div><div class="hero-stat-label">Đầu sách</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">10</div><div class="hero-stat-label">Danh mục chính</div></div>
           <div class="hero-stat"><div class="hero-stat-num">50K+</div><div class="hero-stat-label">Khách hàng</div></div>
-          <div class="hero-stat"><div class="hero-stat-num">4.8★</div><div class="hero-stat-label">Đánh giá</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">AI</div><div class="hero-stat-label">Gợi ý thông minh</div></div>
         </div>
       </div>
       <div class="hero-visual">
-        <img class="hero-main-image" src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80" alt="Không gian đọc sách chuyên nghiệp" loading="eager">
+        <img class="hero-main-image" src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80" alt="Mua sắm đa dạng sản phẩm" loading="eager">
         <div class="hero-books" id="heroBooksPreview"></div>
       </div>
     </div>
   </div>
 
   <div class="main-wrap">
-    <!-- PROMO BANNERS -->
-    <div class="promo-grid" style="margin-top:1.5rem">
-      <div class="promo-card promo-card-1" onclick="filterCat('programming')">
-        <div class="promo-badge">HOT</div>
-        <div class="promo-title">Sách Lập Trình</div>
-        <div class="promo-sub">Giảm đến 30% cho sách kỹ thuật</div>
+
+
+    <!-- ═══ AI RECOMMENDATION WIDGET ═══ -->
+    <div class="section" id="ai-recommend-section">
+      <div class="section-hdr">
+        <div class="section-title" id="ai-widget-title">💡 Gợi ý cá nhân</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAIRecommendations()">🔄 Làm mới</button>
       </div>
-      <div class="promo-card promo-card-2" onclick="filterCat('fiction')">
-        <div class="promo-badge">MỚI</div>
-        <div class="promo-title">Tiểu Thuyết Hay</div>
-        <div class="promo-sub">Bestseller tháng này</div>
-      </div>
-      <div class="promo-card promo-card-3" onclick="filterCat('science')">
-        <div class="promo-badge">ĐỀ XUẤT</div>
-        <div class="promo-title">Khoa Học & Tự Nhiên</div>
-        <div class="promo-sub">Mở rộng kiến thức mỗi ngày</div>
+      <div style="font-size:.78rem;color:var(--tm);margin-bottom:.75rem" id="ai-widget-sub">Hệ thống AI học từ hành vi mua sắm của bạn để đưa ra gợi ý phù hợp nhất</div>
+      <div class="books-grid" id="ai-suggest-you" style="min-height:80px">
+        <div class="loading"><div class="spin"></div></div>
       </div>
     </div>
 
-    <!-- CATEGORIES -->
-    <div class="section">
-      <div class="section-hdr"><div class="section-title">Danh mục sách</div></div>
-      <div class="cat-grid">
-        <div class="cat-card" onclick="filterCat('programming')"><div class="cat-icon">💻</div><div class="cat-name">Lập trình</div><div class="cat-count" id="cnt-programming">...</div></div>
-        <div class="cat-card" onclick="filterCat('science')"><div class="cat-icon">🔬</div><div class="cat-name">Khoa học</div><div class="cat-count" id="cnt-science">...</div></div>
-        <div class="cat-card" onclick="filterCat('history')"><div class="cat-icon">📜</div><div class="cat-name">Lịch sử & KN</div><div class="cat-count" id="cnt-history">...</div></div>
-        <div class="cat-card" onclick="filterCat('fiction')"><div class="cat-icon">📖</div><div class="cat-name">Tiểu thuyết</div><div class="cat-count" id="cnt-fiction">...</div></div>
-        <div class="cat-card" onclick="filterCat('math')"><div class="cat-icon">📐</div><div class="cat-name">Toán học</div><div class="cat-count" id="cnt-math">...</div></div>
-        <div class="cat-card" onclick="filterCat('')"><div class="cat-icon">📚</div><div class="cat-name">Tất cả</div><div class="cat-count" id="cnt-all">...</div></div>
+    <div class="section" id="ai-collab-section" style="display:none">
+      <div class="section-hdr">
+        <div class="section-title">👥 Người dùng tương tự cũng mua</div>
       </div>
+      <div class="books-grid" id="ai-similar-users"></div>
     </div>
 
     <!-- BOOKS -->
     <div class="section" id="bookSection">
       <div class="section-hdr">
         <div>
-          <div class="section-title" id="bookSectionTitle">Tất cả sách</div>
+          <div class="section-title" id="bookSectionTitle">Tất cả sản phẩm</div>
           <div style="font-size:.8rem;color:var(--tm);margin-top:.2rem" id="booksMeta">Đang tải...</div>
         </div>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <select id="sortBy" onchange="sortBooks()" title="Sắp xếp sách" aria-label="Sắp xếp sách" style="padding:.38rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.82rem;background:#F8FBFF">
+          <select id="sortBy" onchange="sortBooks()" title="Sắp xếp sản phẩm" aria-label="Sắp xếp sản phẩm" style="padding:.38rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.82rem;background:#F8FBFF">
             <option value="">Mặc định</option>
             <option value="price_asc">Giá tăng dần</option>
             <option value="price_desc">Giá giảm dần</option>
@@ -324,7 +323,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
           <button class="btn btn-ghost btn-sm" onclick="loadBooks(1)">🔄</button>
         </div>
       </div>
-      <div class="books-grid" id="booksGrid"><div class="loading"><div class="spin"></div><br>Đang tải sách...</div></div>
+      <div class="books-grid" id="booksGrid"><div class="loading"><div class="spin"></div><br>Đang tải sản phẩm...</div></div>
       <div class="pagination" id="pagination"></div>
     </div>
   </div>
@@ -337,7 +336,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
       <div><div class="section-title" id="searchTitle">Kết quả tìm kiếm</div><div style="font-size:.8rem;color:var(--tm);margin-top:.2rem" id="searchMeta"></div></div>
       <button class="btn btn-ghost btn-sm" onclick="backHome()">← Về trang chủ</button>
     </div>
-    <div class="books-grid" id="searchGrid"><div class="empty-state"><div class="empty-icon">🔍</div>Nhập từ khóa để tìm sách</div></div>
+    <div class="books-grid" id="searchGrid"><div class="empty-state"><div class="empty-icon">🔍</div>Nhập từ khóa để tìm sản phẩm</div></div>
   </div>
 </div>
 
@@ -412,8 +411,8 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
   <div class="footer-inner">
     <div class="footer-grid">
       <div class="footer-brand">
-        <div class="logo" style="color:#fff;font-size:1.2rem">🌙 Moon<em>Books</em></div>
-        <p>Nhà sách trực tuyến hàng đầu Việt Nam. Mang tri thức đến mọi nhà với giá tốt nhất.</p>
+        <div class="logo" style="color:#fff;font-size:1.2rem">🛍️ E-<em>commerce</em></div>
+        <p>Nền tảng e-commerce đa ngành hàng. Mang trải nghiệm mua sắm thông minh đến mọi khách hàng với giá tốt nhất.</p>
         <div style="margin-top:.85rem;display:flex;gap:.5rem">
           <span style="background:rgba(255,255,255,.15);padding:.3rem .6rem;border-radius:6px;font-size:.78rem">📘 Facebook</span>
           <span style="background:rgba(255,255,255,.15);padding:.3rem .6rem;border-radius:6px;font-size:.78rem">📸 Instagram</span>
@@ -421,11 +420,16 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
       </div>
       <div class="footer-col">
         <h4>Danh mục</h4>
-        <a href="#" onclick="filterCat('programming');return false">Lập trình</a>
-        <a href="#" onclick="filterCat('science');return false">Khoa học</a>
-        <a href="#" onclick="filterCat('fiction');return false">Tiểu thuyết</a>
-        <a href="#" onclick="filterCat('history');return false">Lịch sử & Kỹ năng</a>
-        <a href="#" onclick="filterCat('math');return false">Toán học</a>
+        <a href="#" onclick="filterCat('books');return false">Sách</a>
+        <a href="#" onclick="filterCat('electronics');return false">Điện tử</a>
+        <a href="#" onclick="filterCat('fashion');return false">Thời trang</a>
+        <a href="#" onclick="filterCat('beauty');return false">Làm đẹp</a>
+        <a href="#" onclick="filterCat('sports');return false">Thể thao</a>
+        <a href="#" onclick="filterCat('toys');return false">Đồ chơi</a>
+        <a href="#" onclick="filterCat('grocery');return false">Thực phẩm</a>
+        <a href="#" onclick="filterCat('home-appliances');return false">Gia dụng</a>
+        <a href="#" onclick="filterCat('office-supplies');return false">Văn phòng phẩm</a>
+        <a href="#" onclick="filterCat('automotive');return false">Ô tô & Xe máy</a>
       </div>
       <div class="footer-col">
         <h4>Hỗ trợ</h4>
@@ -437,13 +441,13 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
       <div class="footer-col">
         <h4>Liên hệ</h4>
         <a href="#">📞 1800-6789 (miễn phí)</a>
-        <a href="#">✉️ support@moonbooks.vn</a>
+        <a href="#">✉️ support@ecommerce.vn</a>
         <a href="#">📍 123 Nguyễn Huệ, Q.1, TP.HCM</a>
         <a href="#">🕐 8:00 - 22:00 hàng ngày</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 MoonBooks. Tất cả quyền được bảo lưu.</span>
+      <span>© 2026 E-commerce. Tất cả quyền được bảo lưu.</span>
       <span>Được xây dựng với ❤️ tại Việt Nam</span>
     </div>
   </div>
@@ -452,7 +456,7 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
 <!-- ═══ MODALS ═══ -->
 <div class="overlay" id="detailModal">
   <div class="modal modal-lg">
-    <div class="modal-hdr"><span class="modal-title" id="detailTitle">Chi tiết sách</span><button class="btn-x" onclick="closeModal('detailModal')">✕</button></div>
+    <div class="modal-hdr"><span class="modal-title" id="detailTitle">Chi tiết sản phẩm</span><button class="btn-x" onclick="closeModal('detailModal')">✕</button></div>
     <div id="detailBody"></div>
   </div>
 </div>
@@ -479,7 +483,11 @@ let user=null, currentBookId=null, reviewRating=5;
 let allBooks=[], currentPage=1, totalPages=1, currentCat='';
 const PAGE_SIZE=12;
 const API='/api';
-const EMOJI={programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'};
+const EMOJI={
+  books:'📚', electronics:'📱', fashion:'👗', beauty:'💄', sports:'⚽',
+  toys:'🧸', grocery:'🛒', 'office-supplies':'🖊️', automotive:'🚗', 'home-appliances':'🏠',
+  programming:'💻', science:'🔬', history:'📜', fiction:'📖', math:'📐',
+};
 const BADGES=['','badge-new','badge-sale','badge-hot','','badge-new','badge-sale'];
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -490,6 +498,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadBooks(1);
   const pane=new URLSearchParams(window.location.search).get('pane');
   if(pane&&['home','search','orders','ratings','profile'].includes(pane))showPane(pane);
+  const orderDetailId=new URLSearchParams(window.location.search).get('showOrderDetail');
+  if(orderDetailId){loadOrders();setTimeout(()=>openOrderDetail(orderDetailId),1000);}
   document.addEventListener('click',e=>{if(!e.target.closest('.profile-wrap'))closeDropdown();});
 });
 
@@ -603,6 +613,10 @@ async function trackBehavior(productId, interactionType, extra = {}) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body),
     });
+    // Refresh AI widget sau mỗi tương tác
+    if (productId && window._customerId) {
+      trackAndRefresh(window._customerId, productId, interactionType);
+    }
   } catch (e) {
     // Non-blocking analytics event.
   }
@@ -612,28 +626,44 @@ async function trackBehavior(productId, interactionType, extra = {}) {
 async function loadBooks(page=1){
   currentPage=page;
   const grid=document.getElementById('booksGrid');
-  grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải sách...</div>';
+  grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải sản phẩm...</div>';
   document.getElementById('pagination').innerHTML='';
   try{
-    let url='/api/books/?page=1';
-    if(currentCat)url+='&category='+currentCat;
-    allBooks=await fetchAllPages(url);
-    // Update category counts
+    let url='/api/products/?page_size=100';
+    const r=await fetch(url);
+    const data=await r.json();
+    allBooks=(data.results||data.products||(Array.isArray(data)?data:[])).map(p=>({
+      ...p,
+      title: p.name||p.title||'',
+      author: p.author||(p.attributes||{}).author||'',
+      category: p.category_slug||p.category_name||p.category||'',
+      cover_image_url: p.cover_image||p.cover_image_url||'',
+      average_rating: p.average_rating||0,
+      total_reviews: p.total_reviews||0,
+    }));
+    window._allBooksCache = allBooks;
     updateCatCounts(allBooks);
-    // Hero preview
     renderHeroPreview(allBooks.slice(0,4));
     sortAndRender();
+    loadAIRecommendations();
   }catch(e){
-    grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Không thể tải sách. Kiểm tra kết nối.</div>';
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Không thể tải sản phẩm. Kiểm tra kết nối.</div>';
     document.getElementById('booksMeta').textContent='Lỗi kết nối';
   }
 }
 
 function updateCatCounts(books){
-  const cats={programming:0,science:0,history:0,fiction:0,math:0};
-  books.forEach(b=>{if(cats[b.category]!==undefined)cats[b.category]++;});
-  Object.entries(cats).forEach(([k,v])=>{const el=document.getElementById('cnt-'+k);if(el)el.textContent=v+' cuốn';});
-  const allEl=document.getElementById('cnt-all');if(allEl)allEl.textContent=books.length+' cuốn';
+  const cats={'books':0,'electronics':0,'fashion':0,'beauty':0,'sports':0,'toys':0,'grocery':0,'office-supplies':0,'automotive':0,'home-appliances':0};
+  books.forEach(b=>{
+    const slug = b.category||'';
+    // Match exact slug first, then try top-level prefix
+    if(cats[slug]!==undefined){ cats[slug]++; return; }
+    // books-programming → books, electronics-phones → electronics
+    const topLevel = Object.keys(cats).find(k => slug.startsWith(k+'-') || slug===k);
+    if(topLevel) cats[topLevel]++;
+  });
+  Object.entries(cats).forEach(([k,v])=>{const el=document.getElementById('cnt-'+k);if(el)el.textContent=v+' sp';});
+  const allEl=document.getElementById('cnt-all');if(allEl)allEl.textContent=books.length+' sp';
 }
 
 function renderHeroPreview(books){
@@ -655,20 +685,24 @@ function renderHeroPreview(books){
   }
   el.innerHTML=fallback.map((src,i)=>`
     <div class="hero-book-thumb">
-      <img src="${src}" alt="Ảnh sách mẫu ${i+1}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+      <img src="${src}" alt="Ảnh sản phẩm mẫu ${i+1}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
     </div>`).join('');
 }
 
 function filterCat(cat){
   showPane('home');
   currentCat=cat;
-  // Update cat nav
   document.querySelectorAll('.cat-link').forEach(el=>{
     el.classList.toggle('active',el.getAttribute('onclick')?.includes(`'${cat}'`)||(cat===''&&el.textContent.includes('Tất cả')));
   });
   const title=document.getElementById('bookSectionTitle');
-  const catNames={programming:'💻 Sách Lập Trình',science:'🔬 Khoa Học',history:'📜 Lịch Sử & Kỹ Năng',fiction:'📖 Tiểu Thuyết',math:'📐 Toán Học','':`Tất cả sách`};
-  if(title)title.textContent=catNames[cat]||'Tất cả sách';
+  const catNames={
+    'books':'📚 Sách','electronics':'📱 Điện tử','fashion':'👗 Thời trang',
+    'home-appliances':'🏠 Gia dụng','beauty':'💄 Làm đẹp','sports':'⚽ Thể thao',
+    'toys':'🧸 Đồ chơi','grocery':'🛒 Thực phẩm','office-supplies':'🖊️ Văn phòng phẩm',
+    'automotive':'🚗 Ô tô & Xe máy','':`Tất cả sản phẩm`
+  };
+  if(title)title.textContent=catNames[cat]||'Tất cả sản phẩm';
   loadBooks(1);
   requestAnimationFrame(()=>{
     document.getElementById('bookSection')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -680,13 +714,19 @@ function sortBooks(){sortAndRender();}
 function sortAndRender(){
   const sort=document.getElementById('sortBy')?.value||'';
   let books=[...allBooks];
+  if(currentCat){
+    books=books.filter(b=>{
+      const slug=String(b.category||'');
+      return slug===currentCat || slug.startsWith(currentCat+'-');
+    });
+  }
   if(sort==='price_asc')books.sort((a,b)=>parseFloat(a.price)-parseFloat(b.price));
   else if(sort==='price_desc')books.sort((a,b)=>parseFloat(b.price)-parseFloat(a.price));
   else if(sort==='name')books.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
   totalPages=Math.ceil(books.length/PAGE_SIZE)||1;
   const start=(currentPage-1)*PAGE_SIZE;
   const pageBooks=books.slice(start,start+PAGE_SIZE);
-  document.getElementById('booksMeta').textContent=`${books.length} cuốn sách · Trang ${currentPage}/${totalPages}`;
+  document.getElementById('booksMeta').textContent=`${books.length} sản phẩm · Trang ${currentPage}/${totalPages}`;
   renderBooks(pageBooks,document.getElementById('booksGrid'));
   renderPagination(books.length);
 }
@@ -712,31 +752,67 @@ async function doSearch(){
   const grid=document.getElementById('searchGrid');
   grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tìm...</div>';
   try{
-    let url='/api/books/search/?q='+encodeURIComponent(q);
-    if(cat)url+='&category='+cat;
+    let url='/api/products/?search='+encodeURIComponent(q);
     const r=await fetch(url);
     const data=await r.json();
-    const books=data.results||data.books||(Array.isArray(data)?data:[]);
-    document.getElementById('searchMeta').textContent=books.length+' kết quả';
-    if (q) {
-      trackBehavior(0, 'search', {query: q});
+    const raw=data.results||data.products||(Array.isArray(data)?data:[]);
+    let books=raw.map(p=>({...p,title:p.name||p.title||'',author:p.author||(p.attributes||{}).author||p.brand_name||'',category:p.category_slug||p.category_name||p.category||'',cover_image_url:p.cover_image||p.cover_image_url||'',cover_image:p.cover_image||p.cover_image_url||''}));
+    if(cat){
+      books=books.filter(b=>{
+        const slug=String(b.category||'');
+        return slug===cat || slug.startsWith(cat+'-');
+      });
     }
+    document.getElementById('searchMeta').textContent=books.length+' kết quả';
+    if(q){trackBehavior(0,'search',{query:q});}
     renderBooks(books,grid);
+    if(q&&window._customerId)loadAISearchSuggestions(q);
   }catch(e){grid.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div>Lỗi tìm kiếm</div>';}
 }
 
+async function loadAISearchSuggestions(query){
+  const suggEl=document.createElement('div');
+  suggEl.style.marginTop='1.5rem';
+  suggEl.innerHTML='<div style="font-size:.9rem;font-weight:700;color:var(--p);margin-bottom:.5rem">🤖 AI gợi ý dựa trên tìm kiếm "'+query+'"</div><div class="books-grid" id="aiSearchRecs" style="min-height:60px"><div class="loading"><div class="spin"></div></div></div>';
+  const grid=document.getElementById('searchGrid');
+  grid.parentElement.insertBefore(suggEl,grid.nextSibling);
+  try{
+    const endpoint=window._customerId?'/api/v1/recommend/'+window._customerId+'?limit=6':'';
+    if(!endpoint)return;
+    const r=await fetch(endpoint);
+    if(r.ok){
+      const data=await r.json();
+      const items=enrichWithCovers(data.recommendations||data.items||[]);
+      const recEl=document.getElementById('aiSearchRecs');
+      recEl.innerHTML=items.length?items.slice(0,6).map(renderAIBook).join(''):'<div class="empty-state" style="padding:1rem"><div class="empty-icon">📚</div>Không có gợi ý liên quan</div>';
+    }
+  }catch(e){}
+}
+
 function renderBooks(books,grid){
-  if(!books.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div>Không tìm thấy sách nào</div>';return;}
+  if(!books.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div>Không tìm thấy sản phẩm nào</div>';return;}
   grid.innerHTML=books.map((b,i)=>{
     const oos=b.stock<=0;
     const badgeClass=BADGES[i%BADGES.length];
     const badgeLabel=badgeClass==='badge-new'?'MỚI':badgeClass==='badge-sale'?'SALE':badgeClass==='badge-hot'?'HOT':'';
+    const catSlug=b.category||'';
+    const topCat=Object.keys(EMOJI).find(k=>catSlug===k||catSlug.startsWith(k+'-'))||catSlug;
+    const icon=EMOJI[topCat]||'📦';
+    const coverSrc=b.cover_image_url||b.cover_image||'';
+    const coverHtml=coverSrc
+      ?`<img src="${coverSrc}" alt="${b.title}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      :'';
+    const fallbackStyle=coverSrc?'display:none':'';
     return`<div class="book-card" onclick="openDetail(${b.id})">
       ${badgeLabel?`<span class="book-badge ${badgeClass}">${badgeLabel}</span>`:''}
-      <div class="book-cover">${coverHtml(b,'200px')}<span class="cover-cat">${b.category||'book'}</span></div>
+      <div class="book-cover">
+        ${coverHtml}
+        <div class="book-cover-fallback" style="${fallbackStyle}">${icon}</div>
+        <span class="cover-cat">${(topCat||'').toUpperCase().slice(0,10)}</span>
+      </div>
       <div class="book-body">
         <div class="book-title">${b.title}</div>
-        <div class="book-author">✍️ ${b.author||'Không rõ'}</div>
+        <div class="book-author">${b.author||b.brand||''}</div>
         <div class="book-rating"><span class="stars">${starsHtml(b.average_rating||0)}</span> ${(b.average_rating||0).toFixed(1)} (${b.total_reviews||0})</div>
         <div class="book-footer">
           <div><span class="book-price">${fmt(b.price)}</span></div>
@@ -757,28 +833,36 @@ async function openDetail(bookId){
   openModal('detailModal');
   document.getElementById('detailBody').innerHTML='<div class="loading"><div class="spin"></div><br>Đang tải...</div>';
   try{
-    const [bookR,revR]=await Promise.all([fetch('/api/books/'+bookId+'/'),fetch('/api/comments/by_book/?book_id='+bookId)]);
-    const book=await bookR.json();
+    const [bookR,revR]=await Promise.all([
+      fetch('/api/products/'+bookId+'/'),
+      fetch('/api/comments/by_book/?book_id='+bookId)
+    ]);
+    const raw=await bookR.json();
+    const book={...raw,title:raw.name||raw.title||'',author:raw.author||(raw.attributes||{}).author||'',category:raw.category_slug||raw.category_name||raw.category||'',cover_image_url:raw.cover_image||raw.cover_image_url||''};
     const revData=revR.ok?await revR.json():{};
     const reviews=revData.comments||[];
     const authorMap=await resolveCustomerNames(reviews.map(rv=>rv.customer_id));
     const avg=revData.average_rating||0;
     const total=revData.total_reviews||0;
     const oos=book.stock<=0;
+    const catSlug=book.category||'';
+    const topCat=Object.keys(EMOJI).find(k=>catSlug===k||catSlug.startsWith(k+'-'))||catSlug;
+    const icon=EMOJI[topCat]||'📦';
     const coverDetail=book.cover_image_url
       ?`<img src="${book.cover_image_url}" alt="${book.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
-      :`<span style="font-size:3rem">${EMOJI[book.category]||'📚'}</span>`;
+      :`<span style="font-size:3rem">${icon}</span>`;
     document.getElementById('detailTitle').textContent=book.title;
     document.getElementById('detailBody').innerHTML=`
       <div class="detail-grid">
         <div class="detail-cover">${coverDetail}</div>
         <div class="detail-info">
           <div class="detail-title">${book.title}</div>
-          <div class="detail-author">✍️ ${book.author||'Không rõ tác giả'}</div>
+          <div class="detail-author">✍️ ${book.author||book.brand||book.attributes?.brand||'—'}</div>
           <div class="detail-meta">
-            <span class="chip">📂 ${book.category||'—'}</span>
-            <span class="chip">📦 Còn ${book.stock} cuốn</span>
-            ${book.publisher_detail?`<span class="chip">🏢 ${book.publisher_detail.name}</span>`:''}
+            <span class="chip">📂 ${book.category_name||book.category||'—'}</span>
+            <span class="chip">📦 Còn ${book.stock} sản phẩm</span>
+            ${book.brand_name?`<span class="chip">🏷️ ${book.brand_name}</span>`:''}
+            ${book.product_type_name?`<span class="chip">🔖 ${book.product_type_name}</span>`:''}
           </div>
           <div class="detail-price">${fmt(book.price)}</div>
           <div class="book-rating"><span class="stars">${starsHtml(avg)}</span> ${avg.toFixed(1)} · ${total} đánh giá</div>
@@ -812,14 +896,14 @@ async function openDetail(bookId){
         <div class="write-rev">
           <h4>✏️ Viết đánh giá của bạn</h4>
           <div class="star-row" id="starRow">${[1,2,3,4,5].map(i=>`<button class="star-btn" id="star${i}" onclick="setRating(${i})">★</button>`).join('')}</div>
-          <div class="form-group"><textarea id="revContent" rows="3" placeholder="Chia sẻ cảm nhận của bạn về cuốn sách..."></textarea></div>
+          <div class="form-group"><textarea id="revContent" rows="3" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..."></textarea></div>
           <button class="btn btn-p btn-sm" onclick="submitReview()">Gửi đánh giá</button>
           <span id="revMsg" style="font-size:.8rem;color:var(--tm);margin-left:.5rem"></span>
         </div>`
         :`<p style="font-size:.85rem;color:var(--tm);margin-top:.75rem"><a href="/customer-login/" style="color:var(--p);font-weight:600">Đăng nhập</a> để viết đánh giá</p>`}
       </div>`;
     setRating(5);
-  }catch(e){document.getElementById('detailBody').innerHTML='<div class="empty-state">Lỗi tải chi tiết sách</div>';}
+  }catch(e){document.getElementById('detailBody').innerHTML='<div class="empty-state">Lỗi tải chi tiết sản phẩm</div>';}
 }
 
 function setRating(n){reviewRating=n;for(let i=1;i<=5;i++){const s=document.getElementById('star'+i);if(s)s.style.color=i<=n?'#F59E0B':'#D1D5DB';}}
@@ -885,9 +969,10 @@ async function loadMyRatings(){
     const ids=[...new Set(comments.map(c=>c.book_id).filter(Boolean))];
     const books=await Promise.all(ids.map(async id=>{
       try{
-        const br=await fetch('/api/books/'+id+'/');
+        const br=await fetch('/api/products/'+id+'/');
         if(!br.ok)return [id,null];
-        return [id,await br.json()];
+        const raw=await br.json();
+        return [id,{...raw,title:raw.name||raw.title||''}];
       }catch(e){
         return [id,null];
       }
@@ -955,9 +1040,10 @@ async function openOrderDetail(orderId){
     const itemIds=[...new Set((order.items||[]).map(i=>i.book_id).filter(Boolean))];
     const itemBooks=await Promise.all(itemIds.map(async id=>{
       try{
-        const br=await fetch('/api/books/'+id+'/');
+        const br=await fetch('/api/products/'+id+'/');
         if(!br.ok)return [id,null];
-        return [id,await br.json()];
+        const raw=await br.json();
+        return [id,{...raw,title:raw.name||raw.title||''}];
       }catch(e){
         return [id,null];
       }
@@ -984,8 +1070,50 @@ async function openOrderDetail(orderId){
           Trạng thái: ${statusBadge(ship.status)}<br>
           Dự kiến giao: <strong>${ship.estimated_delivery||'—'}</strong>
         </div>
-      </div>`:''}`;
+      </div>`:''}
+      <div id="orderDetailReco"></div>`;
+    loadOrderRecommendations(orderId,order.items||[]);
   }catch(e){el.innerHTML='<div class="empty-state">Lỗi tải chi tiết</div>';}
+}
+
+async function loadOrderRecommendations(orderId,items){
+  const recoEl=document.getElementById('orderDetailReco');
+  if(!recoEl||!window._customerId)return;
+  if(!items||!items.length)return;
+
+  recoEl.innerHTML='<div style="margin-top:1.25rem;padding:1rem;background:var(--pll);border-radius:var(--rs);border:1px solid var(--b)"><div style="font-weight:700;margin-bottom:.5rem">💡 Có thể bạn cũng muốn thêm vào giỏ</div><div class="books-grid" id="orderRecoGrid" style="min-height:60px;gap:.6rem"><div class="loading"><div class="spin"></div></div></div></div>';
+
+  try{
+    const endpoint='/api/v1/recommend/'+window._customerId+'?limit=4';
+    const r=await fetch(endpoint);
+    if(r.ok){
+      const data=await r.json();
+      const recs=data.recommendations||data.items||[];
+      const recsWithCover=recs.map(it=>({...it,cover_image_url:it.cover_image_url||it.cover_image||it.cover||''}));
+      const seen=new Set(items.map(i=>String(i.book_id)));
+      const uniq=recsWithCover.filter(it=>{const k=String(it.product_id||it.id);return k&&!seen.has(k);}).slice(0,4);
+      const grid=document.getElementById('orderRecoGrid');
+      if(!uniq.length){
+        recoEl.innerHTML='';
+        return;
+      }
+      grid.innerHTML=uniq.map(renderRecoCard).join('');
+    }
+  }catch(e){}
+}
+
+function renderRecoCard(b){
+  const bid=b.product_id||b.id;
+  const cover=b.cover_image_url||b.cover_image||'';
+  const price=fmt(b.price||0);
+  return `<div class="reco-card" onclick="window.location.href='/?product_id=${bid}'">
+    <div class="reco-cover">${cover?`<img src="${cover}" alt="${b.title||''}" onerror="this.parentElement.innerHTML='📦'">`:'📦'}</div>
+    <div class="reco-body">
+      <div class="reco-title">${b.title||''}</div>
+      <div class="reco-price">${price}</div>
+      ${b.reason?`<div class="reco-reason">${b.reason}</div>`:''}
+    </div>
+  </div>`;
 }
 
 async function cancelOrder(orderId){
@@ -1102,14 +1230,14 @@ async function deleteAddr(id){
 
 <div id="chatBox">
   <div class="chat-hdr">
-    <div>🤖 AI Assistant <span>MoonBooks</span></div>
+    <div>🤖 AI Assistant <span>E-commerce</span></div>
     <button onclick="toggleChat()" style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer">✕</button>
   </div>
   <div id="chatMsgs">
-    <div class="msg bot">Xin chào! 👋 Tôi là AI Assistant của MoonBooks. Tôi có thể giúp bạn gợi ý sách, tìm kiếm, tra cứu đơn hàng và giải đáp thắc mắc!</div>
+    <div class="msg bot">Xin chào! 👋 Tôi là AI Assistant của E-commerce. Tôi có thể giúp bạn gợi ý sản phẩm, tìm kiếm, tra cứu đơn hàng và giải đáp thắc mắc!</div>
   </div>
   <div class="chat-quick" id="quickBtns">
-    <button class="qbtn" onclick="sendQuick('Goi y sach cho toi', 'recommend')">💡 Gợi ý sách</button>
+    <button class="qbtn" onclick="sendQuick('Goi y san pham cho toi', 'recommend')">💡 Gợi ý sản phẩm</button>
     <button class="qbtn" onclick="sendQuick('Chinh sach doi tra', 'return_policy')">🔄 Đổi trả</button>
     <button class="qbtn" onclick="sendQuick('Don hang cua toi', 'order_support')">📦 Đơn hàng</button>
     <button class="qbtn" onclick="sendQuick('Phuong thuc thanh toan', 'payment_support')">💳 Thanh toán</button>
@@ -1209,6 +1337,142 @@ function appendMsg(text, cls) {
   msgs.scrollTop = msgs.scrollHeight;
   return el;
 }
+
+// ═══ AI RECOMMENDATION WIDGET ═══
+const AI_BASE = '';  // route qua api-gateway /api/v1/
+
+function renderAIBook(book) {
+  const price  = Number(book.price || 0).toLocaleString('vi-VN');
+  const bid    = book.product_id || book.id;
+  const cat    = (book.category || '').toUpperCase().slice(0, 12);
+  const cover  = book.cover_image_url || book.cover_image || book.cover || '';
+  const reason = book.reason
+    ? '<div style="font-size:.68rem;color:var(--p);margin-top:.25rem;line-height:1.3">💡 ' + book.reason + '</div>'
+    : '';
+  const stars  = book.avg_rating >= 4
+    ? '<span style="color:#F59E0B;font-size:.72rem">★' + Number(book.avg_rating).toFixed(1) + '</span>'
+    : '';
+  const coverHtml = cover
+    ? '<img src="' + cover + '" alt="' + (book.title||'') + '" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+    : '';
+  const fallbackStyle = cover ? 'display:none' : '';
+  return '<div class="book-card" onclick="openDetail(' + bid + ')" style="cursor:pointer" title="' + (book.title||'') + '">'
+    + '<div class="book-cover">'
+    + coverHtml
+    + '<div class="book-cover-fallback" style="' + fallbackStyle + '">📚</div>'
+    + (cat ? '<div class="cover-cat">' + cat + '</div>' : '')
+    + '</div>'
+    + '<div class="book-body">'
+    + '<div class="book-title">' + (book.title||'') + '</div>'
+    + '<div class="book-author">' + (book.author||'') + '</div>'
+    + stars + reason
+    + '<div class="book-footer">'
+    + '<span class="book-price">' + price + '₫</span>'
+    + '<button class="btn-cart" onclick="event.stopPropagation();addToCart(' + bid + ',' + Number(book.price||0) + ',\'' + String(book.title||'').replace(/'/g, "\\'") + '\')" title="Thêm vào giỏ">🛒</button>'
+    + '</div></div></div>';
+}
+
+function enrichWithCovers(items) {
+  if (!window._allBooksCache) return items;
+  const bmap = {};
+  (window._allBooksCache || []).forEach(function(b) { bmap[b.id] = b; });
+  return items.map(function(item) {
+    const bid = item.product_id || item.id;
+    const cached = bmap[bid];
+    if (!cached) {
+      return item;
+    }
+    const itemCover = item.cover_image_url || item.cover_image || item.cover;
+    if (!itemCover) {
+      const cachedCover = cached.cover_image_url || cached.cover_image || cached.cover;
+      if (cachedCover) {
+        return Object.assign({}, item, {
+          cover_image_url: cachedCover,
+          cover_image: cachedCover,
+        });
+      }
+    }
+    return item;
+  });
+}
+
+async function loadAIRecommendations() {
+  const cid      = window._customerId || null;
+  const suggestEl = document.getElementById('ai-suggest-you');
+  const titleEl   = document.getElementById('ai-widget-title');
+  const collabSec = document.getElementById('ai-collab-section');
+  const collabEl  = document.getElementById('ai-similar-users');
+
+  if (!cid) {
+    if (suggestEl) {
+      suggestEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div>Đăng nhập để nhận gợi ý cá nhân từ AI</div>';
+    }
+    if (titleEl) titleEl.textContent = '💡 Gợi ý cá nhân';
+    return;
+  }
+
+  if (suggestEl) suggestEl.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+
+  try {
+    const endpoint = '/api/v1/recommend/' + cid + '?limit=8';
+    const res = await Promise.race([
+      fetch(endpoint),
+      new Promise(function(_, rej) { setTimeout(function() { rej('timeout'); }, 4000); })
+    ]);
+
+    if (!res.ok) throw new Error('api_error');
+    const data  = await res.json();
+    let items   = data.recommendations || data.items || [];
+    items = enrichWithCovers(items);
+
+    if (titleEl) titleEl.textContent = '💡 Gợi ý cho bạn — dựa trên hành vi mua sắm';
+    if (suggestEl) {
+      suggestEl.innerHTML = items.length
+        ? items.slice(0, 8).map(renderAIBook).join('')
+        : '<div class="empty-state"><div class="empty-icon">📚</div>Chưa có dữ liệu để gợi ý — hãy xem thêm sản phẩm!</div>';
+    }
+
+    if (collabSec && collabEl) {
+      try {
+        const cr = await Promise.race([
+          fetch('/api/v1/recommend/collaborative/' + cid + '?limit=6'),
+          new Promise(function(_, rej) { setTimeout(function() { rej('timeout'); }, 3000); })
+        ]);
+        if (cr.ok) {
+          const cd = await cr.json();
+          const citems = enrichWithCovers(cd.items || []);
+          if (citems.length) {
+            collabSec.style.display = '';
+            collabEl.innerHTML = citems.slice(0, 6).map(renderAIBook).join('');
+          }
+        }
+      } catch (_) {}
+    }
+  } catch (_) {
+    if (suggestEl) {
+      suggestEl.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Không thể tải gợi ý — vui lòng thử lại sau</div>';
+    }
+  }
+}
+
+async function trackAndRefresh(customerId, bookId, interactionType) {
+  if (!customerId || !bookId) return;
+  try {
+    await fetch(AI_BASE + '/api/v1/track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: customerId, product_id: bookId, interaction_type: interactionType}),
+    });
+    loadAIRecommendations();
+  } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const stored = localStorage.getItem('cb_user');
+  if (stored) { try { window._customerId = JSON.parse(stored).service_user_id; } catch (_) {} }
+  loadAIRecommendations();
+});
 </script>
+<script src="/static/_script.js"></script>
 </body>
 </html>

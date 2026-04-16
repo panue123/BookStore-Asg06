@@ -92,6 +92,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'templates']  # serve _script.js from templates/
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # JWT settings (shared secret – must match auth-service)

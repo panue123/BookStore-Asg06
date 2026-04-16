@@ -27,30 +27,31 @@ SERVICE_MAP = {
     'customers':       'customer-service',
     'jobs':            'customer-service',
     'addresses':       'customer-service',
-    'books':           'book-service',
-    'publishers':      'book-service',
     'carts':           'cart-service',
     'orders':          'order-service',
     'payments':        'pay-service',
     'shipments':       'ship-service',
     'staff':           'staff-service',
     'comments':        'comment-rate-service',
-    'catalog':         'catalog-service',
     'manager':         'manager-service',
     'managers':        'manager-service',
     'recommendations': 'recommender-ai-service',
     'ai':              'recommender-ai-service',
     'v1':              'recommender-ai-service',   # /api/v1/* → AI service
+    'products':        'product-service',          # /api/products/* → product-service (DDD)
+    'categories':      'product-service',          # /api/categories/* → product-service
+    'health':          None,                       # handled locally
 }
 
 PUBLIC_ROUTES = {
     'auth',
-    'books',
-    'catalog',
     'comments',
     'recommendations',
     'ai',
     'v1',
+    'products',    # product-service public read
+    'categories',  # product-service public read
+    'health',
 }
 
 # ── Rate limiter (sliding window, per IP) ─────────────────────────────────────
@@ -228,13 +229,12 @@ def api_proxy(request, path):
 HEALTH_SERVICES = {
     'auth-service':           'http://auth-service:8000/api/auth/health/',
     'customer-service':       'http://customer-service:8000/api/customers/',
-    'book-service':           'http://book-service:8000/api/books/',
+    'product-service':        'http://product-service:8000/api/health/',
     'cart-service':           'http://cart-service:8000/api/carts/',
     'order-service':          'http://order-service:8000/api/orders/',
     'pay-service':            'http://pay-service:8000/api/payments/',
     'ship-service':           'http://ship-service:8000/api/shipments/',
     'comment-rate-service':   'http://comment-rate-service:8000/api/comments/',
-    'catalog-service':        'http://catalog-service:8000/api/catalog/',
     'recommender-ai-service': 'http://recommender-ai-service:8000/health',
 }
 

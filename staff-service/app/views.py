@@ -1,3 +1,4 @@
+import os
 import requests
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -5,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import ActivityLog, PermissionType, Role, Shift, ShiftStatus, Staff
 from .serializers import ActivityLogSerializer, ShiftSerializer, StaffCreateSerializer, StaffSerializer
+
+PRODUCT_SVC = os.getenv("PRODUCT_SERVICE_URL", "http://product-service:8000")
 
 
 ROLE_PERMISSIONS = {
@@ -238,20 +241,20 @@ class StaffViewSet(viewsets.ModelViewSet):
         if not _has_permission(staff, PermissionType.MANAGE_BOOKS):
             return Response({'error': 'You do not have permission to manage books'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Call Book Service to perform operation
+        # Call product-service to perform operation
         try:
             if operation == 'create':
-                response = requests.post('http://book-service:8000/api/books/', json=book_data)
+                response = requests.post(f'{PRODUCT_SVC}/api/products/', json=book_data)
             elif operation == 'update':
                 if not book_id:
                     return Response({'error': 'book_id is required for update'}, status=status.HTTP_400_BAD_REQUEST)
-                response = requests.patch(f'http://book-service:8000/api/books/{book_id}/', json=book_data)
+                response = requests.patch(f'{PRODUCT_SVC}/api/products/{book_id}/', json=book_data)
             elif operation == 'delete':
                 if not book_id:
                     return Response({'error': 'book_id is required for delete'}, status=status.HTTP_400_BAD_REQUEST)
-                response = requests.delete(f'http://book-service:8000/api/books/{book_id}/')
+                response = requests.delete(f'{PRODUCT_SVC}/api/products/{book_id}/')
             elif operation == 'list':
-                response = requests.get('http://book-service:8000/api/books/')
+                response = requests.get(f'{PRODUCT_SVC}/api/products/')
             else:
                 return Response({'error': 'Invalid operation'}, status=status.HTTP_400_BAD_REQUEST)
             

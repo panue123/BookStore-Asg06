@@ -1,5 +1,8 @@
-CREATE DATABASE bookstore_book;
+-- Core service databases
 CREATE DATABASE bookstore_cart;
 CREATE DATABASE bookstore_comment;
 CREATE DATABASE bookstore_recommender;
+CREATE DATABASE bookstore_product;
+-- Legacy (kept for backward compat during migration)
+CREATE DATABASE bookstore_book;
 CREATE DATABASE bookstore_catalog;

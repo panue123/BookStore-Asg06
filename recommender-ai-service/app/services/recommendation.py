@@ -1,11 +1,13 @@
 """
-RecommendationService
-──────────────────────
-Personalized recommendations combining:
-  1. Behavior scores (interaction history)
-  2. Content-based filtering (category/author affinity)
-  3. Collaborative signals (rating popularity)
-  4. Budget filtering
+RecommendationService — Hybrid Engine
+──────────────────────────────────────
+final_score = w1 * lstm_behavior + w2 * graph_score + w3 * content_affinity + w4 * rating_popularity
+
+Components:
+  1. LSTM behavior score  (w1=0.40) — sequence-based propensity
+  2. Graph score          (w2=0.25) — Neo4j collaborative filtering
+  3. Content affinity     (w3=0.25) — category/brand match
+  4. Rating popularity    (w4=0.10) — community ratings
 
 Each recommendation includes a human-readable reason (explainability).
 """
@@ -20,10 +22,17 @@ from ..clients.order_client import order_client
 from ..clients.comment_client import comment_client
 from ..core.config import PURCHASE_THRESHOLD, RECOMMENDATION_LIMIT
 from .behavior_analysis import behavior_service
+from ..infrastructure.graph.neo4j_adapter import neo4j_adapter
 
 logger = logging.getLogger(__name__)
 
 WEIGHTS = {"view": 1, "search": 2, "cart": 4, "purchase": 8, "rate": 3}
+
+# Hybrid weight constants
+W_LSTM    = 0.40   # LSTM behavior propensity
+W_GRAPH   = 0.25   # Neo4j graph collaborative score
+W_CONTENT = 0.25   # Content-based affinity (category/brand)
+W_RATING  = 0.10   # Community rating popularity
 
 
 def _get_purchased_ids(customer_id: int) -> set[int]:
@@ -31,8 +40,9 @@ def _get_purchased_ids(customer_id: int) -> set[int]:
     ids: set[int] = set()
     for order in orders:
         for item in order.get("items", []):
-            if item.get("book_id"):
-                ids.add(item["book_id"])
+            pid = item.get("product_id") or item.get("book_id")
+            if pid:
+                ids.add(pid)
     return ids
 
 
@@ -40,8 +50,8 @@ def _rating_map(product_ids: list[int]) -> dict[int, dict]:
     return comment_client.get_reviews_for_products(product_ids)
 
 
-def _popularity_score(book_id: int, ratings: dict[int, dict]) -> float:
-    rm = ratings.get(book_id, {})
+def _popularity_score(product_id: int, ratings: dict[int, dict]) -> float:
+    rm = ratings.get(product_id, {})
     if not rm.get("count", 0):
         return 0.0
     return (rm["avg"] / 5.0) * math.log1p(rm["count"]) * 0.3
@@ -49,24 +59,20 @@ def _popularity_score(book_id: int, ratings: dict[int, dict]) -> float:
 
 def get_personalized(
     customer_id: int,
-    interactions: dict[str, dict[int, int]],   # {type: {book_id: count}}
+    interactions: dict[str, dict[int, int]],   # {type: {product_id: count}}
     limit: int = RECOMMENDATION_LIMIT,
     budget_min: float | None = None,
     budget_max: float | None = None,
     category: str | None = None,
-    customer_ratings: dict[int, int] | None = None,  # {book_id: rating_value}
+    customer_ratings: dict[int, int] | None = None,
+    event_sequence: list[dict] | None = None,  # for LSTM behavior analysis
 ) -> list[dict[str, Any]]:
     """
-    Generate personalized recommendations.
-    interactions: {interaction_type: {book_id: count}}
-    customer_ratings: {book_id: rating_value} - customer's own historical ratings
-    
-    Filter logic:
-      - Exclude books rated < 3⭐ (bad experience)
-      - Boost books rated >= 4⭐ (highly recommend)
+    Generate personalized recommendations using hybrid scoring:
+      final_score = w1 * lstm_behavior + w2 * content_affinity + w3 * rating_popularity
     """
     customer_ratings = customer_ratings or {}
-    # Flatten to {book_id: weighted_score}
+    # Flatten to {product_id: weighted_score}
     book_scores: dict[int, float] = defaultdict(float)
     for itype, book_counts in interactions.items():
         w = WEIGHTS.get(itype, 1)
@@ -83,7 +89,10 @@ def get_personalized(
     segment = "casual"
     profile_pref_cats: set[str] = set()
     try:
-        profile = behavior_service.analyze(customer_id, interaction_totals)
+        profile = behavior_service.analyze(
+            customer_id, interaction_totals,
+            event_sequence=event_sequence,
+        )
         propensity = float(profile.get("purchase_propensity_score", 0.0) or 0.0)
         segment = str(profile.get("customer_segment", "casual") or "casual")
         profile_pref_cats = {
@@ -113,7 +122,7 @@ def get_personalized(
     if not top_cats and profile_pref_cats:
         top_cats = set(list(profile_pref_cats)[:3])
 
-    # Fetch all books
+    # Fetch all products
     all_books = catalog_client.get_all_products(limit=500)
     if not all_books:
         return []
@@ -121,24 +130,29 @@ def get_personalized(
     product_ids = [b["id"] for b in all_books if b.get("id")]
     ratings     = _rating_map(product_ids)
 
+    # Graph scores (Neo4j collaborative filtering) — w2
+    graph_scores: dict[int, float] = {}
+    if customer_id and neo4j_adapter.is_available():
+        try:
+            graph_scores = neo4j_adapter.get_graph_scores(customer_id, product_ids)
+            # Normalize graph scores to [0, 1]
+            max_g = max(graph_scores.values()) if graph_scores else 1.0
+            if max_g > 0:
+                graph_scores = {pid: s / max_g for pid, s in graph_scores.items()}
+        except Exception as exc:
+            logger.debug("Graph scores unavailable: %s", exc)
+
     candidates: list[dict] = []
     segment_boost = {
-        "new": 0.95,
-        "casual": 1.0,
-        "engaged": 1.06,
-        "loyal": 1.1,
-        "champion": 1.12,
+        "new": 0.95, "casual": 1.0, "engaged": 1.06, "loyal": 1.1, "champion": 1.12,
     }
     for book in all_books:
         bid = book.get("id")
         if not bid or bid in purchased or book.get("stock", 0) <= 0:
             continue
 
-        # Filter: exclude books customer rated poorly (< 3⭐)
         if bid in customer_ratings:
-            cust_rating = customer_ratings[bid]
-            if cust_rating < 3:
-                logger.debug("Excluding B%s for C%s (low rating: %d⭐)", bid, customer_id, cust_rating)
+            if customer_ratings[bid] < 3:
                 continue
 
         price = float(book.get("price", 0))
@@ -149,56 +163,66 @@ def get_personalized(
         if category and book.get("category") != category:
             continue
 
-        score   = 0.0
         reasons = []
 
-        # Direct behavior signal
+        # ── w1: LSTM behavior score ───────────────────────────────────────────
         bscore = book_scores.get(bid, 0)
+        lstm_component = 0.0
         if bscore >= PURCHASE_THRESHOLD:
-            score += bscore * 0.4
+            lstm_component = min(bscore / 20.0, 1.0)
             reasons.append(f"bạn đã tương tác {int(bscore)} lần")
+        # Boost highly-rated by customer
+        if bid in customer_ratings and customer_ratings[bid] >= 4:
+            lstm_component += 0.3
+            reasons.append(f"bạn đánh giá cao ⭐{customer_ratings[bid]}")
+        # Propensity boost
+        lstm_component *= (1.0 + max(0.0, min(propensity, 1.0)) * 0.25)
 
-        # Boost: prioritize books customer rated highly (>= 4⭐)
-        if bid in customer_ratings:
-            cust_rating = customer_ratings[bid]
-            if cust_rating >= 4:
-                score += 5.0
-                reasons.append(f"bạn đã đánh giá cao ⭐{cust_rating} trước đây")
+        # ── w2: Graph score (Neo4j collaborative) ─────────────────────────────
+        graph_component = graph_scores.get(bid, 0.0)
+        if graph_component > 0:
+            reasons.append("khách hàng tương tự cũng quan tâm")
 
-        # Category match
+        # ── w3: Content affinity ──────────────────────────────────────────────
+        content_component = 0.0
         if book.get("category") in top_cats:
-            score += 2.0
+            content_component += 0.6
             reasons.append(f"thể loại {book['category']} bạn yêu thích")
         elif book.get("category") in profile_pref_cats:
-            score += 1.2
-            reasons.append(f"phù hợp hồ sơ sở thích thể loại của bạn")
-
-        # Author match
+            content_component += 0.35
         if book.get("author") in top_authors:
-            score += 1.5
+            content_component += 0.4
             reasons.append(f"tác giả {book['author']} bạn quan tâm")
 
-        # Popularity
+        # ── w4: Rating popularity ─────────────────────────────────────────────
         pop = _popularity_score(bid, ratings)
-        score += pop
-        rm = ratings.get(bid, {})
+        rm  = ratings.get(bid, {})
         if rm.get("avg", 0) >= 4.0:
             reasons.append(f"đánh giá cao ({rm['avg']:.1f}★/{rm['count']} lượt)")
 
-        # Calibrate score by per-customer behavior profile.
-        score *= (1.0 + max(0.0, min(propensity, 1.0)) * 0.25)
-        score *= segment_boost.get(segment, 1.0)
+        # ── Hybrid final score ────────────────────────────────────────────────
+        final_score = (
+            W_LSTM    * lstm_component +
+            W_GRAPH   * graph_component +
+            W_CONTENT * content_component +
+            W_RATING  * pop
+        )
+        final_score *= segment_boost.get(segment, 1.0)
 
-        if score > 0 or not reasons:
+        if final_score > 0 or not reasons:
             candidates.append({
-                "product_id": bid,
-                "title":      book.get("title", ""),
-                "author":     book.get("author", ""),
-                "category":   book.get("category", ""),
-                "price":      price,
-                "score":      round(score, 3),
-                "reason":     ", ".join(reasons) if reasons else "phổ biến trong cộng đồng",
-                "avg_rating": round(rm.get("avg", 0), 2),
+                "product_id":       bid,
+                "title":            book.get("title", ""),
+                "author":           book.get("author", ""),
+                "category":         book.get("category", ""),
+                "price":            price,
+                "score":            round(final_score, 3),
+                "lstm_score":       round(lstm_component, 3),
+                "graph_score":      round(graph_component, 3),
+                "content_score":    round(content_component, 3),
+                "rating_score":     round(pop, 3),
+                "reason":           ", ".join(reasons) if reasons else "phổ biến trong cộng đồng",
+                "avg_rating":       round(rm.get("avg", 0), 2),
             })
 
     candidates.sort(key=lambda x: x["score"], reverse=True)

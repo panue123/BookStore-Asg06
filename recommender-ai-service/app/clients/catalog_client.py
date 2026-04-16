@@ -1,35 +1,92 @@
-"""CatalogServiceClient — proxies to book-service (catalog endpoint)."""
+"""CatalogServiceClient — proxies to product-service (DDD source of truth).
+Đây là client chính thay thế book_client cũ.
+"""
 from __future__ import annotations
 from .base import ServiceClient, _extract_list
-from ..core.config import BOOK_SERVICE_URL
+from ..core.config import PRODUCT_SERVICE_URL
 
 
-class CatalogServiceClient(ServiceClient):
+def _normalize_product(item: dict) -> dict:
+    """Normalize product-service payload to AI service recommendation schema."""
+    attrs = item.get("attributes") or {}
+    # Support both book-style (author) and generic product
+    author = item.get("author") or attrs.get("author") or ""
+    category = item.get("category_name") or item.get("category_slug") or item.get("category") or ""
+    brand = item.get("brand_name") or attrs.get("brand") or ""
+    product_type = item.get("product_type_name") or ""
+    return {
+        "id":              item.get("id"),
+        "product_id":      item.get("id"),
+        "title":           item.get("title") or item.get("name") or "",
+        "name":            item.get("name") or item.get("title") or "",
+        "author":          author,
+        "brand":           brand,
+        "category":        category,
+        "category_slug":   item.get("category_slug") or "",
+        "product_type":    product_type,
+        "sku":             item.get("sku") or "",
+        "price":           float(item.get("price") or 0),
+        "stock":           item.get("stock", 0),
+        "description":     item.get("description", ""),
+        "cover_image_url": item.get("cover_image_url") or item.get("cover_image") or "",
+        "attributes":      attrs,
+    }
+
+
+class ProductServiceClient(ServiceClient):
+    """HTTP client for product-service (DDD). Replaces old book_client."""
+
     def __init__(self):
-        super().__init__(BOOK_SERVICE_URL, "catalog/book-service")
+        super().__init__(PRODUCT_SERVICE_URL, "product-service")
 
-    def get_all_products(self, limit: int = 200) -> list[dict]:
-        data = self.get("/api/books/", params={"page_size": limit})
-        return _extract_list(data)
+    def get_all_products(self, limit: int = 200, category_slug: str | None = None) -> list[dict]:
+        params: dict = {"page_size": limit}
+        if category_slug:
+            params["category_slug"] = category_slug
+        data = self.get("/api/products/", params=params)
+        return [_normalize_product(i) for i in _extract_list(data)]
 
     def get_product_by_id(self, product_id: int) -> dict | None:
-        return self.get(f"/api/books/{product_id}/")
+        data = self.get(f"/api/products/{product_id}/")
+        return _normalize_product(data) if data else None
 
-    def search_products(self, query: str, category: str | None = None,
-                        min_price: float | None = None, max_price: float | None = None) -> list[dict]:
+    def search_products(
+        self,
+        query: str,
+        category_slug: str | None = None,
+        min_price: float | None = None,
+        max_price: float | None = None,
+        product_type: str | None = None,
+        in_stock: bool = False,
+    ) -> list[dict]:
         params: dict = {"search": query}
-        if category:
-            params["category"] = category
+        if category_slug:
+            params["category_slug"] = category_slug
         if min_price is not None:
             params["min_price"] = min_price
         if max_price is not None:
             params["max_price"] = max_price
-        data = self.get("/api/books/", params=params)
+        if product_type:
+            params["product_type_name"] = product_type
+        if in_stock:
+            params["in_stock"] = "true"
+        data = self.get("/api/products/", params=params)
+        return [_normalize_product(i) for i in _extract_list(data)]
+
+    def get_by_category(self, category_slug: str) -> list[dict]:
+        data = self.get("/api/products/", params={"category_slug": category_slug})
+        return [_normalize_product(i) for i in _extract_list(data)]
+
+    def get_categories(self) -> list[dict]:
+        data = self.get("/api/categories/")
         return _extract_list(data)
 
-    def get_by_category(self, category: str) -> list[dict]:
-        data = self.get("/api/books/", params={"category": category})
-        return _extract_list(data)
+    def health(self) -> dict:
+        return self.get("/api/health/") or {}
 
 
-catalog_client = CatalogServiceClient()
+# Singleton — primary product client
+product_client = ProductServiceClient()
+
+# Backward-compat alias (catalog_client was used in older code)
+catalog_client = product_client

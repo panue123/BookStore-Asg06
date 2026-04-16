@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MoonBooks – Staff Portal</title>
+<title>E-commerce – Staff Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -69,7 +69,7 @@ tr:hover td{background:#FAFBFF}
 </head>
 <body>
 <nav>
-  <a href="/" class="logo">🌙 Moon<em>Books</em></a>
+  <a href="/" class="logo">🛍️ E-<em>commerce</em></a>
   <div class="nav-right">
     <span id="navName" style="font-size:.88rem;font-weight:600;color:var(--pd)"></span>
     <span class="role-badge" id="navRole">STAFF</span>
@@ -82,7 +82,7 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-item"        onclick="showPage('shifts')"   id="nav-shifts">🕐 Ca làm việc</div>
     <div class="nav-item"        onclick="showPage('orders')"   id="nav-orders">📦 Duyệt đơn hàng</div>
     <div class="nav-item"        onclick="showPage('shipments')" id="nav-shipments">🚚 Vận chuyển</div>
-    <div class="nav-item"        onclick="showPage('books')"    id="nav-books">📚 Kho sách</div>
+    <div class="nav-item"        onclick="showPage('books')"    id="nav-books">📚 Kho sản phẩm</div>
     <div class="nav-item"        onclick="showPage('payments')" id="nav-payments">💳 Thanh toán</div>
     <div class="nav-item"        onclick="showPage('logs')"     id="nav-logs">📋 Nhật ký hoạt động</div>
   </div>
@@ -160,13 +160,13 @@ tr:hover td{background:#FAFBFF}
     <!-- ── BOOKS ── -->
     <div class="page" id="page-books">
       <div class="sec-hdr">
-        <div class="sec-title">📚 Cập nhật tồn kho sách</div>
+        <div class="sec-title">📚 Cập nhật tồn kho sản phẩm</div>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <input type="text" id="bookSearch" placeholder="Tìm tên sách..." style="padding:.35rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:#F8FAFC;width:180px" oninput="filterBooks()">
+          <input type="text" id="bookSearch" placeholder="Tìm tên sản phẩm..." style="padding:.35rem .65rem;border:1.5px solid var(--b);border-radius:var(--rs);font-size:.83rem;background:#F8FAFC;width:180px" oninput="filterBooks()">
           <button class="btn btn-ghost btn-sm" onclick="loadBooks()">🔄 Làm mới</button>
         </div>
       </div>
-      <div class="info-box">ℹ️ Bạn có thể cập nhật số lượng tồn kho. Để chỉnh sửa thông tin sách, liên hệ quản lý.</div>
+      <div class="info-box">ℹ️ Bạn có thể cập nhật số lượng tồn kho. Để chỉnh sửa thông tin sản phẩm, liên hệ quản lý.</div>
       <div class="card" style="padding:0;overflow:hidden">
         <div id="booksPane" class="loading" style="padding:2rem"><div class="spin"></div></div>
       </div>
@@ -206,7 +206,7 @@ tr:hover td{background:#FAFBFF}
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title">📦 Cập nhật tồn kho</span><button class="btn-x" onclick="closeModal('stockModal')">✕</button></div>
     <input type="hidden" id="stockBookId">
-    <div class="form-group"><label>Tên sách</label><input type="text" id="stockBookTitle" readonly style="background:var(--bg)"></div>
+    <div class="form-group"><label>Tên sản phẩm</label><input type="text" id="stockBookTitle" readonly style="background:var(--bg)"></div>
     <div class="form-group"><label>Tồn kho hiện tại</label><input type="number" id="stockCurrent" readonly style="background:var(--bg)"></div>
     <div class="form-group"><label>Tồn kho mới</label><input type="number" id="stockNew" min="0"></div>
     <button class="btn btn-p" style="width:100%;padding:.75rem;margin-top:.5rem" onclick="saveStock()">💾 Cập nhật</button>
@@ -279,6 +279,20 @@ async function api(path, opts={}) {
   return fetch(API+path, opts);
 }
 function fmt(n) { return Number(n).toLocaleString('vi-VN')+'₫'; }
+function normalizeBook(b) {
+  const attrs = b?.attributes || {};
+  const categorySlug = b?.category_slug || b?.category || '';
+  const categoryName = b?.category_name || categorySlug;
+  return {
+    ...b,
+    title: b?.title || b?.name || '',
+    brand_label: b?.brand_name || attrs.brand || attrs.manufacturer || '',
+    type_label: b?.product_type_name || b?.product_type || attrs.type || '',
+    category: categoryName,
+    category_slug: categorySlug,
+    cover_image_url: b?.cover_image_url || b?.cover_image || '',
+  };
+}
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
 function statusBadge(s, map) {
   const m = map || {pending:'s-pending Chờ xử lý',paid:'s-paid Đã thanh toán',shipped:'s-shipped Đang giao',canceled:'s-canceled Đã hủy',delivered:'s-delivered Đã giao',processing:'s-processing Đang xử lý',cancelled:'s-cancelled Đã hủy',scheduled:'s-scheduled Lên lịch',started:'s-started Đang làm',ended:'s-ended Kết thúc'};
@@ -514,18 +528,19 @@ async function loadBooks() {
   const el=document.getElementById('booksPane');
   el.innerHTML='<div class="loading" style="padding:2rem"><div class="spin"></div></div>';
   try {
-    const r=await fetch('/api/books/?page_size=100');
+    const r=await fetch('/api/products/?page_size=100');
     if(!r.ok) throw new Error();
     const data=await r.json();
-    const books=Array.isArray(data)?data:(data.results||[]);
-    if(!books.length) { el.innerHTML='<div class="empty">Không có sách nào</div>'; return; }
+    const books=(Array.isArray(data)?data:(data.results||[])).map(normalizeBook);
+    if(!books.length) { el.innerHTML='<div class="empty">Không có sản phẩm nào</div>'; return; }
     el.innerHTML=`<table>
-      <thead><tr><th>ID</th><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Tồn kho</th><th>Thao tác</th></tr></thead>
+      <thead><tr><th>ID</th><th>Tên sản phẩm</th><th>Thương hiệu</th><th>Loại</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Thao tác</th></tr></thead>
       <tbody>${books.map(b=>`
         <tr>
           <td style="color:var(--tm)">#${b.id}</td>
           <td style="font-weight:600">${b.title}</td>
-          <td style="color:var(--tm)">${b.author||'—'}</td>
+          <td style="color:var(--tm)">${b.brand_label||'—'}</td>
+          <td style="color:var(--tm)">${b.type_label||'—'}</td>
           <td><span class="badge" style="background:var(--pll);color:var(--pd)">${b.category||'—'}</span></td>
           <td style="font-weight:700;color:var(--pd)">${fmt(b.price)}</td>
           <td>
@@ -551,7 +566,7 @@ async function saveStock() {
   const newStock=parseInt(document.getElementById('stockNew').value);
   if(isNaN(newStock)||newStock<0) { toast('Số lượng không hợp lệ','err'); return; }
   try {
-    const r=await api('/books/'+id+'/update_stock/',{method:'PATCH',body:JSON.stringify({stock:newStock})});
+    const r=await api('/products/'+id+'/',{method:'PATCH',body:JSON.stringify({stock:newStock})});
     if(r.ok) { toast('Đã cập nhật tồn kho','ok'); closeModal('stockModal'); loadBooks(); }
     else { const d=await r.json(); toast('❌ '+(d.error||'Lỗi'),'err'); }
   } catch(e) { toast('Lỗi kết nối','err'); }
@@ -799,12 +814,12 @@ async function fetchAllBooks() {
   const books = [];
   let page = 1;
   while (true) {
-    const r = await fetch('/api/books/?page=' + page);
+    const r = await fetch('/api/products/?page=' + page);
     if (!r.ok) throw new Error('failed to load books page ' + page);
     const data = await r.json();
-    if (Array.isArray(data)) return data;
+    if (Array.isArray(data)) return data.map(normalizeBook);
 
-    books.push(...(data.results || []));
+    books.push(...(data.results || []).map(normalizeBook));
     if (!data.next) break;
 
     const m = String(data.next).match(/[?&]page=(\d+)/);
@@ -827,20 +842,26 @@ async function loadBooks() {
 
 function filterBooks() {
   const q=(document.getElementById('bookSearch').value||'').toLowerCase();
-  const filtered=q?allBooksData.filter(b=>(b.title||'').toLowerCase().includes(q)||(b.author||'').toLowerCase().includes(q)):allBooksData;
+  const filtered=q?allBooksData.filter(b=>
+    (b.title||'').toLowerCase().includes(q)||
+    (b.brand_label||'').toLowerCase().includes(q)||
+    (b.type_label||'').toLowerCase().includes(q)||
+    (b.category||'').toLowerCase().includes(q)
+  ):allBooksData;
   renderBooksTable(filtered);
 }
 
 function renderBooksTable(books) {
   const el=document.getElementById('booksPane');
-  if(!books.length) { el.innerHTML='<div class="empty">Không có sách nào</div>'; return; }
+  if(!books.length) { el.innerHTML='<div class="empty">Không có sản phẩm nào</div>'; return; }
   el.innerHTML=`<table>
-    <thead><tr><th>ID</th><th>Tên sách</th><th>Tác giả</th><th>Thể loại</th><th>Giá</th><th>Tồn kho</th><th>Thao tác</th></tr></thead>
+    <thead><tr><th>ID</th><th>Tên sản phẩm</th><th>Thương hiệu</th><th>Loại</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Thao tác</th></tr></thead>
     <tbody>${books.map(b=>`
       <tr>
         <td style="color:var(--tm)">#${b.id}</td>
         <td style="font-weight:600">${b.title}</td>
-        <td style="color:var(--tm)">${b.author||'—'}</td>
+        <td style="color:var(--tm)">${b.brand_label||'—'}</td>
+        <td style="color:var(--tm)">${b.type_label||'—'}</td>
         <td><span class="badge" style="background:var(--pll);color:var(--pd)">${b.category||'—'}</span></td>
         <td style="font-weight:700;color:var(--pd)">${fmt(b.price)}</td>
         <td><span style="font-weight:700;color:${b.stock<5?'#DC2626':b.stock<10?'#D97706':'#059669'}">${b.stock}</span>${b.stock<10?` <span style="font-size:.7rem;color:#D97706">⚠️</span>`:''}</td>

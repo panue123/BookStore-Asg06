@@ -1,0 +1,501 @@
+customer_id,segment,preferred_cats,price_sensitivity,n_events,n_purchases
+1,engaged,khoa học|lập trình|toán học,1,19,1
+2,loyal,nghệ thuật,0,48,6
+3,casual,nghệ thuật|triết học,2,6,0
+4,loyal,toán học|triết học|thiếu nhi,3,25,3
+5,loyal,lịch sử|lập trình,2,29,3
+6,engaged,văn học|thiếu nhi,3,26,1
+7,loyal,khoa học|nghệ thuật,1,36,6
+8,loyal,khoa học|thiếu nhi,1,39,6
+9,champion,lịch sử,3,39,9
+10,loyal,thiếu nhi|lịch sử,3,33,6
+11,loyal,lịch sử|nghệ thuật,1,28,4
+12,loyal,lịch sử|kinh doanh|tâm lý,2,15,3
+13,engaged,kỹ năng sống|thiếu nhi|kinh doanh,1,23,2
+14,loyal,triết học|nghệ thuật,1,20,4
+15,loyal,thiếu nhi|lịch sử|kỹ năng sống,4,36,5
+16,loyal,nghệ thuật|triết học,2,29,5
+17,engaged,kỹ năng sống|khoa học,0,11,1
+18,loyal,kinh doanh,2,17,4
+19,champion,kinh doanh|tâm lý|kỹ năng sống,1,44,8
+20,loyal,triết học|khoa học,2,50,5
+21,loyal,lập trình|thiếu nhi,1,42,6
+22,casual,lập trình|triết học,1,9,0
+23,loyal,thiếu nhi|nghệ thuật,2,32,5
+24,engaged,khoa học|kỹ năng sống|văn học,3,12,1
+25,loyal,nghệ thuật|lịch sử|kinh doanh,2,33,7
+26,champion,triết học|toán học|thiếu nhi,2,50,9
+27,engaged,thiếu nhi,3,22,1
+28,engaged,lịch sử,4,7,1
+29,engaged,tâm lý|lập trình|triết học,4,12,2
+30,loyal,kinh doanh|kỹ năng sống|lịch sử,0,19,3
+31,engaged,thiếu nhi|kinh doanh|khoa học,4,16,2
+32,loyal,triết học,3,29,3
+33,champion,triết học,4,49,11
+34,loyal,thiếu nhi|tâm lý,0,43,4
+35,loyal,thiếu nhi|tâm lý|nghệ thuật,4,38,7
+36,champion,văn học|thiếu nhi|lập trình,1,35,8
+37,loyal,kinh doanh|triết học,0,33,4
+38,engaged,tiểu thuyết|kỹ năng sống|nghệ thuật,3,21,1
+39,champion,tâm lý|lập trình,4,50,8
+40,engaged,thiếu nhi,3,16,2
+41,loyal,triết học,2,31,4
+42,loyal,kỹ năng sống|toán học|văn học,0,28,5
+43,champion,tiểu thuyết|khoa học,3,48,9
+44,loyal,toán học|văn học|khoa học,1,43,6
+45,engaged,khoa học,2,10,1
+46,engaged,khoa học|lập trình,1,15,1
+47,loyal,toán học|nghệ thuật|khoa học,3,39,5
+48,loyal,nghệ thuật|lịch sử|tâm lý,0,45,5
+49,engaged,khoa học|tiểu thuyết|triết học,1,24,2
+50,loyal,toán học|khoa học,4,34,3
+51,engaged,văn học|tiểu thuyết,2,28,2
+52,champion,kỹ năng sống,3,48,8
+53,champion,toán học,2,46,10
+54,champion,kinh doanh|nghệ thuật|văn học,1,43,10
+55,loyal,khoa học|lập trình,1,41,3
+56,loyal,văn học|lịch sử|nghệ thuật,2,32,5
+57,loyal,khoa học|lịch sử|văn học,4,29,7
+58,loyal,tiểu thuyết,0,23,3
+59,champion,nghệ thuật|văn học,4,50,9
+60,loyal,kỹ năng sống|tiểu thuyết|kinh doanh,1,17,4
+61,loyal,thiếu nhi|lịch sử,3,25,3
+62,loyal,toán học|tâm lý|kỹ năng sống,2,43,6
+63,engaged,thiếu nhi|toán học|văn học,1,15,2
+64,champion,văn học|triết học|lịch sử,2,48,9
+65,loyal,nghệ thuật|văn học,2,19,5
+66,loyal,nghệ thuật|lập trình,1,36,6
+67,loyal,toán học,2,21,4
+68,engaged,tâm lý|nghệ thuật|lịch sử,4,21,1
+69,champion,kỹ năng sống|văn học|triết học,1,34,8
+70,engaged,lịch sử|khoa học|tâm lý,3,17,2
+71,loyal,văn học|lịch sử|triết học,3,30,6
+72,loyal,thiếu nhi|toán học|nghệ thuật,0,41,5
+73,loyal,kỹ năng sống,2,23,3
+74,engaged,triết học|tâm lý|văn học,0,9,1
+75,loyal,kinh doanh|tiểu thuyết|khoa học,4,23,3
+76,loyal,văn học,1,25,3
+77,loyal,toán học,1,49,6
+78,casual,tiểu thuyết|thiếu nhi,2,6,0
+79,engaged,văn học|toán học,4,12,2
+80,loyal,lập trình,2,19,3
+81,loyal,khoa học|triết học|lịch sử,3,37,7
+82,engaged,nghệ thuật|kinh doanh|kỹ năng sống,2,16,2
+83,engaged,thiếu nhi|toán học,2,21,2
+84,loyal,toán học|lập trình|tâm lý,0,40,7
+85,loyal,lập trình|lịch sử|kinh doanh,2,16,4
+86,casual,kỹ năng sống,3,31,0
+87,loyal,thiếu nhi|kỹ năng sống,2,28,5
+88,engaged,kỹ năng sống,1,14,1
+89,engaged,lịch sử|tâm lý,2,10,2
+90,engaged,khoa học|toán học,3,22,1
+91,loyal,toán học|nghệ thuật|tiểu thuyết,4,24,4
+92,loyal,tâm lý,3,28,4
+93,loyal,khoa học|triết học|văn học,1,33,3
+94,loyal,nghệ thuật|thiếu nhi,1,44,6
+95,engaged,thiếu nhi,1,15,2
+96,engaged,lập trình|thiếu nhi,4,18,2
+97,engaged,triết học|kinh doanh|kỹ năng sống,3,31,1
+98,casual,tiểu thuyết|lịch sử,3,7,0
+99,engaged,tâm lý|tiểu thuyết|kinh doanh,4,19,1
+100,loyal,kinh doanh|lập trình|thiếu nhi,3,32,5
+101,engaged,nghệ thuật,1,13,1
+102,engaged,triết học|toán học,0,22,2
+103,casual,toán học,3,8,0
+104,loyal,lập trình|tiểu thuyết|kỹ năng sống,2,29,6
+105,loyal,toán học|nghệ thuật|lịch sử,4,35,5
+106,loyal,khoa học,1,33,7
+107,casual,nghệ thuật|khoa học,1,5,0
+108,loyal,lập trình,0,29,5
+109,loyal,thiếu nhi|nghệ thuật|kỹ năng sống,3,48,7
+110,engaged,thiếu nhi,0,23,2
+111,loyal,tiểu thuyết,4,34,7
+112,champion,văn học|khoa học,1,48,8
+113,loyal,tâm lý|tiểu thuyết,4,40,7
+114,loyal,triết học,3,43,3
+115,engaged,tâm lý,4,27,2
+116,champion,thiếu nhi|kỹ năng sống|tâm lý,4,42,8
+117,loyal,nghệ thuật|thiếu nhi|triết học,1,22,4
+118,loyal,khoa học|kỹ năng sống,0,44,3
+119,engaged,khoa học|thiếu nhi,0,7,1
+120,loyal,lịch sử|văn học|kinh doanh,2,38,6
+121,loyal,toán học|nghệ thuật,0,33,4
+122,champion,nghệ thuật,1,46,10
+123,casual,văn học|thiếu nhi,1,10,0
+124,engaged,kinh doanh|kỹ năng sống,0,21,1
+125,engaged,tiểu thuyết,0,7,1
+126,loyal,toán học|tiểu thuyết|thiếu nhi,2,30,5
+127,champion,tiểu thuyết|triết học|văn học,1,48,8
+128,champion,nghệ thuật,1,37,10
+129,loyal,lịch sử,3,13,3
+130,loyal,lập trình|thiếu nhi|khoa học,1,32,6
+131,loyal,lịch sử|kinh doanh,0,25,3
+132,loyal,tâm lý|lập trình,2,25,4
+133,casual,văn học,1,5,0
+134,loyal,tâm lý|triết học,3,22,4
+135,loyal,lập trình|thiếu nhi|tiểu thuyết,2,29,3
+136,engaged,lập trình,4,38,2
+137,loyal,tiểu thuyết,0,21,3
+138,engaged,lịch sử|lập trình|kỹ năng sống,2,23,2
+139,engaged,lập trình|tiểu thuyết|văn học,0,31,2
+140,engaged,lập trình,2,9,1
+141,champion,văn học,3,48,9
+142,loyal,lập trình|tiểu thuyết|kỹ năng sống,4,37,3
+143,loyal,nghệ thuật|kỹ năng sống|lịch sử,2,33,6
+144,champion,triết học,3,50,10
+145,loyal,nghệ thuật|khoa học|văn học,1,30,4
+146,loyal,tâm lý|thiếu nhi,3,16,6
+147,engaged,nghệ thuật|lịch sử|lập trình,4,16,2
+148,casual,thiếu nhi|triết học,3,13,0
+149,loyal,lập trình|tiểu thuyết|triết học,2,39,4
+150,loyal,lịch sử,4,48,7
+151,loyal,nghệ thuật|văn học|tâm lý,4,50,5
+152,loyal,văn học|kinh doanh,4,28,4
+153,engaged,nghệ thuật,3,5,1
+154,engaged,tâm lý|kỹ năng sống|triết học,1,17,1
+155,loyal,triết học,3,40,7
+156,loyal,triết học|thiếu nhi,3,42,4
+157,loyal,kỹ năng sống|tiểu thuyết|triết học,1,25,5
+158,champion,triết học|khoa học,0,30,8
+159,casual,nghệ thuật,0,10,0
+160,loyal,triết học|toán học|văn học,4,12,4
+161,champion,văn học|triết học,0,48,9
+162,engaged,tiểu thuyết,3,12,1
+163,loyal,kinh doanh,0,14,3
+164,engaged,tâm lý|triết học|lịch sử,0,23,2
+165,engaged,triết học|toán học,0,10,1
+166,loyal,lịch sử|khoa học|văn học,3,26,6
+167,loyal,văn học|nghệ thuật,1,31,5
+168,engaged,kỹ năng sống|tâm lý|tiểu thuyết,3,31,2
+169,loyal,thiếu nhi|tâm lý,3,28,3
+170,champion,lịch sử|triết học,3,48,8
+171,loyal,nghệ thuật|triết học|lịch sử,2,20,3
+172,engaged,toán học|nghệ thuật|kỹ năng sống,0,24,2
+173,loyal,kinh doanh|văn học,1,31,6
+174,loyal,lập trình|lịch sử|toán học,1,28,3
+175,loyal,kỹ năng sống|nghệ thuật|thiếu nhi,4,32,5
+176,loyal,kỹ năng sống,3,39,4
+177,loyal,kinh doanh|triết học,0,27,5
+178,casual,triết học,3,8,0
+179,casual,tâm lý|kinh doanh|lập trình,4,6,0
+180,engaged,kỹ năng sống,1,13,2
+181,champion,lập trình,3,37,8
+182,loyal,kinh doanh|khoa học,1,41,7
+183,loyal,nghệ thuật|kỹ năng sống,2,40,6
+184,engaged,văn học|tiểu thuyết,2,10,1
+185,engaged,kỹ năng sống|triết học,2,12,2
+186,loyal,văn học|kỹ năng sống|toán học,3,28,4
+187,loyal,kỹ năng sống|lập trình|lịch sử,0,19,4
+188,loyal,triết học|nghệ thuật,0,32,3
+189,loyal,tiểu thuyết|thiếu nhi|kinh doanh,4,38,5
+190,engaged,toán học,1,8,2
+191,loyal,khoa học|triết học,2,31,3
+192,casual,lịch sử|thiếu nhi,2,14,0
+193,casual,tâm lý|kỹ năng sống|lập trình,3,10,0
+194,engaged,kỹ năng sống,3,11,1
+195,loyal,triết học,4,30,4
+196,casual,thiếu nhi|tâm lý|văn học,0,11,0
+197,engaged,triết học|kỹ năng sống|văn học,1,17,2
+198,loyal,lập trình,3,21,3
+199,engaged,lập trình,3,13,2
+200,loyal,nghệ thuật|toán học|lập trình,1,18,3
+201,engaged,khoa học|triết học,3,9,1
+202,loyal,khoa học,1,17,4
+203,loyal,văn học|triết học,1,48,6
+204,loyal,toán học|kỹ năng sống|kinh doanh,3,34,7
+205,loyal,tâm lý|nghệ thuật|thiếu nhi,3,29,3
+206,engaged,lịch sử|tâm lý|tiểu thuyết,3,5,2
+207,loyal,kinh doanh,3,40,4
+208,loyal,thiếu nhi,1,23,7
+209,engaged,thiếu nhi|triết học|lịch sử,2,8,2
+210,loyal,khoa học,4,43,5
+211,loyal,lịch sử,0,30,4
+212,loyal,thiếu nhi|triết học,4,36,5
+213,loyal,toán học|văn học|nghệ thuật,4,27,4
+214,champion,lập trình|kinh doanh,1,50,8
+215,engaged,thiếu nhi|nghệ thuật|kỹ năng sống,0,11,2
+216,engaged,khoa học|tâm lý|kỹ năng sống,0,14,2
+217,engaged,nghệ thuật|khoa học,4,30,2
+218,loyal,thiếu nhi,0,37,6
+219,champion,triết học,1,36,8
+220,loyal,tiểu thuyết|triết học,0,29,6
+221,loyal,lịch sử|kỹ năng sống|kinh doanh,4,19,4
+222,loyal,tiểu thuyết,3,31,4
+223,loyal,tâm lý,2,11,3
+224,loyal,toán học|văn học,3,45,7
+225,loyal,tiểu thuyết,4,22,5
+226,loyal,triết học|văn học|kỹ năng sống,3,50,7
+227,loyal,nghệ thuật|toán học|kinh doanh,1,26,4
+228,engaged,kỹ năng sống|nghệ thuật,4,12,2
+229,loyal,thiếu nhi|nghệ thuật,3,35,4
+230,engaged,thiếu nhi|văn học,4,15,1
+231,loyal,lịch sử|tiểu thuyết|toán học,1,39,7
+232,engaged,nghệ thuật|văn học,2,13,1
+233,casual,toán học|lịch sử,0,7,0
+234,champion,khoa học|tiểu thuyết,4,35,9
+235,engaged,tiểu thuyết|lịch sử,1,10,2
+236,champion,nghệ thuật,3,33,8
+237,loyal,tâm lý|kinh doanh,4,27,4
+238,loyal,tâm lý|toán học|kinh doanh,1,20,3
+239,loyal,văn học|nghệ thuật,1,32,5
+240,engaged,nghệ thuật,0,23,1
+241,loyal,thiếu nhi|triết học,1,25,5
+242,engaged,lập trình|toán học,1,10,2
+243,loyal,văn học,4,39,3
+244,loyal,kỹ năng sống|nghệ thuật,4,26,4
+245,engaged,tâm lý,0,28,2
+246,loyal,kinh doanh|lập trình|văn học,2,25,6
+247,loyal,triết học,0,21,3
+248,loyal,khoa học,4,39,4
+249,champion,kỹ năng sống|tâm lý|thiếu nhi,3,50,9
+250,loyal,toán học|triết học,1,21,5
+251,engaged,kỹ năng sống|văn học|triết học,2,10,1
+252,loyal,văn học|toán học|triết học,3,42,4
+253,champion,tâm lý|nghệ thuật|lập trình,1,41,8
+254,casual,kinh doanh|khoa học|tiểu thuyết,2,6,0
+255,engaged,tiểu thuyết,0,9,2
+256,champion,thiếu nhi|toán học|kinh doanh,1,33,8
+257,engaged,kinh doanh|lập trình|triết học,3,16,2
+258,loyal,khoa học,0,37,5
+259,loyal,thiếu nhi|lập trình,2,35,4
+260,engaged,kỹ năng sống|văn học|lập trình,3,12,2
+261,engaged,tiểu thuyết|nghệ thuật|văn học,0,8,2
+262,engaged,kinh doanh|lập trình|kỹ năng sống,2,16,1
+263,engaged,kinh doanh,4,9,1
+264,champion,nghệ thuật|lịch sử,2,47,11
+265,loyal,thiếu nhi|lập trình|lịch sử,1,37,5
+266,loyal,triết học,3,47,6
+267,loyal,văn học|nghệ thuật|lập trình,3,17,3
+268,engaged,lịch sử,3,15,1
+269,engaged,triết học|văn học,3,28,2
+270,loyal,kinh doanh,1,30,6
+271,loyal,tiểu thuyết|thiếu nhi|kinh doanh,0,23,5
+272,engaged,triết học|lập trình,2,43,2
+273,loyal,kỹ năng sống|thiếu nhi|kinh doanh,0,39,5
+274,engaged,tâm lý|thiếu nhi|văn học,2,15,2
+275,loyal,lịch sử|lập trình,1,25,7
+276,loyal,toán học,0,41,7
+277,champion,kinh doanh|toán học,0,33,8
+278,loyal,toán học|kỹ năng sống,2,24,5
+279,loyal,kinh doanh|triết học,2,30,7
+280,loyal,kỹ năng sống|nghệ thuật,2,21,3
+281,engaged,văn học,3,20,1
+282,loyal,khoa học,1,35,4
+283,engaged,kinh doanh,2,12,1
+284,engaged,tâm lý|triết học,4,6,1
+285,engaged,kỹ năng sống,3,14,2
+286,loyal,thiếu nhi|triết học,1,8,3
+287,engaged,lập trình|khoa học,1,26,2
+288,loyal,kinh doanh|văn học,4,43,5
+289,loyal,kỹ năng sống|nghệ thuật,4,31,6
+290,champion,thiếu nhi|nghệ thuật,2,50,12
+291,loyal,lập trình|văn học|kinh doanh,3,43,6
+292,loyal,lịch sử|toán học|kỹ năng sống,2,43,5
+293,loyal,thiếu nhi|kinh doanh,4,33,6
+294,engaged,triết học,1,9,1
+295,loyal,tâm lý|lịch sử,0,31,6
+296,loyal,toán học,3,11,3
+297,champion,lịch sử|văn học,1,42,12
+298,loyal,khoa học,4,21,4
+299,loyal,tiểu thuyết|triết học,3,40,5
+300,engaged,triết học,0,24,2
+301,loyal,thiếu nhi|toán học|nghệ thuật,1,9,3
+302,casual,kinh doanh|văn học,4,12,0
+303,loyal,kinh doanh|khoa học,4,20,4
+304,engaged,tâm lý|lập trình,0,10,1
+305,loyal,nghệ thuật|văn học|tiểu thuyết,1,45,6
+306,loyal,nghệ thuật|khoa học|kỹ năng sống,4,45,7
+307,loyal,nghệ thuật,3,23,6
+308,engaged,nghệ thuật|lịch sử|tâm lý,2,11,2
+309,champion,toán học|nghệ thuật,2,50,11
+310,loyal,kỹ năng sống|kinh doanh|triết học,0,36,6
+311,champion,lập trình|toán học,4,44,10
+312,loyal,lập trình|toán học,2,34,4
+313,loyal,lịch sử,4,14,3
+314,loyal,thiếu nhi,2,46,7
+315,engaged,tiểu thuyết,3,7,2
+316,loyal,kinh doanh|lập trình|lịch sử,3,32,5
+317,loyal,kinh doanh|thiếu nhi,0,49,6
+318,loyal,toán học|tiểu thuyết,4,13,3
+319,engaged,lập trình,4,14,2
+320,loyal,thiếu nhi|tâm lý,1,33,6
+321,loyal,thiếu nhi|kỹ năng sống,3,25,5
+322,loyal,nghệ thuật|thiếu nhi|tâm lý,1,41,6
+323,loyal,lập trình|tâm lý|kỹ năng sống,2,13,3
+324,loyal,lịch sử|khoa học,0,49,5
+325,champion,thiếu nhi,3,43,9
+326,loyal,lập trình|toán học|tiểu thuyết,3,34,4
+327,engaged,kinh doanh|tâm lý,2,13,1
+328,loyal,nghệ thuật|kinh doanh,2,44,4
+329,engaged,tâm lý|kỹ năng sống|văn học,4,18,2
+330,loyal,kỹ năng sống|tiểu thuyết,0,33,5
+331,loyal,tiểu thuyết,1,38,6
+332,engaged,kỹ năng sống|tiểu thuyết,2,11,2
+333,loyal,tâm lý|kỹ năng sống,0,44,5
+334,loyal,kỹ năng sống|thiếu nhi|toán học,2,47,4
+335,champion,tâm lý,4,47,9
+336,engaged,tâm lý|toán học|kinh doanh,0,11,1
+337,engaged,văn học,0,17,2
+338,loyal,kinh doanh,0,41,4
+339,champion,tiểu thuyết|tâm lý,3,45,12
+340,loyal,kỹ năng sống|triết học|kinh doanh,4,22,7
+341,engaged,lập trình|nghệ thuật,2,17,1
+342,champion,kinh doanh|khoa học|kỹ năng sống,1,43,10
+343,loyal,nghệ thuật|tâm lý|lịch sử,4,35,3
+344,loyal,nghệ thuật|tiểu thuyết|văn học,2,28,3
+345,champion,triết học|kỹ năng sống,3,47,9
+346,loyal,kỹ năng sống|kinh doanh|toán học,4,40,7
+347,loyal,kỹ năng sống,1,16,3
+348,engaged,tâm lý,2,21,2
+349,casual,văn học|tiểu thuyết|nghệ thuật,0,6,0
+350,casual,tiểu thuyết|tâm lý,3,17,0
+351,loyal,lịch sử|khoa học,2,23,6
+352,engaged,thiếu nhi,4,11,2
+353,engaged,lịch sử,3,7,2
+354,loyal,nghệ thuật,0,47,6
+355,engaged,thiếu nhi,0,16,1
+356,engaged,thiếu nhi|khoa học|nghệ thuật,1,8,1
+357,casual,tiểu thuyết,3,5,0
+358,loyal,thiếu nhi|văn học|lịch sử,0,16,3
+359,loyal,toán học|kỹ năng sống,3,37,4
+360,loyal,tâm lý|tiểu thuyết|kinh doanh,4,21,3
+361,loyal,nghệ thuật,3,43,6
+362,loyal,toán học,0,23,4
+363,loyal,kinh doanh|thiếu nhi,1,49,7
+364,engaged,thiếu nhi,0,16,2
+365,loyal,lập trình|lịch sử,2,26,3
+366,loyal,nghệ thuật|toán học|khoa học,4,24,4
+367,engaged,triết học|tiểu thuyết,2,8,1
+368,engaged,toán học,0,10,1
+369,loyal,triết học|nghệ thuật,4,29,4
+370,engaged,triết học,3,12,2
+371,champion,nghệ thuật|lập trình,0,41,9
+372,champion,kinh doanh|thiếu nhi|lập trình,4,46,10
+373,loyal,tâm lý|toán học,4,50,6
+374,engaged,tiểu thuyết|kinh doanh|lịch sử,3,5,1
+375,champion,lịch sử,2,48,9
+376,engaged,tiểu thuyết,4,10,2
+377,loyal,kinh doanh|lập trình|văn học,1,44,5
+378,loyal,khoa học|toán học,0,48,7
+379,engaged,nghệ thuật,1,18,1
+380,loyal,văn học,4,45,5
+381,loyal,lập trình|triết học,0,44,4
+382,loyal,tiểu thuyết|kinh doanh|khoa học,0,47,4
+383,engaged,khoa học|kỹ năng sống,2,40,2
+384,loyal,văn học|kỹ năng sống,4,27,3
+385,loyal,kỹ năng sống|tâm lý,0,26,6
+386,loyal,khoa học,0,40,7
+387,champion,thiếu nhi,3,49,8
+388,loyal,lịch sử|khoa học,0,19,3
+389,engaged,tiểu thuyết|nghệ thuật|lịch sử,0,9,1
+390,champion,thiếu nhi,4,33,8
+391,loyal,kinh doanh|tiểu thuyết|thiếu nhi,0,32,3
+392,loyal,triết học|lịch sử|kỹ năng sống,4,35,6
+393,champion,tâm lý|lịch sử|kinh doanh,0,36,8
+394,loyal,tiểu thuyết|nghệ thuật,3,36,6
+395,loyal,lập trình|tâm lý,1,31,3
+396,loyal,lập trình,4,14,3
+397,loyal,tâm lý,1,45,6
+398,loyal,thiếu nhi|kỹ năng sống,4,27,3
+399,engaged,kinh doanh|tiểu thuyết,4,9,1
+400,champion,lịch sử,2,36,9
+401,loyal,tiểu thuyết|toán học,2,8,4
+402,champion,kỹ năng sống|tâm lý,0,45,11
+403,loyal,thiếu nhi|tâm lý,0,23,5
+404,loyal,văn học|lập trình,4,34,4
+405,loyal,thiếu nhi|tiểu thuyết,4,15,3
+406,engaged,lập trình|lịch sử|tiểu thuyết,2,14,2
+407,casual,khoa học,0,13,0
+408,loyal,thiếu nhi|tâm lý,3,34,6
+409,loyal,kỹ năng sống|tiểu thuyết,2,43,4
+410,engaged,tâm lý|thiếu nhi|khoa học,1,29,1
+411,loyal,triết học,0,26,4
+412,loyal,lịch sử,2,41,6
+413,engaged,triết học|kỹ năng sống,2,14,1
+414,engaged,kinh doanh|lịch sử|toán học,0,22,1
+415,loyal,lịch sử,0,28,5
+416,loyal,kinh doanh|kỹ năng sống|tiểu thuyết,3,32,4
+417,champion,lịch sử,4,43,10
+418,engaged,toán học,2,8,2
+419,loyal,lịch sử|toán học|kỹ năng sống,0,27,5
+420,champion,lịch sử,1,37,8
+421,engaged,kỹ năng sống,4,32,2
+422,engaged,tâm lý|toán học,0,17,1
+423,engaged,nghệ thuật|triết học,3,16,1
+424,loyal,kinh doanh|tâm lý,3,31,3
+425,loyal,thiếu nhi|tiểu thuyết,2,18,4
+426,champion,nghệ thuật|tiểu thuyết|kỹ năng sống,0,50,11
+427,loyal,tiểu thuyết|tâm lý|văn học,1,28,4
+428,champion,thiếu nhi|tâm lý,2,42,9
+429,champion,khoa học|toán học,3,49,10
+430,engaged,nghệ thuật|thiếu nhi,3,18,2
+431,engaged,tiểu thuyết|triết học,0,27,2
+432,engaged,tâm lý|nghệ thuật|lập trình,4,14,1
+433,champion,triết học|tâm lý|văn học,2,45,8
+434,loyal,tiểu thuyết,0,42,7
+435,loyal,thiếu nhi|kinh doanh,3,40,6
+436,loyal,văn học,0,33,4
+437,loyal,kỹ năng sống|kinh doanh,0,18,3
+438,casual,toán học|lập trình,4,17,0
+439,engaged,toán học|tâm lý,3,17,2
+440,loyal,toán học|thiếu nhi,1,46,6
+441,engaged,tiểu thuyết|khoa học|nghệ thuật,3,26,1
+442,loyal,tiểu thuyết,4,31,6
+443,engaged,triết học|kỹ năng sống,1,18,1
+444,engaged,thiếu nhi,4,9,1
+445,loyal,kỹ năng sống,1,9,3
+446,engaged,nghệ thuật|khoa học|lịch sử,1,25,1
+447,loyal,tâm lý|văn học|khoa học,2,35,5
+448,loyal,tâm lý,1,22,4
+449,champion,lập trình,4,43,14
+450,loyal,toán học|thiếu nhi,1,12,4
+451,engaged,khoa học,0,18,2
+452,champion,lịch sử|kỹ năng sống|khoa học,0,42,8
+453,loyal,lịch sử|triết học,1,25,4
+454,engaged,khoa học|lập trình,0,18,2
+455,loyal,văn học|nghệ thuật,0,26,6
+456,loyal,lịch sử|thiếu nhi,2,28,3
+457,engaged,văn học|kỹ năng sống|lịch sử,2,10,1
+458,champion,tâm lý|kinh doanh,2,41,8
+459,loyal,lập trình,3,21,6
+460,engaged,lịch sử|nghệ thuật|kinh doanh,3,20,2
+461,engaged,văn học,0,12,2
+462,engaged,khoa học|văn học,3,11,1
+463,champion,khoa học|triết học|nghệ thuật,2,46,8
+464,loyal,kinh doanh,4,26,5
+465,loyal,thiếu nhi|tâm lý,4,41,5
+466,loyal,thiếu nhi,2,31,3
+467,engaged,thiếu nhi|kinh doanh,3,9,1
+468,loyal,tiểu thuyết|khoa học|triết học,2,37,7
+469,loyal,kinh doanh|triết học,2,42,4
+470,champion,tâm lý,0,47,8
+471,loyal,thiếu nhi|văn học|lịch sử,3,22,5
+472,loyal,nghệ thuật|lịch sử,3,32,3
+473,loyal,tâm lý|tiểu thuyết|nghệ thuật,1,30,6
+474,loyal,văn học|lập trình,2,44,6
+475,champion,triết học,2,47,8
+476,loyal,thiếu nhi,4,21,3
+477,loyal,nghệ thuật,2,25,4
+478,champion,toán học|lập trình|nghệ thuật,4,50,10
+479,champion,khoa học|thiếu nhi,0,32,11
+480,loyal,lập trình|tiểu thuyết|lịch sử,2,16,3
+481,loyal,tiểu thuyết|khoa học,1,20,4
+482,casual,tiểu thuyết,4,14,0
+483,loyal,lập trình,0,30,5
+484,loyal,kinh doanh,1,41,4
+485,loyal,lịch sử|tiểu thuyết,1,29,3
+486,casual,tiểu thuyết,1,11,0
+487,champion,khoa học,4,49,11
+488,loyal,lập trình|kỹ năng sống,1,24,3
+489,loyal,triết học|kinh doanh,1,37,5
+490,loyal,khoa học|lịch sử,2,35,3
+491,casual,khoa học|tiểu thuyết|triết học,4,19,0
+492,loyal,lịch sử|kỹ năng sống,1,22,3
+493,engaged,khoa học,0,26,2
+494,engaged,khoa học,4,18,1
+495,loyal,kinh doanh|kỹ năng sống|lập trình,1,29,4
+496,loyal,kỹ năng sống|lập trình,4,36,6
+497,champion,khoa học|kinh doanh,2,45,8
+498,casual,toán học|nghệ thuật,1,10,0
+499,engaged,khoa học|kinh doanh,3,12,2
+500,loyal,kinh doanh|khoa học,2,27,6

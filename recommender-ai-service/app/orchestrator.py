@@ -113,11 +113,18 @@ def _get_interactions(customer_id: int) -> dict[str, dict[int, int]]:
     """Load interaction counts from DB via Django ORM."""
     try:
         from django.apps import apps
-        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
-        qs = CustomerBookInteraction.objects.filter(customer_id=customer_id)
+        # Support both old (CustomerBookInteraction) and new (CustomerProductInteraction) model names
+        try:
+            Interaction = apps.get_model("app", "CustomerProductInteraction")
+            id_field = "product_id"
+        except LookupError:
+            Interaction = apps.get_model("app", "CustomerBookInteraction")
+            id_field = "book_id"
+        qs = Interaction.objects.filter(customer_id=customer_id)
         result: dict[str, dict[int, int]] = {}
         for ix in qs:
-            result.setdefault(ix.interaction_type, {})[ix.book_id] = ix.count
+            pid = getattr(ix, id_field, None) or getattr(ix, "product_id", None) or getattr(ix, "book_id", 0)
+            result.setdefault(ix.interaction_type, {})[pid] = ix.count
         return result
     except Exception as exc:
         logger.debug("Could not load interactions: %s", exc)
@@ -125,19 +132,25 @@ def _get_interactions(customer_id: int) -> dict[str, dict[int, int]]:
 
 
 def _get_customer_ratings(customer_id: int) -> dict[int, int]:
-    """Extract customer's own rating history: {book_id: rating_value}."""
+    """Extract customer's own rating history: {product_id: rating_value}."""
     try:
         from django.apps import apps
-        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
-        qs = CustomerBookInteraction.objects.filter(
+        try:
+            Interaction = apps.get_model("app", "CustomerProductInteraction")
+            id_field = "product_id"
+        except LookupError:
+            Interaction = apps.get_model("app", "CustomerBookInteraction")
+            id_field = "book_id"
+        qs = Interaction.objects.filter(
             customer_id=customer_id,
             interaction_type="rate",
-            rating__isnull=False
+            rating__isnull=False,
         )
         result: dict[int, int] = {}
         for ix in qs:
+            pid = getattr(ix, id_field, None) or getattr(ix, "product_id", None) or getattr(ix, "book_id", 0)
             if ix.rating is not None:
-                result[ix.book_id] = ix.rating
+                result[pid] = ix.rating
         logger.debug("Loaded %d ratings for C%s", len(result), customer_id)
         return result
     except Exception as exc:
@@ -152,25 +165,29 @@ def _get_bestseller_from_interactions(limit: int = 8) -> list[dict]:
         from django.db.models import Sum
         from .clients.catalog_client import catalog_client
 
-        CustomerBookInteraction = apps.get_model("app", "CustomerBookInteraction")
-        # Prefer purchase signal, then cart/view as weaker fallback signals.
+        try:
+            Interaction = apps.get_model("app", "CustomerProductInteraction")
+            id_field = "product_id"
+        except LookupError:
+            Interaction = apps.get_model("app", "CustomerBookInteraction")
+            id_field = "book_id"
+
         rows = (
-            CustomerBookInteraction.objects
+            Interaction.objects
             .filter(interaction_type__in=["purchase", "cart", "view"])
-            .values("book_id", "interaction_type")
+            .values(id_field, "interaction_type")
             .annotate(total=Sum("count"))
         )
 
-        # Aggregate weighted engagement per book.
         weighted: dict[int, float] = {}
         for r in rows:
-            bid = int(r.get("book_id") or 0)
-            if not bid:
+            pid = int(r.get(id_field) or 0)
+            if not pid:
                 continue
             itype = str(r.get("interaction_type") or "")
             total = float(r.get("total") or 0)
             w = 6.0 if itype == "purchase" else (2.0 if itype == "cart" else 1.0)
-            weighted[bid] = weighted.get(bid, 0.0) + (total * w)
+            weighted[pid] = weighted.get(pid, 0.0) + (total * w)
 
         if not weighted:
             return []
@@ -181,21 +198,21 @@ def _get_bestseller_from_interactions(limit: int = 8) -> list[dict]:
             if b.get("id") and int(b.get("stock", 0) or 0) > 0
         }
 
-        ranked_ids = sorted(weighted.keys(), key=lambda bid: weighted.get(bid, 0), reverse=True)
+        ranked_ids = sorted(weighted.keys(), key=lambda pid: weighted.get(pid, 0), reverse=True)
         out: list[dict] = []
-        for bid in ranked_ids:
-            b = book_map.get(bid)
+        for pid in ranked_ids:
+            b = book_map.get(pid)
             if not b:
                 continue
             out.append({
                 "product_id": b.get("id"),
-                "title": b.get("title", ""),
-                "author": b.get("author", ""),
-                "category": b.get("category", ""),
-                "price": float(b.get("price", 0) or 0),
-                "stock": int(b.get("stock", 0) or 0),
-                "score": round(float(weighted.get(bid, 0)), 3),
-                "reason": "bán chạy theo lịch sử mua gần đây",
+                "title":      b.get("title", ""),
+                "author":     b.get("author", ""),
+                "category":   b.get("category", ""),
+                "price":      float(b.get("price", 0) or 0),
+                "stock":      int(b.get("stock", 0) or 0),
+                "score":      round(float(weighted.get(pid, 0)), 3),
+                "reason":     "bán chạy theo lịch sử mua gần đây",
                 "avg_rating": 0,
             })
             if len(out) >= limit:

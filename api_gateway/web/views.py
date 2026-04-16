@@ -1,12 +1,22 @@
 from django.shortcuts import render
 import requests
 
-BOOK_SERVICE_URL = "http://book-service:8000"
+PRODUCT_SERVICE_URL = "http://product-service:8000/api"
 CART_SERVICE_URL = "http://cart-service:8000"
 
 def book_list(request):
-    r = requests.get(f"{BOOK_SERVICE_URL}/books/")
-    return render(request, "books.html", {"books": r.json()})
+    r = requests.get(f"{PRODUCT_SERVICE_URL}/products/")
+    data = r.json()
+    items = data.get("results", data) if isinstance(data, dict) else data
+    books = [
+        {
+            **b,
+            "title": b.get("title") or b.get("name") or "",
+            "author": b.get("author") or (b.get("attributes") or {}).get("author") or "",
+        }
+        for b in (items or [])
+    ]
+    return render(request, "books.html", {"books": books})
 
 def view_cart(request, customer_id):
     r = requests.get(f"{CART_SERVICE_URL}/carts/{customer_id}/")

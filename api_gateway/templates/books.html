@@ -4,3 +4,59 @@
 <li>{{ book.title }} - {{ book.price }}</li>
 {% endfor %}
 </ul>
+
+<!-- AI Recommendation Widget -->
+<div id="ai-books-widget" style="margin-top:2rem">
+  <h3>💡 Gợi ý cho bạn</h3>
+  <div id="ai-books-suggest" style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:.75rem">
+    <span>Đang tải...</span>
+  </div>
+  <h3 style="margin-top:1.5rem" id="ai-collab-title" style="display:none">👥 Người dùng tương tự cũng mua</h3>
+  <div id="ai-books-collab" style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:.75rem"></div>
+</div>
+
+<script>
+(function() {
+  const AI_BASE = 'http://localhost:8011';
+  const stored = localStorage.getItem('mb_customer');
+  let cid = null;
+  try { cid = stored ? JSON.parse(stored).id : null; } catch(_) {}
+
+  function renderCard(b) {
+    return `<div style="border:1px solid #ddd;border-radius:8px;padding:.75rem;width:160px;cursor:pointer" onclick="location.href='/books/${b.product_id||b.id}/'">
+      <div style="font-weight:700;font-size:.88rem">${b.title||''}</div>
+      <div style="color:#666;font-size:.78rem">${b.author||''}</div>
+      <div style="color:#e53e3e;font-weight:700;margin-top:.4rem">${Number(b.price||0).toLocaleString('vi-VN')}₫</div>
+      ${b.reason ? `<div style="font-size:.7rem;color:#2E6E94;margin-top:.3rem">💡 ${b.reason}</div>` : ''}
+    </div>`;
+  }
+
+  async function load() {
+    const el = document.getElementById('ai-books-suggest');
+    try {
+      const url = cid ? `${AI_BASE}/api/v1/recommend/${cid}?limit=8` : `${AI_BASE}/api/v1/recommend/popular?limit=8`;
+      const res = await Promise.race([fetch(url), new Promise((_,r)=>setTimeout(()=>r('t'),3000))]);
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      const items = d.recommendations || d.items || [];
+      el.innerHTML = items.slice(0,8).map(renderCard).join('') || '<span>Không có gợi ý</span>';
+
+      if (cid) {
+        const cr = await Promise.race([fetch(`${AI_BASE}/api/v1/recommend/collaborative/${cid}?limit=6`), new Promise((_,r)=>setTimeout(()=>r('t'),3000))]);
+        if (cr.ok) {
+          const cd = await cr.json();
+          const ci = cd.items || [];
+          if (ci.length) {
+            document.getElementById('ai-collab-title').style.display = '';
+            document.getElementById('ai-books-collab').innerHTML = ci.slice(0,6).map(renderCard).join('');
+          }
+        }
+      }
+    } catch(_) {
+      el.innerHTML = '<span>Không thể tải gợi ý</span>';
+    }
+  }
+
+  load();
+})();
+</script>

@@ -6,9 +6,10 @@ FastAPI-based AI service cho hệ thống e-commerce MoonBooks.
 
 ```
 recommender-ai-service/
-├── main.py                          # FastAPI entry point
+├── main.py                          # FastAPI entrypoint
 ├── app/
-│   ├── api/routes.py                # All API endpoints
+│   ├── api/routes.py                # FastAPI router endpoints
+│   ├── api/schemas.py               # Pydantic request/response models
 │   ├── orchestrator.py              # ChatOrchestrator (pipeline điều phối)
 │   ├── services/
 │   │   ├── intent_detector.py       # Phát hiện intent (regex + scoring)
@@ -21,13 +22,12 @@ recommender-ai-service/
 │   │   └── response_composer.py     # Per-intent response formatter
 │   ├── clients/
 │   │   ├── base.py                  # HTTP client với retry/timeout
-│   │   ├── catalog_client.py        # → book-service
+│   │   ├── catalog_client.py        # → product-service (source of truth)
 │   │   ├── order_client.py          # → order-service
 │   │   ├── comment_client.py        # → comment-rate-service
 │   │   ├── ship_client.py           # → ship-service
 │   │   ├── pay_client.py            # → pay-service
 │   │   └── customer_client.py       # → customer-service
-│   ├── models/schemas.py            # Pydantic schemas
 │   └── core/config.py               # Env config
 ├── scripts/train_model.py           # Train BehaviorMLP với synthetic data
 ├── data/seed_kb.json                # FAQ + policy seed data
@@ -47,7 +47,7 @@ recommender-ai-service/
 | POST | `/api/v1/kb/reindex` | Reindex KB từ tất cả sources |
 | GET | `/api/v1/kb/status` | KB status |
 
-Swagger UI: `http://localhost:8011/docs`
+Health check: `http://localhost:8011/health`
 
 ## Intents
 
@@ -58,7 +58,7 @@ Swagger UI: `http://localhost:8011/docs`
 | `payment_support` | "thanh toán", "payment" | KB + RAG |
 | `shipping_support` | "giao hàng", "ship" | KB + RAG |
 | `order_support` | "đơn hàng", "order" | order-service + ship-service + pay-service |
-| `general_search` | "tìm sách", "search" | catalog-service + RAG |
+| `general_search` | "tìm sách", "search" | product-service + RAG |
 | `faq` | "faq", "hỏi đáp" | KB + RAG |
 | `fallback` | không nhận ra | RAG fallback |
 
@@ -73,16 +73,16 @@ Swagger UI: `http://localhost:8011/docs`
 
 ## Deep Learning Model
 
-`BehaviorMLP` (PyTorch):
-- Input: 10 features (views, searches, cart, purchases, ratings, avg_rating, categories, price, recency, frequency)
-- Output: engagement_score, purchase_propensity_score, customer_segment
-- Fallback: rule-based profile nếu không có checkpoint
+Hybrid sequence modeling:
+- LSTM (PyTorch/TensorFlow) cho chuỗi hành vi: view/click/add_to_cart/purchase/rate
+- Output: purchase_propensity_score + customer_segment
+- Fallback: BehaviorMLP/rule-based khi thiếu checkpoint
 
 Train: `python scripts/train_model.py`
 
 ## RAG Pipeline
 
-1. KB ingestion: seed FAQ + books từ book-service + reviews từ comment-service
+1. KB ingestion: seed FAQ + products từ product-service + reviews từ comment-service
 2. TF-IDF vectorization → FAISS IndexFlatIP
 3. Query → vector → FAISS search → keyword fallback
 4. Top-k entries → ResponseComposer
@@ -100,4 +100,7 @@ curl -X POST http://localhost:8000/api/v1/kb/reindex
 curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Gợi ý sách AI cho người mới dưới 300k", "customer_id": 1}'
+
+# Stack status (FastAPI + LSTM + RAG + Graph + Chatbot)
+curl http://localhost:8000/api/v1/status
 ```

@@ -1,8 +1,4 @@
-"""
-Django settings for recommender_ai_service.
-Used ONLY for ORM (interaction tracking DB).
-FastAPI handles HTTP via main.py / uvicorn.
-"""
+"""Django settings for recommender_ai_service (HTTP + ORM)."""
 import os
 from pathlib import Path
 
@@ -15,6 +11,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
+    'rest_framework',
     'app',
 ]
 

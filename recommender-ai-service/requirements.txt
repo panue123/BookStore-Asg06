@@ -1,4 +1,4 @@
-# Web framework
+# FastAPI HTTP layer + Django ORM backend
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 pydantic==2.7.1
@@ -13,9 +13,12 @@ psycopg2-binary==2.9.9
 requests==2.31.0
 urllib3==2.2.1
 
-# Deep Learning
+# Deep Learning — PyTorch (primary: LSTM behavior model)
+# torch installed separately in Dockerfile (CPU wheel)
 numpy==1.26.4
-torch==2.3.0+cpu
+
+# Neo4j driver (for graph-based hybrid recommendation)
+neo4j==5.20.0
 
 # Vector search — installed in Dockerfile separately
 # faiss-cpu==1.8.0
