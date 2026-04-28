@@ -12,15 +12,23 @@ from __future__ import annotations
 import logging
 import re
 import uuid
+from pathlib import Path
 from typing import Any
 
 from .services.intent_detector  import detect as detect_intent
 from .services.entity_extractor import extract as extract_entities
-from .services.rag_retrieval    import retrieve as rag_retrieve, build_context_string
+from .services.rag_retrieval    import retrieve_with_graph_hints, build_context_string
 from .services.recommendation   import recommendation_service as rec_svc
 from .services.behavior_analysis import behavior_service
 from .services.order_support    import order_support_service
 from .services.response_composer import compose
+from .graph.graph_queries import (
+    get_user_interested_categories,
+    get_user_interested_subcategories,
+    get_customer_graph_hints,
+    get_top_recommended_products,
+)
+from .ml.preprocess import BestModelPredictor
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +36,7 @@ logger = logging.getLogger(__name__)
 _sessions: dict[str, list[dict]] = {}
 _session_recommendations: dict[str, list[dict]] = {}
 MAX_HISTORY = 6
+_best_model_predictor = BestModelPredictor(Path(__file__).resolve().parents[1] / "artifacts")
 
 
 def _get_history(session_id: str) -> list[dict]:
@@ -223,6 +232,39 @@ def _get_bestseller_from_interactions(limit: int = 8) -> list[dict]:
         return []
 
 
+def _build_model_sequence_from_interactions(interactions: dict[str, dict[int, int]]) -> list[dict]:
+    sequence: list[dict] = []
+    step = 0
+    for interaction_type, items in interactions.items():
+        for pid, count in items.items():
+            for _ in range(min(int(count), 3)):
+                step += 1
+                sequence.append(
+                    {
+                        "step": step,
+                        "user_id": 0,
+                        "product_id": int(pid),
+                        "category": "unknown",
+                        "action_type": interaction_type,
+                        "price": 0,
+                        "rating": 0,
+                        "cart_value": 0,
+                    }
+                )
+    return sequence[-12:]
+
+
+def _graph_hints_for_customer(customer_id: int | None) -> list[str]:
+    if not customer_id:
+        return []
+    hints: list[str] = []
+    try:
+        hints.extend(get_customer_graph_hints(customer_id, limit=6))
+    except Exception as exc:
+        logger.debug("Could not collect graph hints: %s", exc)
+    return [hint for hint in hints if hint]
+
+
 class ChatOrchestrator:
     def process(
         self,
@@ -299,6 +341,7 @@ class ChatOrchestrator:
         data: dict[str, Any] = {}
         recommendations: list[dict] = []
         sources: list[dict] = []
+        graph_sources: list[dict] = []
 
         if intent in ("faq", "return_policy", "payment_support", "shipping_support"):
             # RAG retrieval from KB
@@ -309,7 +352,8 @@ class ChatOrchestrator:
                 "faq":              None,
             }
             kb_cat = category_map.get(intent)
-            entries = rag_retrieve(message, top_k=3, category=kb_cat)
+            graph_hints = _graph_hints_for_customer(customer_id)
+            entries = retrieve_with_graph_hints(message, graph_hints=graph_hints, top_k=3, category=kb_cat)
             sources = entries
             data["sources"] = entries
 
@@ -378,6 +422,62 @@ class ChatOrchestrator:
                 category=entities.get("category"),
             )
 
+            if customer_id:
+                try:
+                    from .clients.catalog_client import catalog_client
+
+                    graph_cat = get_user_interested_categories(customer_id, limit=3)
+                    graph_subcats = get_user_interested_subcategories(customer_id, limit=3)
+                    graph_sources.extend(
+                        [
+                            {
+                                "title": "graph_category_interest",
+                                "content": f"{g.get('category')}:{g.get('score')}",
+                                "source_type": "graph",
+                            }
+                            for g in graph_cat
+                        ]
+                    )
+                    graph_sources.extend(
+                        [
+                            {
+                                "title": "graph_subcategory_interest",
+                                "content": f"{g.get('subcategory')}:{g.get('score')}",
+                                "source_type": "graph",
+                            }
+                            for g in graph_subcats
+                        ]
+                    )
+
+                    graph_top = get_top_recommended_products(customer_id, limit=4)
+                    if graph_top:
+                        all_books = {int(b.get("id")): b for b in catalog_client.get_all_products(limit=500) if b.get("id")}
+                        graph_items = []
+                        for g in graph_top:
+                            pid = int(g.get("product_id") or 0)
+                            b = all_books.get(pid)
+                            if not b:
+                                continue
+                            graph_items.append(
+                                {
+                                    "product_id": pid,
+                                    "title": b.get("title", ""),
+                                    "author": b.get("author", ""),
+                                    "category": b.get("category", ""),
+                                    "price": float(b.get("price", 0) or 0),
+                                    "score": float(g.get("score", 0) or 0),
+                                    "reason": "goi y tu KB_Graph theo category da quan tam",
+                                    "avg_rating": 0,
+                                }
+                            )
+
+                        existing = {int(r.get("product_id") or r.get("id") or 0) for r in recs}
+                        for gi in graph_items:
+                            if gi["product_id"] not in existing:
+                                recs.append(gi)
+                except Exception as exc:
+                    logger.debug("Graph enrichment failed in product_advice: %s", exc)
+
             # If category-constrained results are too generic, relax category to expose
             # stronger customer-specific ranking signals.
             if recs and all(float(r.get("score", 0) or 0) <= 0 for r in recs):
@@ -400,7 +500,12 @@ class ChatOrchestrator:
                 data["recommendations"] = recs
 
             # RAG context for additional context
-            rag_entries = rag_retrieve(message, top_k=2, category="book")
+            rag_entries = retrieve_with_graph_hints(
+                message,
+                graph_hints=_graph_hints_for_customer(customer_id),
+                top_k=2,
+                category="book",
+            )
             data["rag_context"] = build_context_string(rag_entries)
             sources = rag_entries
 
@@ -633,16 +738,60 @@ class ChatOrchestrator:
                     or entities.get("budget_max") is not None
                 )
                 if not is_commerce_query:
-                    rag_entries = rag_retrieve(message, top_k=2)
+                    rag_entries = retrieve_with_graph_hints(
+                        message,
+                        graph_hints=_graph_hints_for_customer(customer_id),
+                        top_k=2,
+                    )
                     sources = rag_entries
                     data["sources"] = rag_entries
 
+            if customer_id:
+                try:
+                    graph_cat = get_user_interested_categories(customer_id, limit=3)
+                    graph_sources.extend(
+                        [
+                            {
+                                "title": "graph_category_interest",
+                                "content": f"{g.get('category')}:{g.get('score')}",
+                                "source_type": "graph",
+                            }
+                            for g in graph_cat
+                        ]
+                    )
+                except Exception as exc:
+                    logger.debug("Graph enrichment failed in general_search: %s", exc)
+
         else:  # fallback
-            entries = rag_retrieve(message, top_k=2)
+            entries = retrieve_with_graph_hints(
+                message,
+                graph_hints=_graph_hints_for_customer(customer_id),
+                top_k=2,
+            )
             sources = entries
             data["sources"] = entries
 
         # 4. Compose response
+        if customer_id and _best_model_predictor.available:
+            try:
+                interactions = _get_interactions(customer_id)
+                seq = _build_model_sequence_from_interactions(interactions)
+                pred = _best_model_predictor.predict_next_action(seq)
+                if pred:
+                    data["model_best_prediction"] = pred
+                    graph_sources.append(
+                        {
+                            "title": "model_best_inference",
+                            "content": f"predicted_action={pred['predicted_action']}, confidence={pred['confidence']}",
+                            "source_type": "model_best",
+                        }
+                    )
+            except Exception as exc:
+                logger.debug("model_best inference unavailable: %s", exc)
+
+        if graph_sources:
+            data["graph_insights"] = graph_sources
+
         answer = compose(intent, entities, data, customer_id)
         _save_message(session_id, "assistant", answer)
         _save_recommendations(session_id, recommendations)
@@ -666,10 +815,11 @@ class ChatOrchestrator:
             "response":        answer,
             "recommendations": recommendations,
             "books":           books_payload,
-            "sources":         [{"title": s["title"], "snippet": s["content"][:150]} for s in sources],
+            "sources":         [{"title": s["title"], "snippet": s["content"][:150]} for s in (sources + graph_sources)],
             "meta": {
                 "entities":    entities,
                 "customer_id": customer_id,
+                "model_best": data.get("model_best_prediction"),
             },
         }
 

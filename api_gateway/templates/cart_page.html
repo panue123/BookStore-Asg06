@@ -158,8 +158,21 @@ let savedAddresses = [];
 const API = '/api';
 const EMOJI = {programming:'💻',science:'🔬',history:'📜',fiction:'📖',math:'📐'};
 
+function getCustomerId() {
+  return Number(user?.service_user_id || user?.customer_id || user?.id || 0);
+}
+
+function saveUserState() {
+  if (!user) return;
+  localStorage.setItem('cb_user', JSON.stringify(user));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   try { user = JSON.parse(localStorage.getItem('cb_user')||'null'); } catch(e){}
+  if (user && !user.service_user_id) {
+    user.service_user_id = user.customer_id || user.id || null;
+    saveUserState();
+  }
   if (!user) { window.location.href = '/customer-login/?next=/cart/'; return; }
   updateNav();
   document.addEventListener('click',e=>{if(!e.target.closest('.profile-wrap'))closeDropdown();});
@@ -267,14 +280,41 @@ function onSavedAddressChange() {
 }
 
 async function loadCart() {
-  if (!user?.service_user_id) return;
+  const customerId = getCustomerId();
+  if (!customerId) {
+    document.getElementById('cartItemsPane').innerHTML='<div class="empty-cart"><div class="empty-icon">🔒</div>Không xác định được tài khoản khách hàng. Vui lòng đăng nhập lại.</div>';
+    return;
+  }
+
   let cartId = user.cart_id;
+  // Always refresh profile once so cart_id stays in sync with backend.
+  try {
+    const r = await fetch(`${API}/customers/${customerId}/`, {headers:authH()});
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.cart_id) {
+        cartId = d.cart_id;
+        user.cart_id = cartId;
+        saveUserState();
+      }
+    }
+  } catch(e){}
+
   if (!cartId) {
     try {
-      const r = await fetch(`${API}/customers/${user.service_user_id}/`, {headers:authH()});
-      if (r.ok) { const d=await r.json(); cartId=d.cart_id; user.cart_id=cartId; localStorage.setItem('cb_user',JSON.stringify(user)); }
+      const r = await fetch(`${API}/customers/${customerId}/cart/`, {headers:authH()});
+      if (r.ok) {
+        cartData = await r.json();
+        if (cartData?.id) {
+          user.cart_id = cartData.id;
+          saveUserState();
+        }
+        renderCart();
+        return;
+      }
     } catch(e){}
   }
+
   if (!cartId) {
     document.getElementById('cartItemsPane').innerHTML='<div class="empty-cart"><div class="empty-icon">🛒</div><div style="font-weight:600;margin-bottom:.5rem">Giỏ hàng trống</div><a href="/" class="btn btn-p btn-sm" style="display:inline-block;margin-top:.5rem">Khám phá sách ngay</a></div>';
     document.getElementById('itemCount').textContent='0 sản phẩm';
@@ -283,8 +323,19 @@ async function loadCart() {
   }
   try {
     const r = await fetch(`${API}/carts/${cartId}/`, {headers:authH()});
-    if (!r.ok) throw new Error();
-    cartData = await r.json();
+    if (r.ok) {
+      cartData = await r.json();
+      renderCart();
+      return;
+    }
+    // Fallback path if direct cart-service read fails.
+    const r2 = await fetch(`${API}/customers/${customerId}/cart/`, {headers:authH()});
+    if (!r2.ok) throw new Error();
+    cartData = await r2.json();
+    if (cartData?.id && !user.cart_id) {
+      user.cart_id = cartData.id;
+      saveUserState();
+    }
     renderCart();
   } catch(e) {
     document.getElementById('cartItemsPane').innerHTML='<div class="empty-cart"><div class="empty-icon">⚠️</div>Không thể tải giỏ hàng</div>';
@@ -351,17 +402,32 @@ async function loadCartRecommendations(items){
   grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div></div>';
 
   const firstId=items[0].book_id;
-  const customerId=user?.service_user_id;
+  const customerId=getCustomerId();
   try{
-    const calls=[fetch('/api/v1/recommend/similar/'+firstId+'?limit=4')];
-    if(customerId)calls.push(fetch('/api/v1/recommend/collaborative/'+customerId+'?limit=4'));
-    const rs=await Promise.all(calls);
+    const reqs = [
+      { key: 'related', req: fetch('/api/v1/recommend/similar/'+firstId+'?limit=4') },
+      { key: 'popular', req: fetch('/api/v1/recommend/popular?limit=4') },
+    ];
+    if(customerId) reqs.push({ key: 'collab', req: fetch('/api/v1/recommend/collaborative/'+customerId+'?limit=4') });
+    if(customerId) reqs.push({ key: 'personal', req: fetch('/api/v1/recommend/'+customerId+'?limit=4') });
 
-    const related=rs[0].ok?await rs[0].json():{};
-    const collab=(rs[1]&&rs[1].ok)?await rs[1].json():{};
+    const rs = await Promise.all(reqs.map(x => x.req));
+    const payload = {};
+    for (let i = 0; i < reqs.length; i++) {
+      const key = reqs[i].key;
+      const resp = rs[i];
+      payload[key] = resp.ok ? await resp.json() : {};
+    }
+
+    const related = payload.related || {};
+    const collab = payload.collab || {};
+    const personal = payload.personal || {};
+    const popular = payload.popular || {};
     const list=[];
     (related.similar||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||'',reason:i.reason||'liên quan đến sản phẩm trong giỏ'}));
     (collab.items||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||''}));
+    (personal.recommendations||personal.items||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||'',reason:i.reason||'gợi ý cá nhân hóa'}));
+    (popular.items||popular.recommendations||[]).forEach(i=>list.push({...i,product_id:i.product_id||i.id,cover_image_url:i.cover_image_url||i.cover_image||i.cover||'',reason:i.reason||'sản phẩm phổ biến'}));
 
     const uniq=[];
     const seen=new Set(items.map(i=>String(i.book_id)));
@@ -418,9 +484,10 @@ function updateSummary(items) {
 }
 
 async function trackBehavior(productId, interactionType, extra = {}) {
-  if (!user?.service_user_id) return;
+  const customerId = getCustomerId();
+  if (!customerId) return;
   const body = {
-    customer_id: user.service_user_id,
+    customer_id: customerId,
     product_id: productId,
     interaction_type: interactionType,
     ...extra,
@@ -460,6 +527,8 @@ async function checkout() {
 
   if (!addr) { toast('Vui lòng nhập địa chỉ giao hàng','err'); return; }
   const payMethod = document.getElementById('payMethod').value;
+  const customerId = getCustomerId();
+  if (!customerId) { toast('Không xác định được khách hàng, vui lòng đăng nhập lại','err'); return; }
   const cartId = user.cart_id||cartData?.id;
   const btn = document.getElementById('checkoutBtn');
   const msgEl = document.getElementById('checkoutMsg');
@@ -469,7 +538,7 @@ async function checkout() {
   msgEl.textContent=''; sagaBox.style.display='block';
   sagaSteps.innerHTML='<div class="saga-step"><span class="step-wait">⏳</span> Đang khởi tạo đơn hàng...</div>';
   try {
-    const r = await fetch(`${API}/orders/checkout/`,{method:'POST',headers:authH(),body:JSON.stringify({customer_id:user.service_user_id,cart_id:cartId,shipping_address:addr,payment_method:payMethod})});
+    const r = await fetch(`${API}/orders/checkout/`,{method:'POST',headers:authH(),body:JSON.stringify({customer_id:customerId,cart_id:cartId,shipping_address:addr,payment_method:payMethod})});
     const d = await r.json();
     if (r.ok && d.success) {
       const steps = d.saga_steps||[];

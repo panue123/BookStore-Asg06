@@ -53,6 +53,44 @@ FASHION_SUBCATEGORIES = [
     {"name": "Túi xách","slug": "fashion-bags",    "icon": "👜", "parent_slug": "fashion", "description": "Túi xách, ba lô"},
 ]
 
+# ── Danh mục con cho các domain còn lại ───────────────────────────────────────
+HOME_SUBCATEGORIES = [
+    {"name": "Thiết bị bếp", "slug": "home-appliances-kitchen", "icon": "🍳", "parent_slug": "home-appliances", "description": "Nồi, bếp, đồ gia dụng nhà bếp"},
+    {"name": "Điện gia dụng", "slug": "home-appliances-electrical", "icon": "🔌", "parent_slug": "home-appliances", "description": "Ấm siêu tốc, máy lọc, máy hút bụi"},
+]
+
+BEAUTY_SUBCATEGORIES = [
+    {"name": "Son môi", "slug": "beauty-lipstick", "icon": "💋", "parent_slug": "beauty", "description": "Son môi, son dưỡng"},
+    {"name": "Kem nền", "slug": "beauty-foundation", "icon": "🧴", "parent_slug": "beauty", "description": "Kem nền, cushion"},
+    {"name": "Chăm sóc da", "slug": "beauty-skincare", "icon": "✨", "parent_slug": "beauty", "description": "Sữa rửa mặt, serum, kem dưỡng"},
+]
+
+SPORTS_SUBCATEGORIES = [
+    {"name": "Fitness", "slug": "sports-fitness", "icon": "🏋️", "parent_slug": "sports", "description": "Dụng cụ tập gym, yoga"},
+    {"name": "Bóng đá", "slug": "sports-football", "icon": "⚽", "parent_slug": "sports", "description": "Bóng, giày, phụ kiện bóng đá"},
+    {"name": "Cầu lông", "slug": "sports-badminton", "icon": "🏸", "parent_slug": "sports", "description": "Vợt, cầu, phụ kiện cầu lông"},
+]
+
+TOYS_SUBCATEGORIES = [
+    {"name": "LEGO", "slug": "toys-lego", "icon": "🧱", "parent_slug": "toys", "description": "Đồ chơi lắp ráp LEGO"},
+    {"name": "Đồ chơi sáng tạo", "slug": "toys-creative", "icon": "🎨", "parent_slug": "toys", "description": "Đồ chơi phát triển tư duy"},
+]
+
+GROCERY_SUBCATEGORIES = [
+    {"name": "Sữa & dinh dưỡng", "slug": "grocery-dairy", "icon": "🥛", "parent_slug": "grocery", "description": "Sữa, sữa chua, dinh dưỡng"},
+    {"name": "Cà phê & trà", "slug": "grocery-coffee-tea", "icon": "☕", "parent_slug": "grocery", "description": "Cà phê, trà, đồ uống"},
+]
+
+OFFICE_SUBCATEGORIES = [
+    {"name": "Bút viết", "slug": "office-supplies-writing", "icon": "🖊️", "parent_slug": "office-supplies", "description": "Bút bi, bút dạ, bút chì"},
+    {"name": "Sổ giấy", "slug": "office-supplies-paper", "icon": "📒", "parent_slug": "office-supplies", "description": "Tập, sổ, giấy in"},
+]
+
+AUTOMOTIVE_SUBCATEGORIES = [
+    {"name": "Lốp xe", "slug": "automotive-tires", "icon": "🛞", "parent_slug": "automotive", "description": "Lốp, săm, phụ kiện lốp"},
+    {"name": "Dầu nhớt", "slug": "automotive-oil", "icon": "🛢️", "parent_slug": "automotive", "description": "Dầu nhớt, dung dịch bảo dưỡng"},
+]
+
 
 def run():
     created = 0
@@ -78,7 +116,18 @@ def run():
                 print(f"  WARNING: could not seed category '{cat['name']}': {e}")
 
     # 2. Sub-categories
-    all_subs = BOOK_SUBCATEGORIES + ELECTRONICS_SUBCATEGORIES + FASHION_SUBCATEGORIES
+    all_subs = (
+        BOOK_SUBCATEGORIES
+        + ELECTRONICS_SUBCATEGORIES
+        + FASHION_SUBCATEGORIES
+        + HOME_SUBCATEGORIES
+        + BEAUTY_SUBCATEGORIES
+        + SPORTS_SUBCATEGORIES
+        + TOYS_SUBCATEGORIES
+        + GROCERY_SUBCATEGORIES
+        + OFFICE_SUBCATEGORIES
+        + AUTOMOTIVE_SUBCATEGORIES
+    )
     for cat in all_subs:
         parent = slug_to_obj.get(cat.get("parent_slug"))
         data = {k: v for k, v in cat.items() if k != "parent_slug"}

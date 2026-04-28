@@ -26,7 +26,19 @@ from ..infrastructure.graph.neo4j_adapter import neo4j_adapter
 
 logger = logging.getLogger(__name__)
 
-WEIGHTS = {"view": 1, "search": 2, "cart": 4, "purchase": 8, "rate": 3}
+WEIGHTS = {
+    "search": 2,
+    "view": 1,
+    "view_detail": 1,
+    "cart": 4,
+    "add_to_cart": 4,
+    "purchase": 8,
+    "rate": 3,
+    "rate_product": 3,
+    "wishlist": 3,
+    "remove_from_cart": -2,
+    "click_recommendation": 2,
+}
 
 # Hybrid weight constants
 W_LSTM    = 0.40   # LSTM behavior propensity

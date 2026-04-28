@@ -117,6 +117,8 @@ def _compose_shipping_support(entities: dict, data: dict, customer_id: int | Non
 
 def _compose_product_advice(entities: dict, data: dict, customer_id: int | None) -> str:
     recs = data.get("recommendations", [])
+    graph_insights = data.get("graph_insights", [])
+    model_best = data.get("model_best_prediction")
     budget_max = entities.get("budget_max")
     category   = entities.get("category")
     keywords   = entities.get("product_keywords", [])
@@ -151,6 +153,22 @@ def _compose_product_advice(entities: dict, data: dict, customer_id: int | None)
         lines.append("")
 
     lines.append("Bạn muốn biết thêm về cuốn nào? 😊")
+
+    if graph_insights:
+        top_graph = [g for g in graph_insights if g.get("title") == "graph_category_interest"][:2]
+        if top_graph:
+            lines.append("")
+            lines.append("Nguồn KB_Graph:")
+            for g in top_graph:
+                lines.append(f"- {g.get('content', '')}")
+
+    if model_best:
+        lines.append("")
+        lines.append(
+            f"Dự đoán model_best: hành vi kế tiếp có thể là '{model_best.get('predicted_action')}' "
+            f"(confidence={model_best.get('confidence')})."
+        )
+
     return "\n".join(lines)
 
 
@@ -200,6 +218,8 @@ def _compose_order_support(entities: dict, data: dict, customer_id: int | None) 
 def _compose_general_search(entities: dict, data: dict, customer_id: int | None) -> str:
     recs    = data.get("recommendations", [])
     sources = data.get("sources", [])
+    graph_insights = data.get("graph_insights", [])
+    model_best = data.get("model_best_prediction")
     keywords = entities.get("product_keywords", [])
     ask_price = entities.get("ask_price", False)
     ask_stock = entities.get("ask_stock", False)
@@ -327,6 +347,21 @@ def _compose_general_search(entities: dict, data: dict, customer_id: int | None)
         for b in recs[:5]:
             lines.append(_fmt_book(b))
             lines.append("")
+
+        if graph_insights:
+            top_graph = [g for g in graph_insights if g.get("title") == "graph_category_interest"][:2]
+            if top_graph:
+                lines.append("KB_Graph category quan tâm:")
+                for g in top_graph:
+                    lines.append(f"- {g.get('content', '')}")
+                lines.append("")
+
+        if model_best:
+            lines.append(
+                f"model_best dự đoán hành vi tiếp theo: {model_best.get('predicted_action')} "
+                f"(confidence={model_best.get('confidence')})."
+            )
+
         return "\n".join(lines)
 
     if sources:

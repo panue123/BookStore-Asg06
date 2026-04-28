@@ -3,7 +3,9 @@ Neo4j Knowledge Graph Adapter
 ──────────────────────────────
 Schema (Product-centric, multi-domain):
   Nodes:  Customer, Product, Category, Brand
-  Rels:   VIEWED, CART, PURCHASED, RATED, BELONGS_TO, SIMILAR_TO
+  Rels:   SEARCHED, VIEWED, ADDED_TO_CART, PURCHASED, RATED,
+      WISHLISTED, REMOVED_FROM_CART, CLICKED_RECOMMENDATION,
+      BELONGS_TO, SIMILAR_TO
 
 Graceful fallback: nếu Neo4j không kết nối được, tất cả methods trả về
 empty results và log WARNING — không raise exception.
@@ -31,8 +33,8 @@ INIT_QUERIES = [
 
 # Collaborative filtering: customers who bought X also bought Y
 COLLAB_QUERY = """
-MATCH (c:Customer {id: $customer_id})-[:PURCHASED]->(p:Product)
-      <-[:PURCHASED]-(similar:Customer)-[:PURCHASED]->(rec:Product)
+MATCH (c:Customer {id: $customer_id})-[:PURCHASED|ADDED_TO_CART|WISHLISTED]->(p:Product)
+    <-[:PURCHASED|ADDED_TO_CART|WISHLISTED]-(similar:Customer)-[:PURCHASED|ADDED_TO_CART|WISHLISTED]->(rec:Product)
 WHERE NOT (c)-[:PURCHASED]->(rec)
   AND NOT (c)-[:VIEWED]->(rec)
 RETURN rec.id AS product_id, COUNT(similar) AS support
@@ -97,7 +99,7 @@ class Neo4jAdapter:
         self,
         customer_id: int,
         product_id: int,
-        rel_type: str,          # VIEWED | CART | PURCHASED | RATED
+        rel_type: str,
         props: dict | None = None,
         product_meta: dict | None = None,
     ) -> None:
@@ -107,8 +109,21 @@ class Neo4jAdapter:
         props = props or {}
         product_meta = product_meta or {}
         rel_type = rel_type.upper()
-        if rel_type not in ("VIEWED", "CART", "PURCHASED", "RATED"):
+        if rel_type not in (
+            "SEARCHED",
+            "VIEWED",
+            "ADDED_TO_CART",
+            "PURCHASED",
+            "RATED",
+            "WISHLISTED",
+            "REMOVED_FROM_CART",
+            "CLICKED_RECOMMENDATION",
+            "CART",
+        ):
             return
+
+        if rel_type == "CART":
+            rel_type = "ADDED_TO_CART"
 
         try:
             with self._driver.session() as session:
@@ -136,10 +151,14 @@ class Neo4jAdapter:
                     )
                 # Relationship
                 REL_CYPHER = {
+                    "SEARCHED":  "MERGE (c)-[r:SEARCHED]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
                     "VIEWED":    "MERGE (c)-[r:VIEWED]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
-                    "CART":      "MERGE (c)-[r:CART]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
+                    "ADDED_TO_CART": "MERGE (c)-[r:ADDED_TO_CART]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
                     "PURCHASED": "MERGE (c)-[r:PURCHASED]->(p) ON CREATE SET r.ts=$ts,r.price=$price ON MATCH SET r.ts=$ts",
                     "RATED":     "MERGE (c)-[r:RATED]->(p) ON CREATE SET r.rating=$rating ON MATCH SET r.rating=$rating",
+                    "WISHLISTED": "MERGE (c)-[r:WISHLISTED]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
+                    "REMOVED_FROM_CART": "MERGE (c)-[r:REMOVED_FROM_CART]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
+                    "CLICKED_RECOMMENDATION": "MERGE (c)-[r:CLICKED_RECOMMENDATION]->(p) ON CREATE SET r.count=1,r.ts=$ts ON MATCH SET r.count=r.count+1,r.ts=$ts",
                 }
                 cypher = REL_CYPHER.get(rel_type)
                 if cypher:
@@ -188,7 +207,17 @@ class Neo4jAdapter:
         if not self._available or not self._driver or not product_ids:
             return {}
 
-        REL_WEIGHTS = {"VIEWED": 1.0, "CART": 3.0, "PURCHASED": 6.0, "RATED": 2.0}
+        REL_WEIGHTS = {
+            "SEARCHED": 0.8,
+            "VIEWED": 1.0,
+            "ADDED_TO_CART": 3.0,
+            "PURCHASED": 6.0,
+            "RATED": 2.0,
+            "WISHLISTED": 2.5,
+            "REMOVED_FROM_CART": -1.0,
+            "CLICKED_RECOMMENDATION": 1.8,
+            "CART": 3.0,
+        }
         scores: dict[int, float] = {}
 
         try:

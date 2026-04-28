@@ -18,10 +18,16 @@ python -c "import urllib.request; urllib.request.urlopen('http://localhost:8011/
 # 3. Seed behavior data
 python recommender-ai-service/scripts/seed_behavior.py
 
-# 4. Verify 28/28 passed
+# 4. Build AI-service artifacts for the assignment
+python recommender-ai-service/scripts/generate_data_user500.py
+cd recommender-ai-service
+python -m app.ml.evaluate_models
+python -m app.ml.select_best_model
+
+# 5. Verify 28/28 passed
 python smoke_test.py
 
-# 5. Demo
+# 6. Demo
 bash demo_curl.sh
 ```
 
@@ -48,7 +54,7 @@ api-gateway (8000)
 ├── staff-service (8007)          — Staff management
 ├── comment-rate-service (8008)   — Reviews & ratings
 ├── manager-service (8010)        — Manager dashboard
-└── recommender-ai-service (8011) — AI: LSTM + Neo4j Graph + RAG + Chatbot
+└── recommender-ai-service (8011) — AI: RNN + LSTM + biLSTM + Neo4j Graph + RAG + Chatbot
 
 Infrastructure:
   db-mysql      — auth, customer, order, pay, ship, staff, manager

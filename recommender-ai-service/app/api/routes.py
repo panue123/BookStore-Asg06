@@ -21,6 +21,8 @@ from ..services.kb_ingestion     import kb_service
 from ..services.rag_retrieval    import rag_service
 from ..clients.order_client      import order_client
 from ..clients.comment_client    import comment_client
+from ..infrastructure.graph.neo4j_adapter import neo4j_adapter
+from ..clients.catalog_client import catalog_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -203,6 +205,50 @@ def similar(product_id: int, limit: int = Query(6, ge=1, le=12)):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@router.get("/api/v1/recommend/popular", tags=["recommend"])
+def popular(limit: int = Query(8, ge=1, le=20)):
+    """Popular products fallback endpoint for web widgets."""
+    try:
+        items = rec_svc.get_popular(limit=limit)
+        return {"items": items, "source": "popular"}
+    except Exception as exc:
+        logger.exception("Popular recommend error: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/api/v1/recommend/collaborative/{customer_id}", tags=["recommend"])
+def collaborative(customer_id: int, limit: int = Query(6, ge=1, le=20)):
+    """Collaborative recommendations from Neo4j graph."""
+    try:
+        raw = neo4j_adapter.get_collaborative_recs(customer_id=customer_id, limit=limit)
+        pids = [int(r.get("product_id")) for r in raw if r.get("product_id")]
+        books = {int(b["id"]): b for b in catalog_client.get_all_products(limit=500) if b.get("id")}
+
+        items = []
+        for r in raw:
+            pid = int(r.get("product_id") or 0)
+            b = books.get(pid)
+            if not b:
+                continue
+            items.append(
+                {
+                    "product_id": pid,
+                    "title": b.get("title", ""),
+                    "author": b.get("author", ""),
+                    "category": b.get("category", ""),
+                    "price": float(b.get("price", 0) or 0),
+                    "score": float(r.get("support", 0) or 0),
+                    "reason": "nguoi dung tuong tu cung mua",
+                    "avg_rating": 0.0,
+                }
+            )
+
+        return {"customer_id": customer_id, "items": items[:limit], "source": "graph_collaborative"}
+    except Exception as exc:
+        logger.exception("Collaborative recommend error: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 # ── Behavior Analysis ─────────────────────────────────────────────────────────
 
 @router.get("/api/v1/analyze-customer/{customer_id}", response_model=BehaviorProfile, tags=["behavior"])
@@ -235,7 +281,13 @@ def track(req: TrackRequest):
         except LookupError:
             Interaction = apps.get_model("app", "CustomerBookInteraction")
 
-        interaction_type = "view" if req.interaction_type == "click" else req.interaction_type
+        type_alias = {
+            "click": "view_detail",
+            "view": "view_detail",
+            "cart": "add_to_cart",
+            "rate": "rate_product",
+        }
+        interaction_type = type_alias.get(req.interaction_type, req.interaction_type)
 
         obj, created = Interaction.objects.get_or_create(
             customer_id=req.customer_id,
@@ -252,7 +304,16 @@ def track(req: TrackRequest):
         # Write to Neo4j graph for hybrid scoring
         if req.product_id:
             from ..infrastructure.graph.neo4j_adapter import neo4j_adapter
-            rel_map = {"view": "VIEWED", "click": "VIEWED", "cart": "CART", "purchase": "PURCHASED", "rate": "RATED"}
+            rel_map = {
+                "search": "SEARCHED",
+                "view_detail": "VIEWED",
+                "add_to_cart": "ADDED_TO_CART",
+                "purchase": "PURCHASED",
+                "rate_product": "RATED",
+                "wishlist": "WISHLISTED",
+                "remove_from_cart": "REMOVED_FROM_CART",
+                "click_recommendation": "CLICKED_RECOMMENDATION",
+            }
             rel_type = rel_map.get(interaction_type, "VIEWED")
             # Fetch product meta for graph node
             product_meta: dict = {}

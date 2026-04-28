@@ -39,6 +39,8 @@ _INTENT_RULES: list[Tuple[str, list[Tuple[str, float]]]] = [
     ]),
     ("product_advice", [
         (r"\b(gợi ý|goi y|recommend|đề xuất|de xuat|tư vấn|tu van|nên mua|nen mua|mua gì|mua gi)\b", 3.0),
+        (r"\b(sản phẩm tương tự|san pham tuong tu|similar product|giống sản phẩm|giong san pham)\b", 3.0),
+        (r"\b(danh mục quan tâm|danh muc quan tam|category quan tâm|favorite category)\b", 2.8),
         (r"\b(muốn mua|muon mua|cần mua|can mua)\b", 1.8),
         (r"\b(đọc cuốn nào tiếp|doc cuon nao tiep|mua cuốn nào tiếp|mua cuon nao tiep|next book|đọc tiếp|doc tiep)\b", 2.8),
         (r"\b(giá tốt nhất|gia tot nhat|rẻ nhất|re nhat|cheapest|best price)\b", 3.0),
@@ -77,6 +79,8 @@ _INTENT_RULES: list[Tuple[str, list[Tuple[str, float]]]] = [
 # Quick action → intent mapping
 QUICK_ACTION_MAP: dict[str, str] = {
     "recommend":       "product_advice",
+    "similar_products": "product_advice",
+    "category_interest": "product_advice",
     "return_policy":   "return_policy",
     "order_support":   "order_support",
     "payment_support": "payment_support",

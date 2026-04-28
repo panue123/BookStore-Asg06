@@ -182,6 +182,14 @@ def _is_same_author_question(text: str) -> bool:
     return bool(re.search(r"\b(cùng tác giả|cung tac gia|same author|của tác giả|cua tac gia|author)\b", text, re.I))
 
 
+def _is_similar_products_question(text: str) -> bool:
+    return bool(re.search(r"\b(sản phẩm tương tự|san pham tuong tu|similar product|giống sản phẩm|giong san pham)\b", text, re.I))
+
+
+def _is_category_interest_question(text: str) -> bool:
+    return bool(re.search(r"\b(danh mục quan tâm|danh muc quan tam|category quan tâm|favorite category)\b", text, re.I))
+
+
 def _extract_book_titles_for_compare(text: str) -> list[str]:
     # Examples: "Dune va Cosmos cuon nao re hon", "so sanh gia Clean Code va Dune"
     m = re.search(
@@ -303,6 +311,12 @@ def extract(message: str, intent: str) -> dict[str, Any]:
 
     if _is_same_author_question(text):
         entities["ask_same_author"] = True
+
+    if _is_similar_products_question(text):
+        entities["ask_similar_products"] = True
+
+    if _is_category_interest_question(text):
+        entities["ask_category_interest"] = True
 
     if intent in ("order_support",):
         order_id = _extract_order_id(text)

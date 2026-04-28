@@ -242,8 +242,24 @@ def build_context_string(entries: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
+def retrieve_with_graph_hints(
+    query: str,
+    graph_hints: list[str] | None = None,
+    top_k: int = 3,
+    category: str | None = None,
+) -> list[dict]:
+    """Retrieve KB entries using user query enriched by graph-derived hints."""
+    enriched_query = query
+    if graph_hints:
+        hint_text = " ".join([h for h in graph_hints if h])
+        if hint_text:
+            enriched_query = f"{query} {hint_text}".strip()
+    return retrieve(enriched_query, top_k=top_k, category=category)
+
+
 rag_service = type("RAGService", (), {
     "retrieve":             staticmethod(retrieve),
+    "retrieve_with_graph_hints": staticmethod(retrieve_with_graph_hints),
     "build_index":          staticmethod(build_index),
     "load_index":           staticmethod(load_index),
     "build_context_string": staticmethod(build_context_string),

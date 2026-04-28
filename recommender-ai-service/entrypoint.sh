@@ -4,9 +4,16 @@ set -e
 echo "[AI Service] Running Django migrations..."
 python manage.py migrate --noinput 2>&1 || echo "Migration warning (non-fatal)"
 
-echo "[AI Service] Training LSTM behavior model (if not exists)..."
-if [ ! -f "artifacts/lstm_behavior_model.pt" ]; then
-    python scripts/train_model.py && echo "LSTM model trained." || echo "Model training skipped."
+echo "[AI Service] Ensuring AI-service-2 model artifacts (if not exists)..."
+if [ ! -f "data/data_user500.csv" ]; then
+    python scripts/generate_data_user500.py && echo "Generated data_user500.csv" || echo "Dataset generation skipped."
+fi
+
+if [ ! -f "artifacts/model_best.pt" ]; then
+    python -m app.ml.evaluate_models && \
+    python -m app.ml.select_best_model && \
+    echo "RNN/LSTM/biLSTM trained and model_best selected." || \
+    echo "Model pipeline skipped."
 fi
 
 echo "[AI Service] Loading KB + FAISS index..."

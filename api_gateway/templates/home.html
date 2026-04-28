@@ -108,6 +108,15 @@ nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:grid;gri
 .books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:1rem}
 .book-card{background:var(--s);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:all .25s;display:flex;flex-direction:column;border:1.5px solid transparent;cursor:pointer;position:relative}
 .book-card:hover{transform:translateY(-4px);box-shadow:var(--shl);border-color:var(--pl)}
+/* ── RECO CARDS (order detail / cart suggestions) ── */
+.reco-card{border:1px solid var(--b);border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;transition:all .2s;display:flex;flex-direction:column}
+.reco-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.reco-cover{height:130px;background:linear-gradient(135deg,var(--pll),#DCECF6);overflow:hidden;flex-shrink:0}
+.reco-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.reco-body{padding:.6rem .7rem;display:flex;flex-direction:column;flex:1}
+.reco-title{font-size:.82rem;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.1em}
+.reco-price{font-size:.84rem;color:var(--pd);font-weight:800;margin-top:.3rem}
+.reco-reason{font-size:.7rem;color:var(--tm);margin-top:.2rem;line-height:1.3}
 .book-badge{position:absolute;top:.5rem;left:.5rem;z-index:2;padding:.18rem .5rem;border-radius:6px;font-size:.65rem;font-weight:700;color:#fff}
 .badge-new{background:var(--orange)}
 .badge-sale{background:var(--red)}
@@ -128,6 +137,10 @@ nav{background:var(--s);padding:.7rem 2rem;box-shadow:var(--sh);display:grid;gri
 .btn-cart{background:var(--p);color:#fff;border:none;padding:.38rem .7rem;border-radius:var(--rs);font-weight:700;font-size:.76rem;cursor:pointer;transition:all .2s}
 .btn-cart:hover{background:var(--pd)}
 .btn-cart:disabled{opacity:.5;cursor:not-allowed;background:var(--tm)}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;font-size:.95rem}
+.btn-wish{background:#fff;color:#DC2626;border:1.5px solid #FCA5A5}
+.btn-wish:hover{background:#FEE2E2}
+.btn-wish.active{background:#DC2626;color:#fff;border-color:#DC2626}
 .oos-tag{font-size:.72rem;color:var(--red);font-weight:700;background:#FEE2E2;padding:.2rem .5rem;border-radius:6px}
 
 /* ── CATEGORY CARDS ── */
@@ -368,6 +381,20 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
   </div>
 </div>
 
+<!-- WISHLIST -->
+<div id="pane-wishlist" style="display:none">
+  <div class="main-wrap">
+    <div class="section-hdr" style="margin-top:1rem">
+      <div class="section-title">❤ Danh sách yêu thích</div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="loadWishlistPane()">🔄 Làm mới</button>
+        <button class="btn btn-ghost btn-sm" onclick="backHome()">← Trang chủ</button>
+      </div>
+    </div>
+    <div id="wishlistPane"><div class="loading"><div class="spin"></div><br>Đang tải danh sách yêu thích...</div></div>
+  </div>
+</div>
+
 <!-- PROFILE -->
 <div id="pane-profile" style="display:none">
   <div class="main-wrap">
@@ -394,6 +421,15 @@ footer{background:var(--pdd);color:#fff;padding:2rem 2rem 1rem;margin-top:auto}
       </div>
       <div style="font-size:.88rem;color:var(--tm);line-height:1.7;margin-top:.2rem">
         Xem lại những sản phẩm bạn đã đánh giá, số sao đã cho và nội dung nhận xét trước đây.
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="section-hdr">
+        <div style="font-weight:700">❤ Danh sách yêu thích</div>
+        <button class="btn btn-p btn-sm" onclick="showPane('wishlist')">Xem wishlist</button>
+      </div>
+      <div style="font-size:.88rem;color:var(--tm);line-height:1.7;margin-top:.2rem">
+        Lưu lại sản phẩm bạn thích để quay lại mua sau.
       </div>
     </div>
     <div class="profile-card">
@@ -497,7 +533,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateNav();
   loadBooks(1);
   const pane=new URLSearchParams(window.location.search).get('pane');
-  if(pane&&['home','search','orders','ratings','profile'].includes(pane))showPane(pane);
+  if(pane&&['home','search','orders','ratings','wishlist','profile'].includes(pane))showPane(pane);
   const orderDetailId=new URLSearchParams(window.location.search).get('showOrderDetail');
   if(orderDetailId){loadOrders();setTimeout(()=>openOrderDetail(orderDetailId),1000);}
   document.addEventListener('click',e=>{if(!e.target.closest('.profile-wrap'))closeDropdown();});
@@ -543,8 +579,11 @@ async function resolveCustomerNames(customerIds){
   return out;
 }
 function coverHtml(book,h='200px'){
-  if(book.cover_image_url)return`<img src="${book.cover_image_url}" alt="${book.title}" style="width:100%;height:${h};object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="book-cover-fallback" style="display:none;height:${h}">${EMOJI[book.category]||'📚'}</div>`;
-  return`<div class="book-cover-fallback" style="height:${h}">${EMOJI[book.category]||'📚'}</div>`;
+  const slug=book.category_slug||book.category||'';
+  const topCat=Object.keys(EMOJI).find(k=>slug===k||slug.startsWith(k+'-'))||'';
+  const icon=EMOJI[topCat]||'📦';
+  if(book.cover_image_url)return`<img src="${book.cover_image_url}" alt="${escHtml(book.title)}" style="width:100%;height:${h};object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="book-cover-fallback" style="display:none;height:${h}">${icon}</div>`;
+  return`<div class="book-cover-fallback" style="height:${h}">${icon}</div>`;
 }
 
 // ── NAV ──────────────────────────────────────────────────
@@ -563,6 +602,7 @@ function updateNav(){
           <div class="dd-sep"></div>
           <button class="dd-item" onclick="showPane('profile');closeDropdown()">👤 Thông tin cá nhân</button>
           <button class="dd-item" onclick="showPane('ratings');closeDropdown()">⭐ Đánh giá của tôi</button>
+          <button class="dd-item" onclick="showPane('wishlist');closeDropdown()">❤ Sản phẩm yêu thích</button>
           <button class="dd-item" onclick="showPane('orders');closeDropdown()">📦 Đơn hàng của tôi</button>
           <div class="dd-sep"></div>
           <button class="dd-item" onclick="doLogout()" style="color:#DC2626">🚪 Đăng xuất</button>
@@ -588,14 +628,110 @@ function doLogout(){
 
 // ── PANES ────────────────────────────────────────────────
 function showPane(name){
-  ['home','search','orders','ratings','profile'].forEach(t=>{
+  ['home','search','orders','ratings','wishlist','profile'].forEach(t=>{
     const p=document.getElementById('pane-'+t);if(p)p.style.display=t===name?'block':'none';
   });
   if(name==='orders')loadOrders();
   if(name==='ratings')loadMyRatings();
+  if(name==='wishlist')loadWishlistPane();
   if(name==='profile')loadProfileTab();
 }
 function backHome(){showPane('home');}
+
+function wishlistKey(){
+  const uid = user?.service_user_id || 'guest';
+  return 'cb_wishlist_' + uid;
+}
+
+function getWishlist(){
+  try{
+    const data = JSON.parse(localStorage.getItem(wishlistKey()) || '[]');
+    return Array.isArray(data) ? data : [];
+  }catch(_){
+    return [];
+  }
+}
+
+function setWishlist(list){
+  localStorage.setItem(wishlistKey(), JSON.stringify(list));
+}
+
+function isWishlisted(bookId){
+  return getWishlist().some(function(it){ return Number(it.id) === Number(bookId); });
+}
+
+function toggleWishlistItem(item){
+  const list = getWishlist();
+  const id = Number(item.id);
+  const idx = list.findIndex(function(it){ return Number(it.id) === id; });
+  if (idx >= 0) {
+    list.splice(idx, 1);
+    setWishlist(list);
+    toast('Đã xóa khỏi wishlist');
+  } else {
+    list.unshift({
+      id: id,
+      title: item.title || ('Sản phẩm #' + id),
+      price: Number(item.price || 0),
+      author: item.author || item.brand || '',
+      category_slug: item.category_slug || item.category || '',
+      category_name: item.category_name || '',
+      cover_image_url: item.cover_image_url || item.cover_image || item.cover || '',
+    });
+    setWishlist(list.slice(0, 120));
+    toast('Đã lưu vào wishlist','ok');
+    trackBehavior(id,'wishlist');
+  }
+}
+
+async function toggleWishlistById(bookId){
+  let item = null;
+  if (window._allBooksCache) {
+    item = window._allBooksCache.find(function(b){ return Number(b.id) === Number(bookId); }) || null;
+  }
+  if (!item) {
+    try {
+      const r = await fetch('/api/products/' + bookId + '/');
+      if (r.ok) {
+        const raw = await r.json();
+        item = {
+          ...raw,
+          id: raw.id || Number(bookId),
+          title: raw.name || raw.title || '',
+          author: raw.author || (raw.attributes||{}).author || '',
+          category_slug: raw.category_slug || raw.category || '',
+          category_name: raw.category_name || '',
+          cover_image_url: raw.cover_image || raw.cover_image_url || '',
+          price: Number(raw.price || 0),
+        };
+      }
+    } catch(_) {}
+  }
+  if (!item) {
+    item = {id:Number(bookId), title:'Sản phẩm #' + bookId, price:0};
+  }
+  toggleWishlistItem(item);
+  refreshWishlistButtons();
+  if (document.getElementById('pane-wishlist')?.style.display === 'block') {
+    loadWishlistPane();
+  }
+}
+
+function wishlistBtnHtml(book){
+  const bid = Number(book.product_id || book.id || 0);
+  if (!bid) return '';
+  const active = isWishlisted(bid);
+  return '<button class="btn btn-icon btn-wish'+(active?' active':'')+'" data-wish-id="'+bid+'" aria-pressed="'+(active?'true':'false')+'" onclick="event.stopPropagation();toggleWishlistById(' + bid + ')" title="Yêu thích">❤</button>';
+}
+
+function refreshWishlistButtons(){
+  document.querySelectorAll('[data-wish-id]').forEach(function(el){
+    const id = Number(el.getAttribute('data-wish-id'));
+    const on = isWishlisted(id);
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
 
 async function trackBehavior(productId, interactionType, extra = {}) {
   if (!user?.service_user_id) return;
@@ -636,7 +772,10 @@ async function loadBooks(page=1){
       ...p,
       title: p.name||p.title||'',
       author: p.author||(p.attributes||{}).author||'',
-      category: p.category_slug||p.category_name||p.category||'',
+      brand: p.brand_name||(p.attributes||{}).brand||'',
+      category: p.category_slug||p.category_name||String(p.category||''),
+      category_slug: p.category_slug||'',
+      category_name: p.category_name||'',
       cover_image_url: p.cover_image||p.cover_image_url||'',
       average_rating: p.average_rating||0,
       total_reviews: p.total_reviews||0,
@@ -655,12 +794,9 @@ async function loadBooks(page=1){
 function updateCatCounts(books){
   const cats={'books':0,'electronics':0,'fashion':0,'beauty':0,'sports':0,'toys':0,'grocery':0,'office-supplies':0,'automotive':0,'home-appliances':0};
   books.forEach(b=>{
-    const slug = b.category||'';
-    // Match exact slug first, then try top-level prefix
-    if(cats[slug]!==undefined){ cats[slug]++; return; }
-    // books-programming → books, electronics-phones → electronics
-    const topLevel = Object.keys(cats).find(k => slug.startsWith(k+'-') || slug===k);
-    if(topLevel) cats[topLevel]++;
+    const slug=b.category_slug||b.category||'';
+    const topLevel=Object.keys(cats).find(k=>slug===k||slug.startsWith(k+'-'));
+    if(topLevel)cats[topLevel]++;
   });
   Object.entries(cats).forEach(([k,v])=>{const el=document.getElementById('cnt-'+k);if(el)el.textContent=v+' sp';});
   const allEl=document.getElementById('cnt-all');if(allEl)allEl.textContent=books.length+' sp';
@@ -753,16 +889,20 @@ async function doSearch(){
   grid.innerHTML='<div class="loading"><div class="spin"></div><br>Đang tìm...</div>';
   try{
     let url='/api/products/?search='+encodeURIComponent(q);
+    if(cat)url+='&category_slug='+cat;
     const r=await fetch(url);
     const data=await r.json();
     const raw=data.results||data.products||(Array.isArray(data)?data:[]);
-    let books=raw.map(p=>({...p,title:p.name||p.title||'',author:p.author||(p.attributes||{}).author||p.brand_name||'',category:p.category_slug||p.category_name||p.category||'',cover_image_url:p.cover_image||p.cover_image_url||'',cover_image:p.cover_image||p.cover_image_url||''}));
-    if(cat){
-      books=books.filter(b=>{
-        const slug=String(b.category||'');
-        return slug===cat || slug.startsWith(cat+'-');
-      });
-    }
+    const books=raw.map(p=>({
+      ...p,
+      title:p.name||p.title||'',
+      author:p.author||(p.attributes||{}).author||'',
+      brand:p.brand_name||(p.attributes||{}).brand||'',
+      category:p.category_slug||p.category_name||String(p.category||''),
+      category_slug:p.category_slug||'',
+      category_name:p.category_name||'',
+      cover_image_url:p.cover_image||p.cover_image_url||'',
+    }));
     document.getElementById('searchMeta').textContent=books.length+' kết quả';
     if(q){trackBehavior(0,'search',{query:q});}
     renderBooks(books,grid);
@@ -773,7 +913,7 @@ async function doSearch(){
 async function loadAISearchSuggestions(query){
   const suggEl=document.createElement('div');
   suggEl.style.marginTop='1.5rem';
-  suggEl.innerHTML='<div style="font-size:.9rem;font-weight:700;color:var(--p);margin-bottom:.5rem">🤖 AI gợi ý dựa trên tìm kiếm "'+query+'"</div><div class="books-grid" id="aiSearchRecs" style="min-height:60px"><div class="loading"><div class="spin"></div></div></div>';
+  suggEl.innerHTML='<div style="font-size:.9rem;font-weight:700;color:var(--p);margin-bottom:.5rem">✨ Có thể bạn cũng đang tìm kiếm...</div><div class="books-grid" id="aiSearchRecs" style="min-height:60px"><div class="loading"><div class="spin"></div></div></div>';
   const grid=document.getElementById('searchGrid');
   grid.parentElement.insertBefore(suggEl,grid.nextSibling);
   try{
@@ -795,29 +935,31 @@ function renderBooks(books,grid){
     const oos=b.stock<=0;
     const badgeClass=BADGES[i%BADGES.length];
     const badgeLabel=badgeClass==='badge-new'?'MỚI':badgeClass==='badge-sale'?'SALE':badgeClass==='badge-hot'?'HOT':'';
-    const catSlug=b.category||'';
-    const topCat=Object.keys(EMOJI).find(k=>catSlug===k||catSlug.startsWith(k+'-'))||catSlug;
+    const catSlug=b.category_slug||b.category||'';
+    const topCat=Object.keys(EMOJI).find(k=>catSlug===k||catSlug.startsWith(k+'-'))||'';
     const icon=EMOJI[topCat]||'📦';
     const coverSrc=b.cover_image_url||b.cover_image||'';
-    const coverHtml=coverSrc
-      ?`<img src="${coverSrc}" alt="${b.title}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    const coverImgHtml=coverSrc
+      ?`<img src="${coverSrc}" alt="${escHtml(b.title)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       :'';
     const fallbackStyle=coverSrc?'display:none':'';
+    const displayCat=b.category_name||b.category_slug||topCat||'';
+    const authorLine=b.author||b.brand||'';
     return`<div class="book-card" onclick="openDetail(${b.id})">
       ${badgeLabel?`<span class="book-badge ${badgeClass}">${badgeLabel}</span>`:''}
       <div class="book-cover">
-        ${coverHtml}
+        ${coverImgHtml}
         <div class="book-cover-fallback" style="${fallbackStyle}">${icon}</div>
-        <span class="cover-cat">${(topCat||'').toUpperCase().slice(0,10)}</span>
+        ${displayCat?`<span class="cover-cat">${displayCat.toUpperCase().slice(0,12)}</span>`:''}
       </div>
       <div class="book-body">
-        <div class="book-title">${b.title}</div>
-        <div class="book-author">${b.author||b.brand||''}</div>
+        <div class="book-title">${escHtml(b.title)}</div>
+        ${authorLine?`<div class="book-author">${escHtml(authorLine)}</div>`:''}
         <div class="book-rating"><span class="stars">${starsHtml(b.average_rating||0)}</span> ${(b.average_rating||0).toFixed(1)} (${b.total_reviews||0})</div>
         <div class="book-footer">
           <div><span class="book-price">${fmt(b.price)}</span></div>
           ${oos?'<span class="oos-tag">Hết hàng</span>'
-            :`<button class="btn-cart" onclick="event.stopPropagation();addToCart(${b.id},${b.price},'${b.title.replace(/'/g,"\\'")}')">🛒 Thêm</button>`}
+            :`<div style="display:flex;gap:.35rem;align-items:center">${wishlistBtnHtml(b)}<button class="btn-cart btn-icon" onclick="event.stopPropagation();addToCart(${b.id},${b.price},'${escHtml(b.title).replace(/'/g,"\\'")}')" title="Thêm vào giỏ">🛒</button></div>`}
         </div>
       </div>
     </div>`;
@@ -869,7 +1011,7 @@ async function openDetail(bookId){
           ${book.description?`<div class="detail-desc">${book.description}</div>`:''}
           <div style="display:flex;gap:.6rem;margin-top:.75rem;flex-wrap:wrap">
             ${oos?'<span class="oos-tag" style="font-size:.85rem">Hết hàng</span>'
-              :`<button class="btn btn-p" style="padding:.65rem 1.5rem;font-size:.92rem" onclick="addToCart(${book.id},${book.price},'${book.title.replace(/'/g,"\\'")}');closeModal('detailModal')">🛒 Thêm vào giỏ hàng</button>
+              :`${wishlistBtnHtml(book)}<button class="btn btn-p" style="padding:.65rem 1.1rem;font-size:.92rem" onclick="addToCart(${book.id},${book.price},'${book.title.replace(/'/g,"\\'")}');closeModal('detailModal')">🛒 Vào giỏ</button>
                 <a href="/cart/" class="btn btn-o">Xem giỏ hàng →</a>`}
           </div>
         </div>
@@ -1088,7 +1230,7 @@ async function loadOrderRecommendations(orderId,items){
     const r=await fetch(endpoint);
     if(r.ok){
       const data=await r.json();
-      const recs=data.recommendations||data.items||[];
+      const recs=enrichWithCovers(data.recommendations||data.items||[]);
       const recsWithCover=recs.map(it=>({...it,cover_image_url:it.cover_image_url||it.cover_image||it.cover||''}));
       const seen=new Set(items.map(i=>String(i.book_id)));
       const uniq=recsWithCover.filter(it=>{const k=String(it.product_id||it.id);return k&&!seen.has(k);}).slice(0,4);
@@ -1097,23 +1239,102 @@ async function loadOrderRecommendations(orderId,items){
         recoEl.innerHTML='';
         return;
       }
+      await enrichRecoProducts(uniq);
       grid.innerHTML=uniq.map(renderRecoCard).join('');
+      refreshWishlistButtons();
     }
   }catch(e){}
 }
 
+async function enrichRecoProducts(list){
+  if(!Array.isArray(list) || !list.length)return;
+  const bmap = {};
+  (window._allBooksCache || []).forEach(function(b){ bmap[Number(b.id)] = b; });
+  const jobs = [];
+  list.forEach(function(it){
+    const bid = Number(it.product_id || it.id || 0);
+    if(!bid)return;
+    const cached = bmap[bid];
+    if(cached){
+      if(!it.title) it.title = cached.title || '';
+      if(!it.price) it.price = cached.price || 0;
+      if(!it.cover_image_url && !it.cover_image && !it.cover){
+        it.cover_image_url = cached.cover_image_url || cached.cover_image || '';
+      }
+      return;
+    }
+    jobs.push((async function(){
+      try{
+        const r = await fetch('/api/products/' + bid + '/');
+        if(!r.ok)return;
+        const raw = await r.json();
+        it.title = it.title || raw.name || raw.title || '';
+        it.price = Number(it.price || raw.price || 0);
+        it.cover_image_url = it.cover_image_url || raw.cover_image || raw.cover_image_url || '';
+      }catch(_){ }
+    })());
+  });
+  if(jobs.length) await Promise.all(jobs);
+}
+
 function renderRecoCard(b){
   const bid=b.product_id||b.id;
-  const cover=b.cover_image_url||b.cover_image||'';
+  const slug=b.category_slug||b.category||'';
+  const EMAP={books:'📚',electronics:'📱',fashion:'👗',beauty:'💄',sports:'⚽',toys:'🧸',grocery:'🛒','office-supplies':'🖊️',automotive:'🚗','home-appliances':'🏠'};
+  const topCat=Object.keys(EMAP).find(function(k){return slug===k||slug.indexOf(k+'-')===0;})||'';
+  const icon=EMAP[topCat]||'📦';
+  // Try cover from item, then from product cache
+  let cover=b.cover_image_url||b.cover_image||b.cover||'';
+  if(!cover&&window._allBooksCache){
+    const cached=window._allBooksCache.find(function(p){return Number(p.id)===Number(bid);});
+    if(cached)cover=cached.cover_image_url||cached.cover_image||'';
+  }
   const price=fmt(b.price||0);
-  return `<div class="reco-card" onclick="window.location.href='/?product_id=${bid}'">
-    <div class="reco-cover">${cover?`<img src="${cover}" alt="${b.title||''}" onerror="this.parentElement.innerHTML='📦'">`:'📦'}</div>
+  const safeTitle=String(b.title||'').replace(/'/g,"\\'");
+  return `<div class="reco-card" onclick="openDetail(${bid})">
+    <div class="reco-cover">
+      ${cover?`<img src="${cover}" alt="${b.title||''}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:2rem">${icon}</div>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem">${icon}</div>`}
+    </div>
     <div class="reco-body">
       <div class="reco-title">${b.title||''}</div>
-      <div class="reco-price">${price}</div>
-      ${b.reason?`<div class="reco-reason">${b.reason}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.35rem;margin-top:.2rem">
+        <div class="reco-price" style="margin-top:0">${price}</div>
+        <div style="display:flex;gap:.3rem;align-items:center">
+          <button class="btn btn-icon btn-wish ${isWishlisted(bid)?'active':''}" data-wish-id="${bid}" onclick="event.stopPropagation();toggleWishlistById(${bid})" title="Yêu thích">❤</button>
+          <button class="btn-cart btn-icon" onclick="event.stopPropagation();addToCart(${bid},${b.price||0},'${safeTitle}')" title="Thêm vào giỏ">🛒</button>
+        </div>
+      </div>
+      ${b.reason?`<div class="reco-reason">💡 ${b.reason}</div>`:''}
     </div>
   </div>`;
+}
+
+async function loadWishlistPane(){
+  const el = document.getElementById('wishlistPane');
+  if(!el)return;
+  const list = getWishlist();
+  if(!list.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">❤</div>Bạn chưa có sản phẩm yêu thích nào</div>';
+    return;
+  }
+
+  const books = list.map(function(it){
+    return {
+      ...it,
+      id: Number(it.id),
+      product_id: Number(it.id),
+      title: it.title || ('Sản phẩm #' + it.id),
+      cover_image_url: it.cover_image_url || '',
+      category_slug: it.category_slug || '',
+      category_name: it.category_name || '',
+      price: Number(it.price || 0),
+      avg_rating: 0,
+      reason: 'Đã lưu trong wishlist',
+    };
+  });
+  await enrichRecoProducts(books);
+  el.innerHTML = '<div class="books-grid">' + books.map(renderRecoCard).join('') + '</div>';
+  refreshWishlistButtons();
 }
 
 async function cancelOrder(orderId){
@@ -1344,7 +1565,11 @@ const AI_BASE = '';  // route qua api-gateway /api/v1/
 function renderAIBook(book) {
   const price  = Number(book.price || 0).toLocaleString('vi-VN');
   const bid    = book.product_id || book.id;
-  const cat    = (book.category || '').toUpperCase().slice(0, 12);
+  const slug   = book.category_slug || book.category || '';
+  const EMAP   = {books:'📚',electronics:'📱',fashion:'👗',beauty:'💄',sports:'⚽',toys:'🧸',grocery:'🛒','office-supplies':'🖊️',automotive:'🚗','home-appliances':'🏠'};
+  const topCat = Object.keys(EMAP).find(function(k){return slug===k||slug.indexOf(k+'-')===0;})||'';
+  const icon   = EMAP[topCat]||'📦';
+  const catLabel = (book.category_name||book.category_slug||topCat||'').toUpperCase().slice(0,12);
   const cover  = book.cover_image_url || book.cover_image || book.cover || '';
   const reason = book.reason
     ? '<div style="font-size:.68rem;color:var(--p);margin-top:.25rem;line-height:1.3">💡 ' + book.reason + '</div>'
@@ -1359,16 +1584,19 @@ function renderAIBook(book) {
   return '<div class="book-card" onclick="openDetail(' + bid + ')" style="cursor:pointer" title="' + (book.title||'') + '">'
     + '<div class="book-cover">'
     + coverHtml
-    + '<div class="book-cover-fallback" style="' + fallbackStyle + '">📚</div>'
-    + (cat ? '<div class="cover-cat">' + cat + '</div>' : '')
+    + '<div class="book-cover-fallback" style="' + fallbackStyle + '">' + icon + '</div>'
+    + (catLabel ? '<div class="cover-cat">' + catLabel + '</div>' : '')
     + '</div>'
     + '<div class="book-body">'
     + '<div class="book-title">' + (book.title||'') + '</div>'
-    + '<div class="book-author">' + (book.author||'') + '</div>'
+    + '<div class="book-author">' + (book.author||book.brand||'') + '</div>'
     + stars + reason
     + '<div class="book-footer">'
     + '<span class="book-price">' + price + '₫</span>'
-    + '<button class="btn-cart" onclick="event.stopPropagation();addToCart(' + bid + ',' + Number(book.price||0) + ',\'' + String(book.title||'').replace(/'/g, "\\'") + '\')" title="Thêm vào giỏ">🛒</button>'
+    + '<div style="display:flex;gap:.35rem;align-items:center">'
+    + '<button class="btn btn-icon btn-wish ' + (isWishlisted(bid)?'active':'') + '" data-wish-id="' + bid + '" onclick="event.stopPropagation();toggleWishlistById(' + bid + ')" title="Yêu thích">❤</button>'
+    + '<button class="btn-cart btn-icon" onclick="event.stopPropagation();addToCart(' + bid + ',' + Number(book.price||0) + ',\'' + String(book.title||'').replace(/'/g, "\\'") + '\')" title="Thêm vào giỏ">🛒</button>'
+    + '</div>'
     + '</div></div></div>';
 }
 
@@ -1379,20 +1607,17 @@ function enrichWithCovers(items) {
   return items.map(function(item) {
     const bid = item.product_id || item.id;
     const cached = bmap[bid];
-    if (!cached) {
-      return item;
+    if (!cached) return item;
+    const merged = Object.assign({}, item);
+    // Always enrich cover from cache if missing
+    if (!merged.cover_image_url && !merged.cover_image) {
+      merged.cover_image_url = cached.cover_image_url || cached.cover_image || '';
     }
-    const itemCover = item.cover_image_url || item.cover_image || item.cover;
-    if (!itemCover) {
-      const cachedCover = cached.cover_image_url || cached.cover_image || cached.cover;
-      if (cachedCover) {
-        return Object.assign({}, item, {
-          cover_image_url: cachedCover,
-          cover_image: cachedCover,
-        });
-      }
-    }
-    return item;
+    // Enrich category info for icon display
+    if (!merged.category_slug) merged.category_slug = cached.category_slug || '';
+    if (!merged.category_name) merged.category_name = cached.category_name || '';
+    if (!merged.brand) merged.brand = cached.brand || '';
+    return merged;
   });
 }
 
@@ -1430,6 +1655,7 @@ async function loadAIRecommendations() {
       suggestEl.innerHTML = items.length
         ? items.slice(0, 8).map(renderAIBook).join('')
         : '<div class="empty-state"><div class="empty-icon">📚</div>Chưa có dữ liệu để gợi ý — hãy xem thêm sản phẩm!</div>';
+      refreshWishlistButtons();
     }
 
     if (collabSec && collabEl) {
@@ -1444,6 +1670,7 @@ async function loadAIRecommendations() {
           if (citems.length) {
             collabSec.style.display = '';
             collabEl.innerHTML = citems.slice(0, 6).map(renderAIBook).join('');
+            refreshWishlistButtons();
           }
         }
       } catch (_) {}
