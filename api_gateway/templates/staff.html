@@ -79,12 +79,10 @@ tr:hover td{background:#FAFBFF}
 <main>
   <div class="sidebar">
     <div class="nav-item active" onclick="showPage('profile')"  id="nav-profile">👤 Hồ sơ</div>
-    <div class="nav-item"        onclick="showPage('shifts')"   id="nav-shifts">🕐 Ca làm việc</div>
     <div class="nav-item"        onclick="showPage('orders')"   id="nav-orders">📦 Duyệt đơn hàng</div>
     <div class="nav-item"        onclick="showPage('shipments')" id="nav-shipments">🚚 Vận chuyển</div>
     <div class="nav-item"        onclick="showPage('books')"    id="nav-books">📚 Kho sản phẩm</div>
     <div class="nav-item"        onclick="showPage('payments')" id="nav-payments">💳 Thanh toán</div>
-    <div class="nav-item"        onclick="showPage('logs')"     id="nav-logs">📋 Nhật ký hoạt động</div>
   </div>
   <div class="content">
 
@@ -108,15 +106,6 @@ tr:hover td{background:#FAFBFF}
     </div>
 
     <!-- ── SHIFTS ── -->
-    <div class="page" id="page-shifts">
-      <div class="sec-hdr">
-        <div class="sec-title">🕐 Ca làm việc của tôi</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadShifts()">🔄 Làm mới</button>
-      </div>
-      <div class="info-box">ℹ️ Ca làm việc được lên lịch bởi quản lý. Bạn có thể bắt đầu / kết thúc ca tại đây.</div>
-      <div id="shiftsPane" class="loading"><div class="spin"></div></div>
-    </div>
-
     <!-- ── ORDERS ── -->
     <div class="page" id="page-orders">
       <div class="sec-hdr">
@@ -188,16 +177,6 @@ tr:hover td{background:#FAFBFF}
     </div>
 
     <!-- ── LOGS ── -->
-    <div class="page" id="page-logs">
-      <div class="sec-hdr">
-        <div class="sec-title">📋 Nhật ký hoạt động của tôi</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadLogs()">🔄 Làm mới</button>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div id="logsPane" class="loading" style="padding:2rem"><div class="spin"></div></div>
-      </div>
-    </div>
-
   </div><!-- /content -->
 </main>
 

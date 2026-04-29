@@ -93,35 +93,36 @@ function Ensure-PostgresDatabase {
 }
 
 $pgDbs = @(
-    "bookstore_book",
     "bookstore_cart",
-    "bookstore_catalog",
     "bookstore_comment",
-    "bookstore_customer",
-    "bookstore_order",
-    "bookstore_pay",
     "bookstore_product",
-    "bookstore_recommender",
-    "bookstore_ship",
-    "bookstore_staff"
+    "bookstore_recommender"
 )
+
+$mysqlDbs = @(
+    "bookstore_auth",
+    "bookstore_user",
+    "bookstore_notification"
+)
+
+foreach ($db in $mysqlDbs) {
+    Ensure-MySQLDatabase -DbName $db
+}
 
 foreach ($db in $pgDbs) {
     Ensure-PostgresDatabase -DbName $db
 }
 
 $services = @(
-    "customer-service",
-    "book-service",
+    "auth-service",
+    "user-service",
     "product-service",
     "cart-service",
     "order-service",
     "pay-service",
     "ship-service",
-    "staff-service",
     "comment-rate-service",
-    "catalog-service",
-    "manager-service",
+    "notification-service",
     "recommender-ai-service",
     "api-gateway"
 )

@@ -1,15 +1,15 @@
 # AI Assistant Service
 
-FastAPI-based AI service cho hệ thống e-commerce MoonBooks.
+Django-based AI service cho hệ thống e-commerce MoonBooks.
 
 ## Kiến trúc
 
 ```
 recommender-ai-service/
-├── main.py                          # FastAPI entrypoint
+├── main.py                          # Legacy compatibility stub (runtime uses Django)
 ├── app/
-│   ├── api/routes.py                # FastAPI router endpoints
-│   ├── api/schemas.py               # Pydantic request/response models
+│   ├── views.py                     # Django REST endpoints
+│   ├── urls.py                      # URL mapping for /health + /api/v1/*
 │   ├── orchestrator.py              # ChatOrchestrator (pipeline điều phối)
 │   ├── services/
 │   │   ├── intent_detector.py       # Phát hiện intent (regex + scoring)
@@ -27,8 +27,9 @@ recommender-ai-service/
 │   │   ├── comment_client.py        # → comment-rate-service
 │   │   ├── ship_client.py           # → ship-service
 │   │   ├── pay_client.py            # → pay-service
-│   │   └── customer_client.py       # → customer-service
+│   │   └── customer_client.py       # → user-service (compat)
 │   └── core/config.py               # Env config
+├── recommender_ai_service/          # Django project settings/urls/wsgi/asgi
 ├── scripts/train_model.py           # Train BehaviorMLP với synthetic data
 ├── data/seed_kb.json                # FAQ + policy seed data
 └── artifacts/                       # behavior_model.pt, kb_faiss.index
@@ -101,6 +102,6 @@ curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Gợi ý sách AI cho người mới dưới 300k", "customer_id": 1}'
 
-# Stack status (FastAPI + LSTM + RAG + Graph + Chatbot)
-curl http://localhost:8000/api/v1/status
+# Stack status (Django + LSTM + RAG + Graph + Chatbot)
+curl http://localhost:8011/health
 ```

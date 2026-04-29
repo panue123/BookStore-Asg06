@@ -61,7 +61,7 @@ def generate(customer_id: int, limit: int = 8) -> list[dict]:
     # 2. Fetch all books
     all_books = book_client.get_all_books()
     if not all_books:
-        logger.warning("No books available from book-service")
+        logger.warning("No products available from product-service")
         return []
 
     rating_map = _global_rating_map()

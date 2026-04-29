@@ -1,4 +1,5 @@
 import datetime
+import os
 import jwt as pyjwt
 import requests
 from django.utils import timezone
@@ -8,6 +9,9 @@ from rest_framework.response import Response
 
 from .jwt_utils import generate_tokens, decode_token, validate_access_token
 from .models import AuthUser, RevokedToken, UserRole
+
+
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://user-service:8000')
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -24,8 +28,8 @@ def _err(msg, code=400):
 @api_view(['POST'])
 def register(request):
     """
-    Register a new customer.
-    Proxies to customer-service to create the domain record,
+    Register a new identity.
+    Proxies to user-service to create the user profile,
     then stores auth identity here.
     """
     username = request.data.get('username', '').strip()
@@ -41,47 +45,29 @@ def register(request):
     if AuthUser.objects.filter(email=email).exists():
         return _err('Email already registered', 409)
 
-    # Create domain record in the appropriate service
+    # Create domain record in user-service
     service_user_id = None
     cart_id = None
-    if role == UserRole.CUSTOMER:
-        try:
-            resp = requests.post(
-                'http://customer-service:8000/api/customers/',
-                json={'username': username, 'email': email, 'password': password},
-                timeout=10,
-            )
-            if resp.status_code == 201:
-                data = resp.json()
-                service_user_id = data.get('data', {}).get('id') or data.get('customer_id')
-                cart_id = data.get('data', {}).get('cart_id')
-        except Exception:
-            pass
-    elif role == UserRole.STAFF:
-        staff_role = request.data.get('staff_role', 'staff')
-        try:
-            resp = requests.post(
-                'http://staff-service:8000/api/staff/',
-                json={'username': username, 'email': email, 'password': password,
-                      'role': staff_role, 'department': request.data.get('department', '')},
-                timeout=10,
-            )
-            if resp.status_code == 201:
-                service_user_id = resp.json().get('id')
-        except Exception:
-            pass
-    elif role in (UserRole.MANAGER, UserRole.ADMIN):
-        try:
-            resp = requests.post(
-                'http://manager-service:8000/api/manager/',
-                json={'name': username, 'email': email, 'password': password,
-                      'department': request.data.get('department', '')},
-                timeout=10,
-            )
-            if resp.status_code == 201:
-                service_user_id = resp.json().get('id')
-        except Exception:
-            pass
+    role_for_user_service = role
+    if role_for_user_service == UserRole.ADMIN:
+        role_for_user_service = UserRole.MANAGER
+    try:
+        resp = requests.post(
+            f'{USER_SERVICE_URL}/api/users/',
+            json={
+                'username': username,
+                'email': email,
+                'role': role_for_user_service,
+                'department': request.data.get('department', ''),
+            },
+            timeout=10,
+        )
+        if resp.status_code == 201:
+            data = resp.json()
+            service_user_id = data.get('data', {}).get('id') or data.get('id') or data.get('user_id')
+            cart_id = data.get('data', {}).get('cart_id') or data.get('cart_id')
+    except Exception:
+        pass
 
     auth_user = AuthUser(username=username, email=email, role=role, service_user_id=service_user_id)
     auth_user.set_password(password)
@@ -127,12 +113,12 @@ def login(request):
     user.last_login = timezone.now()
     user.save(update_fields=['last_login'])
 
-    # Fetch extra info from domain service
+    # Fetch extra info from user-service profile
     cart_id = None
-    if user.role == UserRole.CUSTOMER and user.service_user_id:
+    if user.service_user_id:
         try:
             r = requests.get(
-                f'http://customer-service:8000/api/customers/{user.service_user_id}/',
+                f'{USER_SERVICE_URL}/api/users/{user.service_user_id}/',
                 timeout=5,
             )
             if r.status_code == 200:

@@ -621,7 +621,7 @@
         function renderBooks(books) {
             const grid = document.getElementById('booksGrid');
             if (!books || books.length === 0) {
-                grid.innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 3rem;'>No database configured for books. Make sure book-service is running DB migrations. Mocking books instead...</div>";
+                grid.innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 3rem;'>No product data available yet. Make sure product-service migrations and seed data are ready. Mocking products instead...</div>";
                 setTimeout(mockBooks, 1500);
                 return;
             }

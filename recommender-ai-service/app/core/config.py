@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # ── Service URLs ──────────────────────────────────────────────────────────────
 PRODUCT_SERVICE_URL  = os.getenv("PRODUCT_SERVICE_URL",  "http://product-service:8000")
-CUSTOMER_SERVICE_URL = os.getenv("CUSTOMER_SERVICE_URL", "http://customer-service:8000")
+USER_SERVICE_URL     = os.getenv("USER_SERVICE_URL", "http://user-service:8000")
 ORDER_SERVICE_URL    = os.getenv("ORDER_SERVICE_URL",    "http://order-service:8000")
 COMMENT_SERVICE_URL  = os.getenv("COMMENT_SERVICE_URL",  "http://comment-rate-service:8000")
 SHIP_SERVICE_URL     = os.getenv("SHIP_SERVICE_URL",     "http://ship-service:8000")

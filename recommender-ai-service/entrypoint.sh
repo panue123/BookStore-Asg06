@@ -27,5 +27,5 @@ if not ok and c > 0:
 print(f'KB entries: {c}, faiss_loaded: {ok}')
 " || echo "KB/FAISS load warning (non-fatal)"
 
-echo "[AI Service] Starting FastAPI + uvicorn..."
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level info
+echo "[AI Service] Starting Django API server..."
+exec python manage.py runserver 0.0.0.0:8000

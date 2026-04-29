@@ -95,8 +95,6 @@ tr:hover td{background:#FAFBFF}
     <div class="nav-group">Nhân sự</div>
     <div class="nav-item"        onclick="showPage('customers')"  id="nav-customers">👥 Khách hàng</div>
     <div class="nav-item"        onclick="showPage('staff')"      id="nav-staff">🧑‍💼 Nhân viên</div>
-    <div class="nav-item"        onclick="showPage('shifts')"     id="nav-shifts">🕐 Ca làm việc</div>
-    <div class="nav-item"        onclick="showPage('auditlogs')"  id="nav-auditlogs">📋 Audit Log</div>
   </div>
   <div class="content">
 
@@ -227,24 +225,7 @@ tr:hover td{background:#FAFBFF}
     </div>
 
     <!-- ── SHIFTS ── -->
-    <div class="page" id="page-shifts">
-      <div class="sec-hdr">
-        <div class="sec-title">🕐 Quản lý ca làm việc</div>
-        <button class="btn btn-p btn-sm" onclick="openCreateShiftModal()">+ Tạo ca</button>
-      </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div id="shiftsPane" class="loading" style="padding:2rem"><div class="spin"></div></div>
-      </div>
-    </div>
-
     <!-- ── AUDIT LOGS ── -->
-    <div class="page" id="page-auditlogs">
-      <div class="sec-hdr"><div class="sec-title">📋 Audit Log hệ thống</div><button class="btn btn-ghost btn-sm" onclick="loadAuditLogs()">🔄 Làm mới</button></div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div id="auditlogsPane" class="loading" style="padding:2rem"><div class="spin"></div></div>
-      </div>
-    </div>
-
   </div>
 </main>
 
@@ -314,19 +295,6 @@ tr:hover td{background:#FAFBFF}
     <div id="createStaffMsg" style="font-size:.82rem;color:var(--tm);margin-top:.5rem;text-align:center"></div>
   </div>
 </div>
-
-<!-- Modal: Create Shift -->
-<div class="overlay" id="createShiftModal">
-  <div class="modal">
-    <div class="modal-hdr"><span class="modal-title">🕐 Tạo ca làm việc</span><button class="btn-x" onclick="closeModal('createShiftModal')">✕</button></div>
-    <div class="form-group"><label>Nhân viên</label><select id="shiftStaffId"><option value="">Đang tải...</option></select></div>
-    <div class="grid2">
-      <div class="form-group"><label>Giờ bắt đầu</label><input type="datetime-local" id="shiftStart"></div>
-      <div class="form-group"><label>Giờ kết thúc</label><input type="datetime-local" id="shiftEnd"></div>
-    </div>
-    <div class="form-group"><label>Ghi chú</label><input type="text" id="shiftNotes" placeholder="Ghi chú ca làm..."></div>
-    <button class="btn btn-p" style="width:100%;padding:.75rem;margin-top:.5rem" onclick="createShift()">✅ Tạo ca</button>
-    <div id="createShiftMsg" style="font-size:.82rem;color:var(--tm);margin-top:.5rem;text-align:center"></div>
   </div>
 </div>
 
@@ -492,7 +460,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
-  const loaders={dashboard:loadDashboard,reports:loadReports,books:loadBooks,catalog:loadCatalog,inventory:loadInventoryLogs,orders:loadOrders,shipments:loadShipments,payments:loadPayments,customers:loadCustomers,staff:loadStaff,shifts:loadShifts,auditlogs:loadAuditLogs};
+  const loaders={dashboard:loadDashboard,reports:loadReports,books:loadBooks,catalog:loadCatalog,inventory:loadInventoryLogs,orders:loadOrders,shipments:loadShipments,payments:loadPayments,customers:loadCustomers,staff:loadStaff};
   if(loaders[name]) loaders[name]();
 }
 
@@ -501,7 +469,7 @@ async function loadDashboard() {
   document.getElementById('kpiPane').innerHTML='<div class="loading"><div class="spin"></div></div>';
   document.getElementById('lowStockPane').innerHTML='<div class="loading" style="padding:1.5rem"><div class="spin"></div></div>';
   try {
-    const r=await api('/manager/dashboard/',{method:'POST',body:'{}'});
+    const r=await api('/mgr/dashboard/',{method:'POST',body:'{}'});
     if(!r.ok) throw new Error();
     const d=(await r.json()).dashboard||{};
     document.getElementById('kpiPane').innerHTML=`
@@ -534,9 +502,9 @@ async function loadReports() {
   el.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div></div>';
   try {
     const [sR,iR,shR]=await Promise.all([
-      api('/manager/sales_report/'),
-      api('/manager/inventory_report/'),
-      api('/manager/shipping_report/')
+      api('/mgr/sales_report/'),
+      api('/mgr/inventory_report/'),
+      api('/mgr/shipping_report/')
     ]);
     const sales=sR.ok?await sR.json():{};
     const inv=iR.ok?await iR.json():{};
@@ -663,7 +631,7 @@ async function saveStock() {
   const reason=document.getElementById('stockReason').value||'Manual adjustment';
   if(isNaN(newStock)||newStock<0) { toast('Số lượng không hợp lệ','err'); return; }
   try {
-    const r=await api('/manager/update_inventory/',{method:'POST',body:JSON.stringify({book_id:id,new_stock:newStock,reason,manager_id:mgr.service_user_id})});
+    const r=await api('/mgr/update_inventory/',{method:'POST',body:JSON.stringify({book_id:id,new_stock:newStock,reason,manager_id:mgr.service_user_id})});
     if(r.ok) { toast('Đã cập nhật tồn kho','ok'); closeModal('stockModal'); loadBooks(); loadInventoryLogs(); }
     else { const d=await r.json(); toast('❌ '+(d.error||'Lỗi'),'err'); }
   } catch(e) { toast('Lỗi kết nối','err'); }
@@ -673,7 +641,7 @@ async function loadInventoryLogs() {
   const el=document.getElementById('invLogsPane');
   el.innerHTML='<div class="loading" style="padding:2rem"><div class="spin"></div></div>';
   try {
-    const r=await api('/manager/inventory_logs/?limit=50');
+    const r=await api('/mgr/inventory_logs/?limit=50');
     const d=await r.json(); const logs=d.logs||[];
     if(!logs.length) { el.innerHTML='<div class="empty">Chưa có lịch sử điều chỉnh kho</div>'; return; }
     el.innerHTML=`<table>
@@ -912,50 +880,8 @@ async function createStaff() {
 }
 
 // ── SHIFTS ────────────────────────────────────────────────
-async function loadShifts() {
-  const el=document.getElementById('shiftsPane');
-  el.innerHTML='<div class="loading" style="padding:2rem"><div class="spin"></div></div>';
-  try {
-    const r=await api('/staff/shifts/?requester_id='+mgr.service_user_id);
-    const d=await r.json(); const shifts=d.shifts||[];
-    if(!shifts.length) { el.innerHTML='<div class="empty">Chưa có ca làm việc nào</div>'; return; }
-    el.innerHTML=`<table>
-      <thead><tr><th>ID</th><th>Nhân viên</th><th>Bắt đầu</th><th>Kết thúc</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
-      <tbody>${shifts.map(s=>`<tr>
-        <td style="color:var(--tm)">#${s.id}</td>
-        <td>Staff #${s.staff}</td>
-        <td style="font-size:.82rem">${fmtDate(s.start_time)}</td>
-        <td style="font-size:.82rem">${s.end_time?fmtDate(s.end_time):'—'}</td>
-        <td>${statusBadge(s.status)}</td>
-        <td style="font-size:.82rem;color:var(--tm)">${s.notes||'—'}</td>
-      </tr>`).join('')}</tbody></table>`;
-  } catch(e) { el.innerHTML='<div class="empty">Lỗi tải ca làm việc</div>'; }
-}
 
-async function openCreateShiftModal() {
-  // Load staff list
-  try {
-    const r=await api('/staff/');
-    const data=await r.json();
-    const staff=Array.isArray(data)?data:(data.results||data.staff||[]);
-    document.getElementById('shiftStaffId').innerHTML=staff.map(s=>`<option value="${s.id}">${s.username} (${s.role})</option>`).join('');
-  } catch(e) { document.getElementById('shiftStaffId').innerHTML='<option>Lỗi tải nhân viên</option>'; }
-  document.getElementById('createShiftMsg').textContent='';
-  openModal('createShiftModal');
-}
 
-async function createShift() {
-  const body={staff:document.getElementById('shiftStaffId').value,start_time:document.getElementById('shiftStart').value,end_time:document.getElementById('shiftEnd').value||null,notes:document.getElementById('shiftNotes').value,requester_id:mgr.service_user_id};
-  const msg=document.getElementById('createShiftMsg');
-  if(!body.staff||!body.start_time) { msg.textContent='Chọn nhân viên và giờ bắt đầu'; return; }
-  msg.textContent='Đang tạo...';
-  try {
-    const r=await api('/staff/create_shift/',{method:'POST',body:JSON.stringify(body)});
-    const d=await r.json();
-    if(r.ok) { toast('Đã tạo ca làm việc','ok'); closeModal('createShiftModal'); loadShifts(); }
-    else msg.textContent='❌ '+(d.error||JSON.stringify(d));
-  } catch(e) { msg.textContent='❌ Lỗi kết nối'; }
-}
 
 // ── AUDIT LOGS ────────────────────────────────────────────
 async function loadAuditLogs() {

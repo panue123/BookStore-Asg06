@@ -85,12 +85,13 @@ services:
       - JWT_SECRET=super-secret-jwt-key-change-in-production-2024
       - JWT_ACCESS_MINUTES=60
       - JWT_REFRESH_DAYS=7
+      - USER_SERVICE_URL=http://user-service:8000
 
   # ═══════════════════════════════════════════════════════════
   # CORE MICROSERVICES
   # ═══════════════════════════════════════════════════════════
-  customer-service:
-    build: ./customer-service
+  user-service:
+    build: ./user-service
     ports:
       - "8001:8000"
     depends_on:
@@ -100,13 +101,16 @@ services:
       - app-network
     environment:
       - DEBUG=1
-      - DJANGO_SETTINGS_MODULE=customer_service.settings
-      - DB_NAME=bookstore_customer
+      - DJANGO_SETTINGS_MODULE=user_service.settings
+      - DB_NAME=bookstore_user
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_HOST=db-mysql
+      - ORDER_SERVICE_URL=http://order-service:8000
+      - PRODUCT_SERVICE_URL=http://product-service:8000
+      - SHIP_SERVICE_URL=http://ship-service:8000
 
-  # product-service replaces book-service as the primary product catalog
+  # product-service is the primary product/catalog service
   product-service:
     build: ./product-service
     ports:
@@ -197,24 +201,6 @@ services:
       - DB_PASSWORD=root
       - DB_HOST=db-mysql
 
-  staff-service:
-    build: ./staff-service
-    ports:
-      - "8007:8000"
-    depends_on:
-      db-mysql:
-        condition: service_healthy
-    networks:
-      - app-network
-    environment:
-      - DEBUG=1
-      - DJANGO_SETTINGS_MODULE=staff_service.settings
-      - DB_NAME=bookstore_staff
-      - DB_USER=root
-      - DB_PASSWORD=root
-      - DB_HOST=db-mysql
-      - PRODUCT_SERVICE_URL=http://product-service:8000
-
   comment-rate-service:
     build: ./comment-rate-service
     ports:
@@ -232,10 +218,10 @@ services:
       - POSTGRES_PASSWORD=root
       - DB_HOST=db-postgres
 
-  manager-service:
-    build: ./manager-service
+  notification-service:
+    build: ./notification-service
     ports:
-      - "8010:8000"
+      - "8014:8000"
     depends_on:
       db-mysql:
         condition: service_healthy
@@ -243,12 +229,11 @@ services:
       - app-network
     environment:
       - DEBUG=1
-      - DJANGO_SETTINGS_MODULE=manager_service.settings
-      - DB_NAME=bookstore_manager
+      - DJANGO_SETTINGS_MODULE=notification_service.settings
+      - DB_NAME=bookstore_notification
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_HOST=db-mysql
-      - PRODUCT_SERVICE_URL=http://product-service:8000
 
   # ═══════════════════════════════════════════════════════════
   # KNOWLEDGE GRAPH (Neo4j) — for hybrid recommendation
@@ -300,7 +285,7 @@ services:
       - POSTGRES_PASSWORD=root
       - DB_HOST=db-postgres
       - PRODUCT_SERVICE_URL=http://product-service:8000
-      - CUSTOMER_SERVICE_URL=http://customer-service:8000
+      - USER_SERVICE_URL=http://user-service:8000
       - ORDER_SERVICE_URL=http://order-service:8000
       - COMMENT_SERVICE_URL=http://comment-rate-service:8000
       - SHIP_SERVICE_URL=http://ship-service:8000
@@ -321,14 +306,14 @@ services:
       - "8000:8000"
     depends_on:
       - auth-service
-      - customer-service
+      - user-service
       - product-service
       - cart-service
       - order-service
       - pay-service
       - ship-service
-      - staff-service
       - comment-rate-service
+      - notification-service
       - recommender-ai-service
     networks:
       - app-network

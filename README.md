@@ -33,8 +33,10 @@ bash demo_curl.sh
 
 **Truy cập:**
 - Frontend: http://localhost:8000
-- AI API Docs: http://localhost:8011/docs
+- AI API (Django): http://localhost:8011/health
 - Product API: http://localhost:8013/api/products/
+- User API: http://localhost:8001/api/users/
+- Notification API: http://localhost:8014/api/notifications/
 - Neo4j Browser: http://localhost:7474 (neo4j/neo4j_password)
 - RabbitMQ UI: http://localhost:15672 (guest/guest)
 
@@ -45,25 +47,24 @@ bash demo_curl.sh
 ```
 api-gateway (8000)
 ├── auth-service (8012)           — JWT authentication
-├── customer-service (8001)       — Customer profiles
-├── product-service (8013)        — Product catalog (DDD, 10+ domains) ← replaces book-service
+├── user-service (8001)           — Unified users + role + RBAC (manager/staff/customer)
+├── product-service (8013)        — Product catalog/category/stock (replaces book+catalog)
 ├── cart-service (8003)           — Shopping cart → calls product-service
 ├── order-service (8004)          — Order management + Saga
 ├── pay-service (8005)            — Payment processing
 ├── ship-service (8006)           — Shipping & tracking
-├── staff-service (8007)          — Staff management
 ├── comment-rate-service (8008)   — Reviews & ratings
-├── manager-service (8010)        — Manager dashboard
-└── recommender-ai-service (8011) — AI: RNN + LSTM + biLSTM + Neo4j Graph + RAG + Chatbot
+├── notification-service (8014)   — Async notifications (email/SMS queue)
+└── recommender-ai-service (8011) — Django AI service: RNN + LSTM + biLSTM + Neo4j Graph + RAG + Chatbot
 
 Infrastructure:
-  db-mysql      — auth, customer, order, pay, ship, staff, manager
+  db-mysql      — auth, user, order, pay, ship, notification
   db-postgres   — product, cart, comment, recommender
   rabbitmq      — async events (order saga)
   neo4j         — knowledge graph (hybrid recommendation)
 ```
 
-**book-service** và **catalog-service** đã deprecated. Xem `DEPRECATED_SERVICES.md`.
+Legacy services `book-service`, `catalog-service`, `customer-service`, `staff-service`, `manager-service` đã bị loại khỏi runtime chính.
 
 ---
 
@@ -92,8 +93,10 @@ docker-compose ps
 
 # 3. Truy cập
 # Frontend:       http://localhost:8000
-# API docs AI:    http://localhost:8011/docs
+# AI health:       http://localhost:8011/health
 # Product API:    http://localhost:8013/api/products/
+# User API:       http://localhost:8001/api/users/
+# Notification:   http://localhost:8014/api/notifications/
 # Neo4j Browser:  http://localhost:7474 (neo4j/neo4j_password)
 # RabbitMQ UI:    http://localhost:15672 (guest/guest)
 ```
@@ -194,11 +197,16 @@ GET  /health                            — service health + hybrid weights
 
 ### API Gateway (proxy)
 ```
+/api/users/*             → user-service
+/api/customers/*         → user-service (compat)
+/api/staff/*             → user-service (compat)
+/api/manager/*           → user-service (compat)
 /api/products/*          → product-service
 /api/categories/*        → product-service
 /api/v1/*                → recommender-ai-service
 /api/ai/*                → recommender-ai-service
 /api/auth/*              → auth-service (public)
+/api/notifications/*     → notification-service
 /api/orders/*            → order-service (JWT required)
 /api/carts/*             → cart-service (JWT required)
 /api/payments/*          → pay-service (JWT required)
@@ -235,15 +243,13 @@ curl -X POST http://localhost:8000/api/v1/chat \
 
 ---
 
-## Migration từ book-service
+## Migration kiến trúc
 
-1. book-service **không còn** trong docker-compose runtime
-2. Dữ liệu sách → `product_type="book"`, `category_slug="books-*"`
-3. `book_id` trong cart/order DB field giữ nguyên (backward compat)
-4. AI service: `catalog_client` là alias của `product_client`
-5. comment-rate-service: hỗ trợ cả `book_id` và `product_id`
-
-Xem chi tiết: `DEPRECATED_SERVICES.md`
+1. Runtime chính chỉ dùng: user-service, product-service, cart/order/pay/ship/comment, notification-service, recommender-ai-service
+2. `book-service` + `catalog-service` được thay bởi `product-service`
+3. Dữ liệu sách cũ migrate sang `product_type="book"`
+4. `customer/staff/manager` hợp nhất vào `user-service` với RBAC role claims
+5. AI service chạy Django-only; gateway route `/api/v1/*` vào recommender-ai-service
 
 ---
 

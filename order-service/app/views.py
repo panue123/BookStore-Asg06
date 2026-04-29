@@ -1,4 +1,5 @@
 import logging
+import os
 import requests
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -10,6 +11,32 @@ from .events import publish_order_created, publish_order_paid, publish_order_can
 
 logger = logging.getLogger(__name__)
 CART_SVC = 'http://cart-service:8000'
+USER_SVC = os.getenv('USER_SERVICE_URL', 'http://user-service:8000')
+NOTIFICATION_SVC = os.getenv('NOTIFICATION_SERVICE_URL', 'http://notification-service:8000')
+
+
+def _notify_customer(customer_id, subject, message, metadata=None):
+    recipient = f'user-{customer_id}'
+    try:
+        user_resp = requests.get(f'{USER_SVC}/api/users/{customer_id}/', timeout=5)
+        if user_resp.status_code == 200:
+            user_data = user_resp.json()
+            recipient = user_data.get('email') or user_data.get('username') or recipient
+    except requests.RequestException:
+        pass
+
+    payload = {
+        'user_id': customer_id,
+        'channel': 'email',
+        'recipient': recipient,
+        'subject': subject,
+        'message': message,
+        'metadata': metadata or {},
+    }
+    try:
+        requests.post(f'{NOTIFICATION_SVC}/api/notifications/', json=payload, timeout=5)
+    except requests.RequestException:
+        logger.warning('Notification service unavailable for customer %s', customer_id)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -74,8 +101,28 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.refresh_from_db()
         if result['success']:
             publish_order_paid(order)
+            _notify_customer(
+                order.customer_id,
+                f'Đơn hàng #{order.id} đã được xác nhận',
+                f'Đơn hàng #{order.id} của bạn đã được xử lý thành công với tổng tiền {order.total_amount}.',
+                {
+                    'event': 'order.checkout.success',
+                    'order_id': order.id,
+                    'status': order.status,
+                },
+            )
         else:
             publish_order_canceled(order)
+            _notify_customer(
+                order.customer_id,
+                f'Đơn hàng #{order.id} chưa hoàn tất',
+                f'Đơn hàng #{order.id} chưa thể hoàn tất: {result.get("error", "Checkout failed")}.',
+                {
+                    'event': 'order.checkout.failed',
+                    'order_id': order.id,
+                    'status': order.status,
+                },
+            )
         http_status = status.HTTP_201_CREATED if result['success'] else status.HTTP_402_PAYMENT_REQUIRED
         return Response({
             'success': result['success'],
@@ -161,6 +208,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         order.status = OrderStatus.CANCELED
         order.save()
+        _notify_customer(
+            order.customer_id,
+            f'Đơn hàng #{order.id} đã bị hủy',
+            f'Đơn hàng #{order.id} đã được hủy. Lý do: {request.data.get("reason", "Không có lý do cụ thể")}.',
+            {
+                'event': 'order.canceled',
+                'order_id': order.id,
+                'status': order.status,
+                'reason': request.data.get('reason', ''),
+            },
+        )
         return Response({'message': 'Order canceled', 'order': OrderSerializer(order).data})
 
     # ── health ────────────────────────────────────────────────────────────────

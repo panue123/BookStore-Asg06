@@ -24,17 +24,20 @@ logger = logging.getLogger('gateway')
 
 SERVICE_MAP = {
     'auth':            'auth-service',
-    'customers':       'customer-service',
-    'jobs':            'customer-service',
-    'addresses':       'customer-service',
+    'users':           'user-service',
+    'customers':       'user-service',
+    'jobs':            'user-service',
+    'addresses':       'user-service',
     'carts':           'cart-service',
     'orders':          'order-service',
     'payments':        'pay-service',
     'shipments':       'ship-service',
-    'staff':           'staff-service',
+    'staff':           'user-service',
     'comments':        'comment-rate-service',
-    'manager':         'manager-service',
-    'managers':        'manager-service',
+    'manager':         'user-service',
+    'managers':        'user-service',
+    'mgr':             'user-service',          # /api/mgr/* → manager dashboard/reports
+    'notifications':   'notification-service',
     'recommendations': 'recommender-ai-service',
     'ai':              'recommender-ai-service',
     'v1':              'recommender-ai-service',   # /api/v1/* → AI service
@@ -51,6 +54,7 @@ PUBLIC_ROUTES = {
     'v1',
     'products',    # product-service public read
     'categories',  # product-service public read
+    'notifications',
     'health',
 }
 
@@ -211,10 +215,14 @@ def api_proxy(request, path):
         logger.info('%s %s -> %s [%dms] %d', request.method, path, target_service, elapsed, resp.status_code)
         if resp.status_code >= 500:
             _inc('total_errors')
+        upstream_ct = resp.headers.get('Content-Type', 'application/json')
+        # Ensure UTF-8 charset is declared so browsers decode Vietnamese correctly
+        if 'application/json' in upstream_ct and 'charset' not in upstream_ct:
+            upstream_ct = 'application/json; charset=utf-8'
         return HttpResponse(
             content=resp.content,
             status=resp.status_code,
-            content_type=resp.headers.get('Content-Type', 'application/json'),
+            content_type=upstream_ct,
         )
     except requests.Timeout:
         _inc('total_errors')
@@ -228,13 +236,14 @@ def api_proxy(request, path):
 
 HEALTH_SERVICES = {
     'auth-service':           'http://auth-service:8000/api/auth/health/',
-    'customer-service':       'http://customer-service:8000/api/customers/',
+    'user-service':           'http://user-service:8000/api/health/',
     'product-service':        'http://product-service:8000/api/health/',
     'cart-service':           'http://cart-service:8000/api/carts/',
     'order-service':          'http://order-service:8000/api/orders/',
     'pay-service':            'http://pay-service:8000/api/payments/',
     'ship-service':           'http://ship-service:8000/api/shipments/',
     'comment-rate-service':   'http://comment-rate-service:8000/api/comments/',
+    'notification-service':   'http://notification-service:8000/api/notifications/health/',
     'recommender-ai-service': 'http://recommender-ai-service:8000/health',
 }
 

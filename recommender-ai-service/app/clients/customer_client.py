@@ -1,19 +1,19 @@
-"""CustomerServiceClient."""
+"""UserServiceClient (customer compatibility methods)."""
 from __future__ import annotations
 from .base import ServiceClient, _extract_list
-from ..core.config import CUSTOMER_SERVICE_URL
+from ..core.config import USER_SERVICE_URL
 
 
 class CustomerServiceClient(ServiceClient):
     def __init__(self):
-        super().__init__(CUSTOMER_SERVICE_URL, "customer-service")
+        super().__init__(USER_SERVICE_URL, "user-service")
 
     def get_customer_by_id(self, customer_id: int) -> dict | None:
-        return self.get(f"/api/customers/{customer_id}/")
+        return self.get(f"/api/users/{customer_id}/")
 
     def get_customer_history(self, customer_id: int) -> dict:
         """Returns cart + profile info for a customer."""
-        data = self.get(f"/api/customers/{customer_id}/")
+        data = self.get(f"/api/users/{customer_id}/")
         if not data:
             return {}
         return data
